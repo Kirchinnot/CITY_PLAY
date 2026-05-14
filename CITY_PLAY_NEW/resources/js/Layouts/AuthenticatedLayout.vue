@@ -12,9 +12,9 @@ const showingNavigationDropdown = ref(false);
 
 <template>
     <div>
-        <div class="min-h-screen bg-gray-100">
+        <div class="min-h-screen bg-slate-950">
             <nav
-                class="border-b border-gray-100 bg-white"
+                class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md"
             >
                 <!-- Primary Navigation Menu -->
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -23,9 +23,9 @@ const showingNavigationDropdown = ref(false);
                             <!-- Logo -->
                             <div class="flex shrink-0 items-center">
                                 <Link :href="route('dashboard')">
-                                    <ApplicationLogo
-                                        class="block h-9 w-auto fill-current text-gray-800"
-                                    />
+                                    <div class="h-9 w-9 bg-gradient-to-tr from-indigo-600 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                                        <span class="text-white font-black text-xs tracking-tighter">CP</span>
+                                    </div>
                                 </Link>
                             </div>
 
@@ -36,6 +36,7 @@ const showingNavigationDropdown = ref(false);
                                 <NavLink
                                     :href="route('dashboard')"
                                     :active="route().current('dashboard')"
+                                    class="text-slate-400 hover:text-cyan-400"
                                 >
                                     Dashboard
                                 </NavLink>
@@ -50,7 +51,7 @@ const showingNavigationDropdown = ref(false);
                                         <span class="inline-flex rounded-md">
                                             <button
                                                 type="button"
-                                                class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
+                                                class="inline-flex items-center rounded-md border border-transparent bg-slate-800 px-3 py-2 text-sm font-medium leading-4 text-slate-300 transition duration-150 ease-in-out hover:text-white focus:outline-none"
                                             >
                                                 {{ $page.props.auth.user.name }}
 
@@ -71,18 +72,22 @@ const showingNavigationDropdown = ref(false);
                                     </template>
 
                                     <template #content>
-                                        <DropdownLink
-                                            :href="route('profile.edit')"
-                                        >
-                                            Profile
-                                        </DropdownLink>
-                                        <DropdownLink
-                                            :href="route('logout')"
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Log Out
-                                        </DropdownLink>
+                                        <div class="bg-slate-900 border border-slate-800 rounded-md shadow-xl">
+                                            <DropdownLink
+                                                :href="route('profile.edit')"
+                                                class="text-slate-300 hover:bg-slate-800 hover:text-cyan-400"
+                                            >
+                                                Profile
+                                            </DropdownLink>
+                                            <DropdownLink
+                                                :href="route('logout')"
+                                                method="post"
+                                                as="button"
+                                                class="text-slate-300 hover:bg-slate-800 hover:text-cyan-400"
+                                            >
+                                                Log Out
+                                            </DropdownLink>
+                                        </div>
                                     </template>
                                 </Dropdown>
                             </div>
