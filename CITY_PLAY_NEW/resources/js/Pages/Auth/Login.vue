@@ -31,23 +31,29 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Log in" />
+        <Head title="Connexion" />
+
+        <div class="mb-8">
+            <h2 class="text-3xl font-black text-cityplay-brown uppercase tracking-tight">Bon retour !</h2>
+            <p class="text-gray-500 font-medium">Connecte-toi pour continuer l'aventure.</p>
+        </div>
 
         <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
             {{ status }}
         </div>
 
-        <form @submit.prevent="submit">
+        <form @submit.prevent="submit" class="space-y-6">
             <div>
-                <InputLabel for="email" value="Email" />
+                <InputLabel for="email" value="Email" class="text-cityplay-brown font-bold" />
 
                 <TextInput
                     id="email"
                     type="email"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full border-2 border-cityplay-lime/30 focus:border-cityplay-orange focus:ring-cityplay-orange rounded-xl shadow-sm"
                     v-model="form.email"
                     required
                     autofocus
+                    placeholder="ton-email@exemple.com"
                     autocomplete="username"
                 />
 
@@ -55,14 +61,24 @@ const submit = () => {
             </div>
 
             <div class="mt-4">
-                <InputLabel for="password" value="Password" />
+                <div class="flex items-center justify-between">
+                    <InputLabel for="password" value="Mot de passe" class="text-cityplay-brown font-bold" />
+                    <Link
+                        v-if="canResetPassword"
+                        :href="route('password.request')"
+                        class="text-sm text-cityplay-orange font-bold hover:underline focus:outline-none"
+                    >
+                        Oublié ?
+                    </Link>
+                </div>
 
                 <TextInput
                     id="password"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full border-2 border-cityplay-lime/30 focus:border-cityplay-orange focus:ring-cityplay-orange rounded-xl shadow-sm"
                     v-model="form.password"
                     required
+                    placeholder="••••••••"
                     autocomplete="current-password"
                 />
 
@@ -71,29 +87,31 @@ const submit = () => {
 
             <div class="mt-4 block">
                 <label class="flex items-center">
-                    <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600"
-                        >Remember me</span
-                    >
+                    <Checkbox name="remember" v-model:checked="form.remember" class="text-cityplay-orange border-2 border-cityplay-lime/30 rounded focus:ring-cityplay-orange" />
+                    <span class="ms-2 text-sm text-cityplay-brown font-medium">Se souvenir de moi</span>
                 </label>
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    v-if="canResetPassword"
-                    :href="route('password.request')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                    Forgot your password?
-                </Link>
-
+            <div class="pt-2">
                 <PrimaryButton
-                    class="ms-4"
+                    class="w-full justify-center py-4 bg-cityplay-orange hover:bg-cityplay-yellow text-white font-black text-lg rounded-2xl shadow-lg transform transition active:scale-95 border-b-4 border-cityplay-brown/20"
                     :class="{ 'opacity-25': form.processing }"
                     :disabled="form.processing"
                 >
-                    Log in
+                    C'EST PARTI !
                 </PrimaryButton>
+            </div>
+
+            <div class="text-center mt-6">
+                <p class="text-gray-500 font-medium">
+                    Pas encore de compte ?
+                    <Link
+                        :href="route('register')"
+                        class="text-cityplay-orange font-black hover:underline"
+                    >
+                        Rejoins-nous !
+                    </Link>
+                </p>
             </div>
         </form>
     </GuestLayout>

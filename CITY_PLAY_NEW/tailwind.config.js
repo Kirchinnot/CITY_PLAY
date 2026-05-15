@@ -15,6 +15,15 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                cityplay: {
+                    yellow: '#FBC02D',
+                    orange: '#F9A825',
+                    lime: '#D4E157',
+                    red: '#E53935',
+                    brown: '#4E342E',
+                }
+            }
         },
     },
 
