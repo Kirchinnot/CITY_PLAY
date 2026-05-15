@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
+<<<<<<< HEAD
     <div class="flex min-h-screen flex-col md:flex-row bg-cityplay-lime/20 overflow-hidden font-sans">
         <!-- Left Side: Illustration & Branding -->
         <div class="hidden md:flex md:w-1/2 bg-cityplay-lime relative items-center justify-center p-12 overflow-hidden">
@@ -50,6 +51,23 @@ import { Link } from '@inertiajs/vue3';
                     <circle cx="50" cy="50" r="40" />
                 </svg>
             </div>
+=======
+    <div
+        class="flex min-h-screen flex-col items-center bg-slate-950 pt-6 sm:justify-center sm:pt-0"
+    >
+        <div>
+            <Link href="/">
+                <div class="h-20 w-20 bg-gradient-to-tr from-indigo-600 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <span class="text-white font-black text-2xl tracking-tighter">CP</span>
+                </div>
+            </Link>
+        </div>
+
+        <div
+            class="mt-6 w-full overflow-hidden bg-slate-900 px-6 py-8 shadow-2xl border border-slate-800 sm:max-w-md sm:rounded-3xl"
+        >
+            <slot />
+>>>>>>> d0f1d232be28ecccb01dbf729987c14746d1aced
         </div>
     </div>
 </template>
