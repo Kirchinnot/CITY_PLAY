@@ -39,6 +39,20 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink
+                                    v-if="$page.props.auth.user.role === 'admin'"
+                                    :href="route('admin.cities.index')"
+                                    :active="route().current('admin.cities.*')"
+                                >
+                                    Parcours
+                                </NavLink>
+                                <NavLink
+                                    v-if="$page.props.auth.user.role === 'admin'"
+                                    :href="route('admin.places.index')"
+                                    :active="route().current('admin.places.*') || route().current('admin.riddles.*')"
+                                >
+                                    Lieux & Énigmes
+                                </NavLink>
                             </div>
                         </div>
 

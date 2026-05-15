@@ -16,7 +16,7 @@ class PlaceController extends Controller
     public function index(Request $request)
     {
         $cities = City::all();
-        $places = Place::with('city')
+        $places = Place::with(['city', 'images'])
             ->when($request->city_id, fn($q) => $q->where('city_id', $request->city_id))
             ->orderBy('city_id')
             ->orderBy('order_index')
@@ -32,7 +32,7 @@ class PlaceController extends Controller
     /**
      * Enregistre un nouveau lieu.
      */
-    public function store(Request $request)
+    public function store(Request $request, \App\Services\ImageUploadService $uploader)
     {
         $validated = $request->validate([
             'city_id' => 'required|exists:cities,id',
@@ -42,10 +42,32 @@ class PlaceController extends Controller
             'lng' => 'required|numeric',
             'validation_radius' => 'required|integer|min:1',
             'order_index' => 'required|integer|min:1',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpeg,png|max:2048',
         ]);
 
-        Place::create($validated);
+        $place = Place::create($validated);
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $index => $image) {
+                $url = $uploader->upload($image, 'places');
+                $place->images()->create([
+                    'image_url' => $url,
+                    'display_order' => $index + 1,
+                ]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Lieu ajouté avec succès.');
+    }
+    /**
+     * Supprime une image d'un lieu.
+     */
+    public function destroyImage(\App\Models\PlaceImage $image, \App\Services\ImageUploadService $uploader)
+    {
+        $uploader->delete($image->image_url);
+        $image->delete();
+
+        return redirect()->back()->with('success', 'Image supprimée.');
     }
 }

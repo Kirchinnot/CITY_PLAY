@@ -1,7 +1,13 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { onMounted, ref, watch } from 'vue';
+
+const deleteImage = (imageId) => {
+    if (confirm('Supprimer cette image ?')) {
+        router.delete(route('admin.place-images.destroy', imageId));
+    }
+};
 
 const props = defineProps({
     places: Array,
@@ -19,6 +25,7 @@ const form = useForm({
     lng: 4.8422,
     validation_radius: 5,
     order_index: 1,
+    images: null,
 });
 
 let map = null;
@@ -130,9 +137,20 @@ watch(showForm, (val) => {
                                 <p class="text-[10px] text-gray-500">Cliquez sur la carte pour déplacer le point</p>
                             </div>
 
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Photos du lieu</label>
+                                <input
+                                    type="file"
+                                    multiple
+                                    @input="form.images = $event.target.files"
+                                    class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                <p class="text-[10px] text-gray-400 mt-1">JPEG/PNG, Max 2Mo par fichier.</p>
+                            </div>
+
                             <div class="flex justify-end pt-4">
-                                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">
-                                    Enregistrer le lieu
+                                <button type="submit" :disabled="form.processing" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:opacity-50">
+                                    {{ form.processing ? 'Envoi...' : 'Enregistrer le lieu' }}
                                 </button>
                             </div>
                         </div>
@@ -165,6 +183,22 @@ watch(showForm, (val) => {
                                     </td>
                                     <td class="px-6 py-4 text-xs text-gray-500">
                                         {{ place.lat }}, {{ place.lng }} ({{ place.validation_radius }}m)
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex flex-wrap gap-2">
+                                            <div v-for="img in place.images" :key="img.id" class="relative group">
+                                                <img :src="img.image_url" class="h-10 w-10 object-cover rounded border" />
+                                                <button
+                                                    @click="deleteImage(img.id)"
+                                                    class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    title="Supprimer l'image"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 text-sm">
                                         <Link
