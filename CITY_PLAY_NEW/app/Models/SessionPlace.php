@@ -15,19 +15,18 @@ class SessionPlace extends Model
     protected $fillable = [
         'game_session_id',
         'place_id',
-        'riddle_id',
+        'order_index',
         'is_completed',
-        'attempts_count',
         'completed_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'is_completed'   => 'boolean',
-            'attempts_count' => 'integer',
-            'completed_at'   => 'datetime',
-            'created_at'     => 'datetime',
+            'order_index'  => 'integer',
+            'is_completed' => 'boolean',
+            'completed_at' => 'datetime',
+            'created_at'   => 'datetime',
         ];
     }
 
@@ -43,10 +42,5 @@ class SessionPlace extends Model
     public function place(): BelongsTo
     {
         return $this->belongsTo(Place::class);
-    }
-
-    public function riddle(): BelongsTo
-    {
-        return $this->belongsTo(Riddle::class);
     }
 }

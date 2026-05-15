@@ -6,22 +6,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class TeamMember extends Model
+class Hint extends Model
 {
     use HasFactory;
 
     public $timestamps = false;
 
     protected $fillable = [
-        'team_id',
-        'user_id',
-        'joined_at',
+        'riddle_id',
+        'index',
+        'content',
+        'points_penalty',
     ];
 
     protected function casts(): array
     {
         return [
-            'joined_at' => 'datetime',
+            'index'          => 'integer',
+            'points_penalty' => 'integer',
+            'created_at'     => 'datetime',
         ];
     }
 
@@ -29,13 +32,8 @@ class TeamMember extends Model
     // Relations
     // -----------------------------------------------------------------------
 
-    public function team(): BelongsTo
+    public function riddle(): BelongsTo
     {
-        return $this->belongsTo(Team::class);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Riddle::class);
     }
 }

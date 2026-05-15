@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,15 +11,15 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
         'email',
         'password',
-        'avatar',
+        'phone',
         'role',
+        'avatar',
         'two_factor_enabled',
     ];
 
@@ -32,9 +31,9 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at'    => 'datetime',
-            'password'             => 'hashed',
-            'two_factor_enabled'   => 'boolean',
+            'email_verified_at'  => 'datetime',
+            'password'           => 'hashed',
+            'two_factor_enabled' => 'boolean',
         ];
     }
 
@@ -51,35 +50,41 @@ class User extends Authenticatable
     // Relations
     // -----------------------------------------------------------------------
 
-    /** Équipes dont l'utilisateur est propriétaire */
-    public function ownedTeams(): HasMany
+    /** Villes/aventures créées par cet admin */
+    public function cities(): HasMany
     {
-        return $this->hasMany(Team::class, 'owner_id');
+        return $this->hasMany(City::class, 'created_by');
     }
 
-    /** Équipes dont l'utilisateur est membre */
-    public function teams(): BelongsToMany
+    /** Invitations créées par cet admin */
+    public function invitations(): HasMany
     {
-        return $this->belongsToMany(Team::class, 'team_members', 'user_id', 'team_id')
-                    ->withPivot('joined_at')
-                    ->withTimestamps();
+        return $this->hasMany(Invitation::class, 'created_by');
     }
 
-    /** Environnements créés par cet admin */
-    public function environments(): HasMany
+    /** Sessions de jeu où l'utilisateur est hôte principal */
+    public function hostedSessions(): HasMany
     {
-        return $this->hasMany(Environment::class, 'created_by');
+        return $this->hasMany(GameSession::class, 'host_user_id');
     }
 
-    /** Sessions de jeu */
-    public function gameSessions(): HasMany
+    /** Sessions auxquelles l'utilisateur participe (via game_players) */
+    public function gameSessions(): BelongsToMany
     {
-        return $this->hasMany(GameSession::class);
+        return $this->belongsToMany(GameSession::class, 'game_players', 'user_id', 'game_session_id')
+                    ->withPivot(['joined_at', 'current_riddle_id', 'last_lat', 'last_lng', 'last_seen_at', 'is_active'])
+                    ->using(GamePlayer::class);
     }
 
-    /** Statistiques agrégées */
-    public function statistic(): HasOne
+    /** Scores individuels (mode mercenaire) */
+    public function scores(): HasMany
     {
-        return $this->hasOne(UserStatistic::class);
+        return $this->hasMany(Score::class);
+    }
+
+    /** Badges débloqués */
+    public function achievements(): HasMany
+    {
+        return $this->hasMany(Achievement::class);
     }
 }

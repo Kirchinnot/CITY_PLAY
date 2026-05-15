@@ -12,24 +12,24 @@ class Place extends Model
     use HasFactory;
 
     protected $fillable = [
-        'environment_id',
+        'city_id',
         'name',
         'description',
-        'latitude',
-        'longitude',
+        'lat',
+        'lng',
         'validation_radius',
-        'estimated_visit_minutes',
-        'visit_order',
+        'order_index',
+        'estimated_time_min',
     ];
 
     protected function casts(): array
     {
         return [
-            'latitude'                => 'decimal:8',
-            'longitude'               => 'decimal:8',
-            'validation_radius'       => 'integer',
-            'estimated_visit_minutes' => 'integer',
-            'visit_order'             => 'integer',
+            'lat'               => 'decimal:7',
+            'lng'               => 'decimal:7',
+            'validation_radius' => 'integer',
+            'order_index'       => 'integer',
+            'estimated_time_min'=> 'integer',
         ];
     }
 
@@ -37,20 +37,26 @@ class Place extends Model
     // Relations
     // -----------------------------------------------------------------------
 
-    public function environment(): BelongsTo
+    public function city(): BelongsTo
     {
-        return $this->belongsTo(Environment::class);
+        return $this->belongsTo(City::class);
     }
 
-    /** Images du lieu (max 3-4) */
+    /** Images du lieu (max 3-4 recommandées) */
     public function images(): HasMany
     {
         return $this->hasMany(PlaceImage::class)->orderBy('display_order');
     }
 
-    /** Énigmes liées à ce lieu (4 niveaux) */
+    /** Énigmes par niveau de difficulté */
     public function riddles(): HasMany
     {
         return $this->hasMany(Riddle::class);
+    }
+
+    /** Apparitions dans les sessions */
+    public function sessionPlaces(): HasMany
+    {
+        return $this->hasMany(SessionPlace::class);
     }
 }

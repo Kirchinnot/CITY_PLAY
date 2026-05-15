@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GameSession extends Model
@@ -12,35 +13,34 @@ class GameSession extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
-        'team_id',
-        'environment_id',
-        'current_place_id',
-        'current_riddle_id',
-        'transport_mode',
+        'invitation_id',
+        'city_id',
+        'host_user_id',
+        'mode',
         'difficulty',
+        'locomotion',
         'available_minutes',
-        'score',
-        'total_riddles',
-        'solved_riddles',
-        'failed_riddles',
         'status',
+        'current_place_index',
+        'total_places',
+        'solved_places',
         'started_at',
         'paused_at',
-        'ended_at',
+        'total_pause_seconds',
+        'completed_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'available_minutes' => 'integer',
-            'score'             => 'integer',
-            'total_riddles'     => 'integer',
-            'solved_riddles'    => 'integer',
-            'failed_riddles'    => 'integer',
-            'started_at'        => 'datetime',
-            'paused_at'         => 'datetime',
-            'ended_at'          => 'datetime',
+            'available_minutes'   => 'integer',
+            'current_place_index' => 'integer',
+            'total_places'        => 'integer',
+            'solved_places'       => 'integer',
+            'total_pause_seconds' => 'integer',
+            'started_at'          => 'datetime',
+            'paused_at'           => 'datetime',
+            'completed_at'        => 'datetime',
         ];
     }
 
@@ -48,48 +48,61 @@ class GameSession extends Model
     // Helpers
     // -----------------------------------------------------------------------
 
-    public function isActive(): bool   { return $this->status === 'active'; }
-    public function isPaused(): bool   { return $this->status === 'paused'; }
-    public function isFinished(): bool { return in_array($this->status, ['completed', 'abandoned']); }
+    public function isPending(): bool   { return $this->status === 'pending'; }
+    public function isActive(): bool    { return $this->status === 'active'; }
+    public function isPaused(): bool    { return $this->status === 'paused'; }
+    public function isCompleted(): bool { return $this->status === 'completed'; }
+    public function isAbandoned(): bool { return $this->status === 'abandoned'; }
+    public function isFinished(): bool  { return in_array($this->status, ['completed', 'abandoned']); }
 
     // -----------------------------------------------------------------------
     // Relations
     // -----------------------------------------------------------------------
 
-    public function user(): BelongsTo
+    public function invitation(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Invitation::class);
     }
 
-    public function team(): BelongsTo
+    public function city(): BelongsTo
     {
-        return $this->belongsTo(Team::class);
+        return $this->belongsTo(City::class);
     }
 
-    public function environment(): BelongsTo
+    public function host(): BelongsTo
     {
-        return $this->belongsTo(Environment::class);
+        return $this->belongsTo(User::class, 'host_user_id');
     }
 
-    public function currentPlace(): BelongsTo
+    /** Joueurs participant à cette session */
+    public function players(): BelongsToMany
     {
-        return $this->belongsTo(Place::class, 'current_place_id');
+        return $this->belongsToMany(User::class, 'game_players', 'game_session_id', 'user_id')
+                    ->withPivot(['joined_at', 'current_riddle_id', 'last_lat', 'last_lng', 'last_seen_at', 'is_active'])
+                    ->using(GamePlayer::class);
     }
 
-    public function currentRiddle(): BelongsTo
+    /** Entrées game_players directes */
+    public function gamePlayers(): HasMany
     {
-        return $this->belongsTo(Riddle::class, 'current_riddle_id');
+        return $this->hasMany(GamePlayer::class);
     }
 
-    /** Lieux assignés à cette session */
+    /** Lieux sélectionnés pour cette session */
     public function sessionPlaces(): HasMany
     {
-        return $this->hasMany(SessionPlace::class);
+        return $this->hasMany(SessionPlace::class)->orderBy('order_index');
     }
 
-    /** Historique de toutes les réponses */
-    public function sessionAnswers(): HasMany
+    /** Scores de cette session */
+    public function scores(): HasMany
     {
-        return $this->hasMany(SessionAnswer::class);
+        return $this->hasMany(Score::class);
+    }
+
+    /** Badges gagnés dans cette session */
+    public function achievements(): HasMany
+    {
+        return $this->hasMany(Achievement::class);
     }
 }

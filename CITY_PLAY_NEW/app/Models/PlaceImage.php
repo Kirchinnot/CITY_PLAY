@@ -16,6 +16,7 @@ class PlaceImage extends Model
         'place_id',
         'image_url',
         'display_order',
+        'caption',
     ];
 
     protected function casts(): array

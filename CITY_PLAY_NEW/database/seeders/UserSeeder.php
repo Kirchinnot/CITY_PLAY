@@ -10,31 +10,31 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Admin (mairie)
         User::firstOrCreate(
             ['email' => 'admin@cityplay.fr'],
             [
                 'name'               => 'Admin CityPlay',
                 'password'           => Hash::make('password'),
+                'phone'              => '+33600000001',
                 'role'               => 'admin',
                 'two_factor_enabled' => false,
             ]
         );
 
-        // Joueurs de test
         $players = [
-            ['name' => 'Alice Martin',  'email' => 'alice@cityplay.fr'],
-            ['name' => 'Bob Dupont',    'email' => 'bob@cityplay.fr'],
-            ['name' => 'Carla Nguyen',  'email' => 'carla@cityplay.fr'],
-            ['name' => 'David Moreau',  'email' => 'david@cityplay.fr'],
+            ['name' => 'Alice Martin', 'email' => 'alice@cityplay.fr', 'phone' => '+33611111111'],
+            ['name' => 'Bob Dupont',   'email' => 'bob@cityplay.fr',   'phone' => '+33622222222'],
+            ['name' => 'Carla Nguyen', 'email' => 'carla@cityplay.fr', 'phone' => '+33633333333'],
+            ['name' => 'David Moreau', 'email' => 'david@cityplay.fr', 'phone' => '+33644444444'],
         ];
 
-        foreach ($players as $player) {
+        foreach ($players as $p) {
             User::firstOrCreate(
-                ['email' => $player['email']],
+                ['email' => $p['email']],
                 [
-                    'name'               => $player['name'],
+                    'name'               => $p['name'],
                     'password'           => Hash::make('password'),
+                    'phone'              => $p['phone'],
                     'role'               => 'player',
                     'two_factor_enabled' => false,
                 ]

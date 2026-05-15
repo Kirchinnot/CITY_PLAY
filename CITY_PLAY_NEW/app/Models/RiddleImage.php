@@ -16,6 +16,7 @@ class RiddleImage extends Model
         'riddle_id',
         'image_url',
         'display_order',
+        'caption',
     ];
 
     protected function casts(): array

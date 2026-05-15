@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Riddle extends Model
 {
@@ -17,15 +16,18 @@ class Riddle extends Model
         'title',
         'question',
         'difficulty',
-        'points',
+        'points_base',
         'time_limit_seconds',
+        'options',
+        'answer',
     ];
 
     protected function casts(): array
     {
         return [
-            'points'             => 'integer',
+            'points_base'        => 'integer',
             'time_limit_seconds' => 'integer',
+            'options'            => 'array',
         ];
     }
 
@@ -39,6 +41,18 @@ class Riddle extends Model
     }
 
     // -----------------------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------------------
+
+    /**
+     * Vérifie la réponse du joueur (insensible à la casse et aux espaces).
+     */
+    public function isCorrect(string $userAnswer): bool
+    {
+        return strtolower(trim($userAnswer)) === strtolower(trim($this->answer));
+    }
+
+    // -----------------------------------------------------------------------
     // Relations
     // -----------------------------------------------------------------------
 
@@ -47,21 +61,21 @@ class Riddle extends Model
         return $this->belongsTo(Place::class);
     }
 
-    /** Images de l'énigme */
+    /** Images illustrant l'énigme */
     public function images(): HasMany
     {
         return $this->hasMany(RiddleImage::class)->orderBy('display_order');
     }
 
-    /** Réponse correcte (relation 1-1) */
-    public function answer(): HasOne
+    /** Indices progressifs (max 3) */
+    public function hints(): HasMany
     {
-        return $this->hasOne(RiddleAnswer::class);
+        return $this->hasMany(Hint::class)->orderBy('index');
     }
 
-    /** Réponses des joueurs */
-    public function sessionAnswers(): HasMany
+    /** Scores liés à cette énigme */
+    public function scores(): HasMany
     {
-        return $this->hasMany(SessionAnswer::class);
+        return $this->hasMany(Score::class);
     }
 }
