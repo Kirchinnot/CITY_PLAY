@@ -48,8 +48,9 @@ return new class extends Migration
                   ->comment('Niveau des énigmes sélectionnées pour cette session');
             $table->enum('locomotion', ['marche', 'velo', 'moto', 'voiture'])->default('marche')
                   ->comment('Moyen de transport — influence le nombre de lieux atteignables selon la durée');
-            $table->integer('max_players')->nullable()
-                  ->comment('Nombre max de joueurs. NULL = illimité. Validé dans GamePlayersController.');
+            $table->integer('max_players')
+                  ->default(10)
+                  ->comment('Nombre max de joueurs par équipe. Strictement limité à 10 pour le MVP.');
 
             // ── Durée & validité ──────────────────────────────────────────
             $table->integer('duration_minutes')->default(90)
