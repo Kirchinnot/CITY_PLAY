@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 </script>
 
 <template>
@@ -13,6 +13,9 @@ import { Head } from '@inertiajs/vue3';
             >
                 Dashboard
             </h2>
+            <Link href="/admin/places" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                Gérer les lieux
+            </Link>
         </template>
 
         <div class="py-12">
