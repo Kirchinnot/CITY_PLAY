@@ -41,7 +41,7 @@ class RiddleValidationController extends Controller
             ->first();
 
         if (!$currentSessionPlace || $currentSessionPlace->place_id !== $riddle->place_id) {
-            return redirect()->route('dashboard')->with('error', 'Cette énigme ne correspond pas à votre lieu actuel.');
+            return redirect()->route('player.dashboard')->with('error', 'Cette énigme ne correspond pas à votre lieu actuel.');
         }
 
         $unlockedHintIds = HintUsage::where('game_session_id', $session->id)

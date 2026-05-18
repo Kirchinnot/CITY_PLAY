@@ -39,7 +39,7 @@ class GameSessionController extends Controller
         }
 
         if (!$session) {
-            return redirect()->route('dashboard')->with('error', 'Aucune partie trouvée.');
+            return redirect()->route('player.dashboard')->with('error', 'Aucune partie trouvée.');
         }
 
         return Inertia::render('Gameplay/Map', [
@@ -104,6 +104,82 @@ class GameSessionController extends Controller
     }
 
     /**
+     * Met la session en pause.
+     */
+    public function pause(Request $request, GameSession $session)
+    {
+        $user = $request->user();
+
+        // Seul le host peut mettre en pause
+        if ($session->host_user_id !== $user->id) {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        if (!$session->isActive()) {
+            return response()->json(['message' => 'La session n\'est pas active.'], 422);
+        }
+
+        $session->update([
+            'status'    => 'paused',
+            'paused_at' => now(),
+        ]);
+
+        return response()->json(['status' => 'paused', 'paused_at' => $session->paused_at]);
+    }
+
+    /**
+     * Reprend une session en pause.
+     */
+    public function resume(Request $request, GameSession $session)
+    {
+        $user = $request->user();
+
+        if ($session->host_user_id !== $user->id) {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        if (!$session->isPaused()) {
+            return response()->json(['message' => 'La session n\'est pas en pause.'], 422);
+        }
+
+        // Cumule le temps de pause
+        $pauseSeconds = $session->paused_at
+            ? (int) $session->paused_at->diffInSeconds(now())
+            : 0;
+
+        $session->update([
+            'status'               => 'active',
+            'paused_at'            => null,
+            'total_pause_seconds'  => $session->total_pause_seconds + $pauseSeconds,
+        ]);
+
+        return response()->json(['status' => 'active', 'total_pause_seconds' => $session->total_pause_seconds]);
+    }
+
+    /**
+     * Abandonne une session.
+     */
+    public function abandon(Request $request, GameSession $session)
+    {
+        $user = $request->user();
+
+        if ($session->host_user_id !== $user->id) {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        if ($session->isFinished()) {
+            return response()->json(['message' => 'La session est déjà terminée.'], 422);
+        }
+
+        $session->update([
+            'status'       => 'abandoned',
+            'completed_at' => now(),
+        ]);
+
+        return response()->json(['status' => 'abandoned']);
+    }
+
+    /**
      * Démarre une nouvelle session de jeu pour une ville donnée.
      */
     public function store(Request $request)
@@ -123,7 +199,7 @@ class GameSessionController extends Controller
             ->first();
 
         if ($activeSession) {
-            return redirect()->route('dashboard')->with('error', 'Vous avez déjà une partie en cours.');
+            return redirect()->route('player.dashboard')->with('error', 'Vous avez déjà une partie en cours.');
         }
 
         return DB::transaction(function () use ($user, $city) {
@@ -143,7 +219,7 @@ class GameSessionController extends Controller
             $totalPlaces = $city->places->count();
 
             if ($totalPlaces === 0) {
-                return redirect()->route('dashboard')->with('error', 'Cette ville n\'a pas encore de lieux configurés.');
+                return redirect()->route('player.dashboard')->with('error', 'Cette ville n\'a pas encore de lieux configurés.');
             }
 
             // 2. Création de la session
@@ -179,7 +255,7 @@ class GameSessionController extends Controller
                 ]);
             }
 
-            return redirect()->route('dashboard')->with('success', 'Partie démarrée !');
+            return redirect()->route('player.dashboard')->with('success', 'Partie démarrée !');
         });
     }
 }

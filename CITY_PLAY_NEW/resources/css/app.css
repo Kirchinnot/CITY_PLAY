@@ -1,3 +1,79 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════
+   CITYPLAY THEME SYSTEM
+   dark  → #1A1B26 bleu nuit
+   light → #F4F4F0 crème doux
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Variables dark (défaut) ── */
+:root,
+.theme-dark {
+    --bg-base:        #1A1B26;
+    --bg-surface:     #1e2030;
+    --bg-card:        #1e2030;
+    --bg-card-alt:    #181926;
+    --bg-header:      rgba(26, 27, 38, 0.88);
+    --bg-nav:         rgba(26, 27, 38, 0.92);
+
+    --text-primary:   #e8eaf0;
+    --text-secondary: rgba(232, 234, 240, 0.55);
+    --text-muted:     rgba(232, 234, 240, 0.25);
+
+    --border-subtle:  rgba(255, 255, 255, 0.06);
+    --border-card:    rgba(255, 255, 255, 0.07);
+
+    --orb-orange:     rgba(214, 90, 49, 0.10);
+    --orb-indigo:     rgba(99, 102, 241, 0.08);
+    --orb-violet:     rgba(139, 92, 246, 0.06);
+
+    --city-card-bg:   #181926;
+    --session-card-bg-from: #1e2030;
+    --session-card-bg-to:   #181926;
+
+    --input-bg:       rgba(255, 255, 255, 0.04);
+    --input-border:   rgba(255, 255, 255, 0.08);
+    --input-text:     #e8eaf0;
+}
+
+/* ── Variables light ── */
+.theme-light {
+    --bg-base:        #F4F4F0;
+    --bg-surface:     #EEEEE9;
+    --bg-card:        #FFFFFF;
+    --bg-card-alt:    #F0F0EB;
+    --bg-header:      rgba(244, 244, 240, 0.90);
+    --bg-nav:         rgba(244, 244, 240, 0.94);
+
+    --text-primary:   #1a1b26;
+    --text-secondary: rgba(26, 27, 38, 0.60);
+    --text-muted:     rgba(26, 27, 38, 0.35);
+
+    --border-subtle:  rgba(26, 27, 38, 0.08);
+    --border-card:    rgba(26, 27, 38, 0.10);
+
+    --orb-orange:     rgba(214, 90, 49, 0.07);
+    --orb-indigo:     rgba(99, 102, 241, 0.05);
+    --orb-violet:     rgba(139, 92, 246, 0.04);
+
+    --city-card-bg:   #FFFFFF;
+    --session-card-bg-from: #FFFFFF;
+    --session-card-bg-to:   #F4F4F0;
+
+    --input-bg:       rgba(26, 27, 38, 0.04);
+    --input-border:   rgba(26, 27, 38, 0.12);
+    --input-text:     #1a1b26;
+}
+
+/* ── Transition globale douce ── */
+html {
+    transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+/* ── Scrollbar thémée ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: rgba(214, 90, 49, 0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(214, 90, 49, 0.5); }

@@ -85,7 +85,7 @@ const formatTime = (seconds) => {
             <!-- Actions -->
             <div class="pt-4">
                 <Link 
-                    :href="route('dashboard')"
+                    :href="route('player.dashboard')"
                     class="w-full h-16 bg-white text-black rounded-2xl font-black uppercase tracking-widest flex items-center justify-center hover:bg-gray-200 transition shadow-2xl"
                 >
                     Retour à l'accueil
