@@ -10,9 +10,9 @@ const props = defineProps({
 
 const difficulties = [
     { key: 'child', label: 'Enfant', value: 'enfant' },
-    { key: 'force_1', label: 'Force 1 (Facile)', value: 'facile' },
-    { key: 'force_2', label: 'Force 2 (Moyen)', value: 'moyen' },
-    { key: 'force_3', label: 'Force 3 (Difficile)', value: 'difficile' },
+    { key: 'force_1', label: 'Force 1', value: 'facile' },
+    { key: 'force_2', label: 'Force 2', value: 'moyen' },
+    { key: 'force_3', label: 'Force 3', value: 'difficile' },
 ];
 
 // Initialisation du formulaire avec les 4 niveaux
@@ -27,6 +27,7 @@ const initialRiddles = difficulties.map(diff => {
         points_base: existing.points_base || 100,
         time_limit_seconds: existing.time_limit_seconds || 300,
         images: [null, null, null, null],
+        previews: [null, null, null, null],
         existing_images: existing.images || [],
         hints: existing.hints ? existing.hints.map(h => ({ content: h.content, points_penalty: h.points_penalty })) : [],
     };
@@ -36,8 +37,18 @@ const form = useForm({
     riddles: initialRiddles,
 });
 
-const setFile = (riddleIndex, imgIndex, file) => {
-    form.riddles[riddleIndex].images[imgIndex] = file;
+const handleMultipleUpload = (riddleIndex, files) => {
+    const riddle = form.riddles[riddleIndex];
+    const fileArray = Array.from(files).slice(0, 4); // Prend max 4 images
+    
+    // Remplace les images locales existantes
+    riddle.images = [null, null, null, null];
+    riddle.previews = [null, null, null, null];
+    
+    fileArray.forEach((file, idx) => {
+        riddle.images[idx] = file;
+        riddle.previews[idx] = URL.createObjectURL(file);
+    });
 };
 
 const addHint = (riddleIndex) => {
@@ -52,7 +63,7 @@ const removeHint = (riddleIndex, hintIndex) => {
 
 const submit = () => {
     form.post(route('admin.riddles.store', props.place.id), {
-        onSuccess: () => alert('Énigmes sauvegardées !'),
+        onSuccess: () => alert('Énigmes sauvegardées avec succès !'),
     });
 };
 
@@ -64,193 +75,196 @@ const activeTab = ref('enfant');
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Gestion des Énigmes : {{ place.name }}
-            </h2>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-family: var(--font-family-display); font-size: 1.5rem; font-weight: 700; color: var(--color-text-main);">
+                    Gestion des Énigmes : <span style="color: var(--color-primary);">{{ place.name }}</span>
+                </h2>
+                <button
+                    @click="submit"
+                    :disabled="form.processing"
+                    class="premium-btn premium-btn-primary"
+                >
+                    {{ form.processing ? 'Enregistrement...' : 'Sauvegarder tout' }}
+                </button>
+            </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    
-                    <!-- Tabs pour les difficultés -->
-                    <div class="border-b border-gray-200 mb-6">
-                        <nav class="-mb-px flex space-x-8">
-                            <button
-                                v-for="diff in difficulties"
-                                :key="diff.key"
-                                @click="activeTab = diff.value"
-                                :class="[
-                                    activeTab === diff.value
-                                        ? 'border-indigo-500 text-indigo-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors'
-                                ]"
-                            >
-                                {{ diff.label }}
-                            </button>
-                        </nav>
-                    </div>
+        <div class="premium-container">
+            <div class="premium-card" style="padding: 0;">
+                
+                <!-- Premium Tabs -->
+                <div style="display: flex; border-bottom: 1px solid var(--border-color); background: var(--color-bg-light); padding: 0 1.5rem;">
+                    <button
+                        v-for="diff in difficulties"
+                        :key="diff.key"
+                        @click="activeTab = diff.value"
+                        :style="{
+                            padding: '1.25rem 1.5rem',
+                            background: 'transparent',
+                            border: 'none',
+                            borderBottom: activeTab === diff.value ? '3px solid var(--color-primary)' : '3px solid transparent',
+                            color: activeTab === diff.value ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
+                            fontWeight: activeTab === diff.value ? '700' : '500',
+                            cursor: 'pointer',
+                            transition: 'all var(--transition-fast)',
+                            fontSize: '0.95rem'
+                        }"
+                    >
+                        {{ diff.label }}
+                    </button>
+                </div>
 
+                <!-- Form Content -->
+                <div style="padding: 2rem;">
                     <form @submit.prevent="submit">
                         <div v-for="(riddle, index) in form.riddles" :key="riddle.difficulty" v-show="activeTab === riddle.difficulty">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
                                 
-                                <!-- Gauche : Énigme -->
-                                <div class="space-y-4">
+                                <!-- Colonne Gauche : Énigme Principale -->
+                                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700">Titre de l'énigme</label>
+                                        <label class="premium-label">Titre de l'énigme</label>
                                         <input
                                             v-model="riddle.title"
                                             type="text"
-                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="premium-input"
                                             placeholder="Ex: Le mystère du lion"
                                         />
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700">Question / Énigme</label>
+                                        <label class="premium-label">Question / Énigme</label>
                                         <textarea
                                             v-model="riddle.question"
-                                            rows="4"
-                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            rows="5"
+                                            class="premium-input"
                                             placeholder="Écrivez l'énigme ici..."
                                         ></textarea>
                                     </div>
 
-                                    <div class="grid grid-cols-2 gap-4">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700">Points de base</label>
-                                            <input
-                                                v-model="riddle.points_base"
-                                                type="number"
-                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                            />
+                                            <label class="premium-label">Points (Réussite)</label>
+                                            <input v-model="riddle.points_base" type="number" class="premium-input" />
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700">Temps (sec)</label>
-                                            <input
-                                                v-model="riddle.time_limit_seconds"
-                                                type="number"
-                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                            />
+                                            <label class="premium-label">Temps limite (sec)</label>
+                                            <input v-model="riddle.time_limit_seconds" type="number" class="premium-input" />
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Illustrations (4 photos suggérées)</label>
-                                        <div class="grid grid-cols-2 gap-3">
-                                            <div v-for="imgIdx in [0, 1, 2, 3]" :key="imgIdx" class="relative group border-2 border-dashed border-gray-200 rounded-lg p-2 hover:border-indigo-300 transition-colors bg-white">
-                                                <!-- Prévisualisation ou Placeholder -->
-                                                <div class="h-24 w-full flex items-center justify-center bg-gray-50 rounded mb-2 overflow-hidden">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.5rem;">
+                                            <label class="premium-label" style="margin-bottom: 0;">Illustrations (Maximum 4)</label>
+                                            <input
+                                                type="file"
+                                                multiple
+                                                accept="image/jpeg,image/png"
+                                                @input="handleMultipleUpload(index, $event.target.files)"
+                                                class="premium-input"
+                                                style="width: auto; padding: 0.25rem; font-size: 0.75rem;"
+                                            />
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                                            <div v-for="imgIdx in [0, 1, 2, 3]" :key="imgIdx" style="border: 2px dashed var(--border-color); border-radius: var(--border-radius-md); padding: 0.5rem; text-align: center; transition: all var(--transition-fast);">
+                                                <div style="height: 100px; background: var(--color-bg-light); border-radius: var(--border-radius-sm); overflow: hidden; display: flex; align-items: center; justify-content: center;">
                                                     <img 
-                                                        v-if="riddle.existing_images.find(i => i.display_order === imgIdx + 1)" 
-                                                        :src="riddle.existing_images.find(i => i.display_order === imgIdx + 1).image_url" 
-                                                        class="h-full w-full object-cover"
+                                                        v-if="riddle.previews[imgIdx]" 
+                                                        :src="riddle.previews[imgIdx]" 
+                                                        style="width: 100%; height: 100%; object-fit: cover;"
                                                     />
-                                                    <div v-else class="text-[10px] text-gray-400 text-center">
-                                                        Slot {{ imgIdx + 1 }}
-                                                    </div>
+                                                    <img 
+                                                        v-else-if="riddle.existing_images.find(i => i.display_order === imgIdx + 1)" 
+                                                        :src="riddle.existing_images.find(i => i.display_order === imgIdx + 1).image_url" 
+                                                        style="width: 100%; height: 100%; object-fit: cover;"
+                                                    />
+                                                    <span v-else style="color: var(--color-text-muted); font-size: 0.75rem;">Slot {{ imgIdx + 1 }}</span>
                                                 </div>
-                                                
-                                                <input
-                                                    type="file"
-                                                    @input="setFile(index, imgIdx, $event.target.files[0])"
-                                                    class="block w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                                                />
                                             </div>
                                         </div>
-                                        <p class="text-[10px] text-gray-400 mt-2 italic">JPEG/PNG, Max 2Mo par photo.</p>
+                                        <p style="text-align: right; font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.5rem;">Sélectionnez plusieurs images d'un coup (JPEG/PNG).</p>
                                     </div>
                                 </div>
 
-                                <!-- Droite : QCM & Indices -->
-                                <div class="space-y-6">
-                                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                        <h4 class="font-bold text-gray-700 border-b pb-2 mb-4 uppercase text-xs tracking-wider">Configuration QCM</h4>
-                                        
-                                        <div class="space-y-3">
-                                            <div v-for="(opt, oIndex) in riddle.options" :key="oIndex">
-                                                <div class="flex items-center space-x-2">
-                                                    <input
-                                                        type="radio"
-                                                        :name="'correct_' + riddle.difficulty"
-                                                        :value="riddle.options[oIndex]"
-                                                        v-model="riddle.answer"
-                                                        class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                                                    />
-                                                    <input
-                                                        v-model="riddle.options[oIndex]"
-                                                        type="text"
-                                                        class="block w-full rounded-md border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                                        :placeholder="'Option ' + (oIndex + 1)"
-                                                    />
-                                                </div>
+                                <!-- Colonne Droite : QCM & Indices -->
+                                <div style="display: flex; flex-direction: column; gap: 2rem;">
+                                    
+                                    <!-- QCM -->
+                                    <div style="background: var(--color-bg-light); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); padding: 1.5rem;">
+                                        <h4 style="margin: 0 0 1rem 0; font-size: 1rem; color: var(--color-primary-dark); font-weight: 700;">Configuration QCM</h4>
+                                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                            <div v-for="(opt, oIndex) in riddle.options" :key="oIndex" style="display: flex; align-items: center; gap: 0.75rem;">
+                                                <input
+                                                    type="radio"
+                                                    :name="'correct_' + riddle.difficulty"
+                                                    :value="riddle.options[oIndex]"
+                                                    v-model="riddle.answer"
+                                                    style="width: 18px; height: 18px; accent-color: var(--color-primary);"
+                                                />
+                                                <input
+                                                    v-model="riddle.options[oIndex]"
+                                                    type="text"
+                                                    class="premium-input"
+                                                    style="padding: 0.5rem 1rem;"
+                                                    :placeholder="'Option ' + (oIndex + 1)"
+                                                />
                                             </div>
                                         </div>
-                                        <p class="text-[10px] text-gray-500 mt-3 italic">
-                                            * Cochez le bouton radio à gauche de la bonne réponse.
+                                        <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 1rem; font-style: italic;">
+                                            Sélectionnez le bouton radio correspondant à la bonne réponse.
                                         </p>
                                     </div>
 
-                                    <!-- SECTION INDICES -->
-                                    <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
-                                        <div class="flex justify-between items-center border-b border-amber-200 pb-2 mb-4">
-                                            <h4 class="font-bold text-amber-800 uppercase text-xs tracking-wider">Indices (Max 3)</h4>
+                                    <!-- Indices -->
+                                    <div style="background: var(--color-warning-bg); border: 1px solid #fcd34d; border-radius: var(--border-radius-lg); padding: 1.5rem;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                            <h4 style="margin: 0; font-size: 1rem; color: #b45309; font-weight: 700;">Indices (Max 3)</h4>
                                             <button 
                                                 type="button" 
                                                 @click="addHint(index)" 
                                                 v-if="riddle.hints.length < 3"
-                                                class="text-[10px] bg-amber-600 text-white px-2 py-1 rounded hover:bg-amber-700"
+                                                class="premium-btn"
+                                                style="background: #d97706; color: white; padding: 0.25rem 0.75rem; font-size: 0.75rem;"
                                             >
-                                                + Ajouter un indice
+                                                + Ajouter
                                             </button>
                                         </div>
 
-                                        <div class="space-y-4">
-                                            <div v-for="(hint, hIndex) in riddle.hints" :key="hIndex" class="bg-white p-3 rounded border border-amber-100 shadow-sm">
-                                                <div class="flex justify-between items-center mb-2">
-                                                    <span class="text-[10px] font-bold text-amber-600">INDICE #{{ hIndex + 1 }}</span>
-                                                    <button @click="removeHint(index, hIndex)" type="button" class="text-red-500 hover:text-red-700 text-xs">Supprimer</button>
+                                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                            <div v-for="(hint, hIndex) in riddle.hints" :key="hIndex" style="background: white; border-radius: var(--border-radius-md); padding: 1rem; box-shadow: var(--shadow-sm);">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                                    <span style="font-size: 0.7rem; font-weight: 700; color: #d97706;">INDICE #{{ hIndex + 1 }}</span>
+                                                    <button @click="removeHint(index, hIndex)" type="button" style="background: transparent; border: none; color: var(--color-danger); font-size: 0.75rem; cursor: pointer;">Retirer</button>
                                                 </div>
                                                 <textarea
                                                     v-model="hint.content"
                                                     rows="2"
-                                                    class="block w-full rounded-md border-gray-200 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-xs mb-2"
-                                                    placeholder="Texte de l'indice..."
+                                                    class="premium-input"
+                                                    style="margin-bottom: 0.5rem; font-size: 0.85rem;"
+                                                    placeholder="Contenu de l'indice..."
                                                 ></textarea>
-                                                <div class="flex items-center space-x-2">
-                                                    <label class="text-[10px] text-gray-500">Pénalité de points :</label>
+                                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                    <label style="font-size: 0.75rem; color: var(--color-text-muted);">Pénalité (points) :</label>
                                                     <input
                                                         v-model="hint.points_penalty"
                                                         type="number"
-                                                        class="block w-20 rounded-md border-gray-200 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-[10px]"
+                                                        class="premium-input"
+                                                        style="width: 80px; padding: 0.25rem 0.5rem;"
                                                     />
                                                 </div>
                                             </div>
-                                            <p v-if="riddle.hints.length === 0" class="text-center text-xs text-amber-600 italic py-4">
-                                                Aucun indice configuré pour ce niveau.
+                                            <p v-if="riddle.hints.length === 0" style="text-align: center; font-size: 0.85rem; color: #d97706; font-style: italic;">
+                                                Aucun indice configuré pour cette difficulté.
                                             </p>
                                         </div>
                                     </div>
-                                </div>
 
+                                </div>
                             </div>
                         </div>
-
-                        <div class="mt-8 flex justify-end">
-                            <button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-sm text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
-                            >
-                                <span v-if="form.processing">Enregistrement...</span>
-                                <span v-else>Sauvegarder tous les niveaux</span>
-                            </button>
-                        </div>
                     </form>
-
                 </div>
+
             </div>
         </div>
     </AuthenticatedLayout>

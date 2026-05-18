@@ -28,6 +28,9 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     // Villes / Parcours
     Route::get('/cities', [\App\Http\Controllers\Admin\CityController::class, 'index'])->name('cities.index');
+    Route::post('/cities', [\App\Http\Controllers\Admin\CityController::class, 'store'])->name('cities.store');
+    Route::put('/cities/{city}', [\App\Http\Controllers\Admin\CityController::class, 'update'])->name('cities.update');
+    Route::delete('/cities/{city}', [\App\Http\Controllers\Admin\CityController::class, 'destroy'])->name('cities.destroy');
     Route::post('/cities/{city}/publish', [\App\Http\Controllers\Admin\CityController::class, 'publish'])->name('cities.publish');
     Route::post('/cities/{city}/unpublish', [\App\Http\Controllers\Admin\CityController::class, 'unpublish'])->name('cities.unpublish');
 

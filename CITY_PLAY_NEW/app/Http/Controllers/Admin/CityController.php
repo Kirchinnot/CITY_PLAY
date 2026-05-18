@@ -55,4 +55,47 @@ class CityController extends Controller
         $city->update(['is_published' => false]);
         return redirect()->back()->with('success', "Le parcours a été retiré de la publication.");
     }
+
+    /**
+     * Enregistre un nouveau parcours.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:150',
+            'description' => 'required|string|max:500',
+        ]);
+
+        $validated['created_by'] = $request->user()->id;
+        $validated['is_published'] = false;
+
+        City::create($validated);
+
+        return redirect()->back()->with('success', 'Parcours créé avec succès.');
+    }
+
+    /**
+     * Met à jour un parcours existant.
+     */
+    public function update(Request $request, City $city)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:150',
+            'description' => 'required|string|max:500',
+        ]);
+
+        $city->update($validated);
+
+        return redirect()->back()->with('success', 'Parcours mis à jour avec succès.');
+    }
+
+    /**
+     * Supprime un parcours.
+     */
+    public function destroy(City $city)
+    {
+        $city->delete();
+
+        return redirect()->back()->with('success', 'Parcours supprimé avec succès.');
+    }
 }
