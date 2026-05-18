@@ -10,8 +10,6 @@ const props = defineProps({
 const form = useForm({});
 
 const submit = () => {
-    // Cette route sera créée lors de la mise en place du GameSessionController
-    // Pour l'instant on prépare l'UI
     form.post(route('game.session.join', props.invitation.token));
 };
 
@@ -25,78 +23,110 @@ const getLocomotionIcon = (type) => {
     return icons[type] || '🚶';
 };
 
+const getDifficultyLabel = (level) => {
+    const labels = {
+        facile: 'Facile 🏹',
+        moyen: 'Moyen 🦁',
+        difficile: 'Difficile 👑'
+    };
+    return labels[level] || level;
+};
+
 const getDifficultyColor = (level) => {
     const colors = {
-        facile: 'text-green-500',
-        moyen: 'text-cityplay-orange',
-        difficile: 'text-cityplay-red'
+        facile: 'color: var(--color-success)',
+        moyen: 'color: var(--color-primary-light)',
+        difficile: 'color: var(--color-primary-dark)'
     };
-    return colors[level] || 'text-cityplay-orange';
+    return colors[level] || 'color: var(--color-primary-light)';
 };
 </script>
 
 <template>
     <GuestLayout>
-        <Head title="Rejoindre l'aventure" />
+        <Head title="CityPlay - Rejoindre l'aventure" />
 
-        <div class="mb-8">
-            <h2 class="text-3xl font-black text-cityplay-brown uppercase tracking-tight">L'aventure t'attend !</h2>
-            <p class="text-gray-500 font-medium">Tu as été invité à explorer une ville.</p>
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <span style="font-size: 3rem; display: block; margin-bottom: 0.5rem; animation: pulse 2s infinite;">🌍</span>
+            <h2 style="font-family: var(--font-family-display); font-size: 2rem; font-weight: 800; color: var(--color-primary-dark); text-transform: uppercase; margin: 0; letter-spacing: -0.02em;">
+                L'aventure t'attend !
+            </h2>
+            <p style="font-size: 0.9rem; color: var(--color-text-muted); margin: 0.25rem 0 0 0; font-weight: 500;">
+                Tu as été invité à explorer une ville béninoise à travers des énigmes.
+            </p>
         </div>
 
-        <div class="bg-cityplay-lime/10 border-2 border-cityplay-lime/30 rounded-3xl p-6 mb-8 shadow-inner">
-            <div class="flex items-start gap-4 mb-6">
-                <div class="bg-white p-3 rounded-2xl shadow-sm text-3xl">
+        <div class="premium-card" style="border: 1px solid var(--border-color); background: var(--color-surface-light); padding: 1.75rem; margin-bottom: 2rem; box-shadow: var(--shadow-lg);">
+            <div style="display: flex; items-start: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                <div style="background: var(--color-bg-light); padding: 0.75rem; border-radius: var(--border-radius-md); font-size: 2rem; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
                     📍
                 </div>
                 <div>
-                    <h3 class="text-xl font-black text-cityplay-brown uppercase">{{ invitation.city.name }}</h3>
-                    <p class="text-cityplay-brown/70 font-medium text-sm leading-tight">{{ invitation.city.description }}</p>
+                    <span style="font-size: 0.65rem; color: var(--color-text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; display: block;">Destination</span>
+                    <h3 style="font-family: var(--font-family-display); font-size: 1.35rem; font-weight: 800; color: var(--color-primary-dark); margin: 0; text-transform: uppercase;">
+                        {{ invitation.city.name }}
+                    </h3>
+                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0.25rem 0 0 0; line-height: 1.3; font-weight: 500;">
+                        {{ invitation.city.description }}
+                    </p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white/60 p-3 rounded-2xl border border-white">
-                    <span class="block text-xs font-bold text-gray-400 uppercase mb-1">Mode</span>
-                    <span class="text-cityplay-brown font-black uppercase">{{ invitation.mode }}</span>
-                </div>
-                <div class="bg-white/60 p-3 rounded-2xl border border-white">
-                    <span class="block text-xs font-bold text-gray-400 uppercase mb-1">Difficulté</span>
-                    <span :class="['font-black uppercase', getDifficultyColor(invitation.difficulty)]">
-                        {{ invitation.difficulty }}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div style="background: var(--color-bg-light); padding: 0.75rem 1rem; border-radius: var(--border-radius-md); border: 1px solid var(--border-color);">
+                    <span style="display: block; font-size: 0.6rem; font-weight: 800; color: var(--color-text-muted); text-transform: uppercase; margin-bottom: 0.25rem; letter-spacing: 0.05em;">Mode de Jeu</span>
+                    <span style="color: var(--color-primary-dark); font-weight: 800; font-size: 0.85rem; text-transform: uppercase; font-family: var(--font-family-display);">
+                        👥 {{ invitation.mode }}
                     </span>
                 </div>
-                <div class="bg-white/60 p-3 rounded-2xl border border-white">
-                    <span class="block text-xs font-bold text-gray-400 uppercase mb-1">Transport</span>
-                    <span class="text-cityplay-brown font-black uppercase">
+                
+                <div style="background: var(--color-bg-light); padding: 0.75rem 1rem; border-radius: var(--border-radius-md); border: 1px solid var(--border-color);">
+                    <span style="display: block; font-size: 0.6rem; font-weight: 800; color: var(--color-text-muted); text-transform: uppercase; margin-bottom: 0.25rem; letter-spacing: 0.05em;">Difficulté</span>
+                    <span :style="getDifficultyColor(invitation.difficulty)" style="font-weight: 800; font-size: 0.85rem; text-transform: uppercase; font-family: var(--font-family-display);">
+                        {{ getDifficultyLabel(invitation.difficulty) }}
+                    </span>
+                </div>
+
+                <div style="background: var(--color-bg-light); padding: 0.75rem 1rem; border-radius: var(--border-radius-md); border: 1px solid var(--border-color);">
+                    <span style="display: block; font-size: 0.6rem; font-weight: 800; color: var(--color-text-muted); text-transform: uppercase; margin-bottom: 0.25rem; letter-spacing: 0.05em;">Moyen de transport</span>
+                    <span style="color: var(--color-primary-dark); font-weight: 800; font-size: 0.85rem; text-transform: uppercase; font-family: var(--font-family-display);">
                         {{ getLocomotionIcon(invitation.locomotion) }} {{ invitation.locomotion }}
                     </span>
                 </div>
-                <div class="bg-white/60 p-3 rounded-2xl border border-white">
-                    <span class="block text-xs font-bold text-gray-400 uppercase mb-1">Temps estimé</span>
-                    <span class="text-cityplay-brown font-black uppercase">{{ invitation.duration_minutes }} min</span>
+
+                <div style="background: var(--color-bg-light); padding: 0.75rem 1rem; border-radius: var(--border-radius-md); border: 1px solid var(--border-color);">
+                    <span style="display: block; font-size: 0.6rem; font-weight: 800; color: var(--color-text-muted); text-transform: uppercase; margin-bottom: 0.25rem; letter-spacing: 0.05em;">Temps alloué</span>
+                    <span style="color: var(--color-primary-dark); font-weight: 800; font-size: 0.85rem; text-transform: uppercase; font-family: var(--font-family-display);">
+                        ⏱️ {{ invitation.duration_minutes }} min
+                    </span>
                 </div>
             </div>
         </div>
 
-        <div class="space-y-4">
-            <PrimaryButton
+        <div style="display: flex; flex-direction: column; gap: 1rem; text-align: center;">
+            <button
                 @click="submit"
-                class="w-full justify-center py-4 bg-cityplay-orange hover:bg-cityplay-yellow text-white font-black text-lg rounded-2xl shadow-lg transform transition active:scale-95 border-b-4 border-cityplay-brown/20 uppercase"
-                :class="{ 'opacity-25': form.processing }"
+                class="premium-btn premium-btn-primary"
+                style="width: 100%; py: 1rem; font-size: 1.1rem; font-family: var(--font-family-display); font-weight: 800; text-transform: uppercase; border-radius: var(--border-radius-md); box-shadow: var(--shadow-glow);"
                 :disabled="form.processing"
             >
-                REJOINDRE L'ÉQUIPE
-            </PrimaryButton>
+                {{ form.processing ? 'Chargement de l\'équipe...' : '🔥 REJOINDRE L\'ÉQUIPE' }}
+            </button>
 
-            <div class="text-center">
-                <Link
-                    href="/"
-                    class="text-gray-400 font-bold hover:text-cityplay-brown transition-colors text-sm uppercase tracking-widest"
-                >
-                    Peut-être plus tard
-                </Link>
-            </div>
+            <Link
+                href="/"
+                style="color: var(--color-text-muted); font-weight: 700; text-decoration: none; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; transition: color var(--transition-fast);"
+                class="hover:text-primary"
+            >
+                Peut-être plus tard
+            </Link>
         </div>
     </GuestLayout>
 </template>
+
+<style scoped>
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+</style>

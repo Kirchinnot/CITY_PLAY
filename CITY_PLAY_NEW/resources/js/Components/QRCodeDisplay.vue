@@ -29,28 +29,29 @@ const copyLink = async () => {
 </script>
 
 <template>
-    <div class="flex flex-col items-center gap-4 p-6 bg-white rounded-3xl">
-        <div class="p-4 bg-white rounded-2xl shadow-inner">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1rem 0; width: 100%;">
+        <div style="padding: 0.75rem; background: white; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); display: inline-block;">
             <QrcodeVue 
                 :value="url" 
                 :size="size" 
                 level="M"
                 :margin="2"
-                class="rounded-lg"
+                style="border-radius: var(--border-radius-sm);"
             />
         </div>
         
-        <div class="w-full max-w-xs">
-            <p class="text-xs text-gray-400 font-bold uppercase tracking-widest text-center mb-2">
-                Lien d'invitation
+        <div style="width: 100%; max-width: 320px;">
+            <p style="font-size: 0.65rem; color: var(--color-text-muted); font-weight: 800; text-transform: uppercase; tracking-widest: 0.05em; text-align: center; margin-bottom: 0.5rem;">
+                Lien d'invitation direct
             </p>
-            <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                <p class="text-sm text-cityplay-brown font-mono truncate flex-1">
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--color-bg-light); rounded: var(--border-radius-sm); border: 1px dashed var(--border-color); border-radius: var(--border-radius-sm);">
+                <p style="font-size: 0.75rem; font-family: monospace; color: var(--color-text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; margin: 0;">
                     {{ url }}
                 </p>
                 <button 
                     @click="copyLink"
-                    class="flex-shrink-0 px-3 py-1 bg-cityplay-orange text-white text-xs font-bold rounded-lg hover:bg-cityplay-yellow transition-colors"
+                    class="premium-btn"
+                    style="flex-shrink: 0; padding: 0.4rem 0.8rem; font-size: 0.7rem; font-family: var(--font-family-display); font-weight: 800; border-radius: var(--border-radius-sm); background: var(--color-primary); color: white;"
                 >
                     {{ copied ? '✓ Copié !' : 'Copier' }}
                 </button>
