@@ -76,6 +76,7 @@ Route::prefix('player')
         Route::get('/riddles/{riddle}',              [RiddleValidationController::class, 'show'])->name('riddle.show');
         Route::post('/riddles/{riddle}/validate',    [RiddleValidationController::class, 'validate'])->middleware('verify.speed')->name('riddle.validate');
         Route::post('/riddles/{riddle}/unlock-hint', [RiddleValidationController::class, 'unlockHint'])->name('riddle.unlock-hint');
+        Route::post('/riddles/{riddle}/skip',        [RiddleValidationController::class, 'skip'])->name('riddle.skip');
 
         // Sessions de jeu gameplay
         Route::post('/game-sessions',                    [GameSessionController::class, 'store'])->name('game-sessions.store');
@@ -119,5 +120,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 |--------------------------------------------------------------------------
 */
 Route::redirect('/dashboard', '/player/dashboard')->middleware(['auth', 'verified']);
+Route::redirect('/admin/dashboard', '/player/dashboard')->middleware(['auth', 'verified']);
+Route::redirect('/admin', '/player/dashboard')->middleware(['auth', 'verified']);
 
 require __DIR__.'/auth.php';

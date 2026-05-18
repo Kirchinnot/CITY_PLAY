@@ -255,4 +255,67 @@ class RiddleValidationController extends Controller
             ]);
         });
     }
+
+    /**
+     * Permet à l'équipe de passer à l'énigme suivante (avec 0 points).
+     */
+    public function skip(Request $request, Riddle $riddle)
+    {
+        $user = $request->user();
+        $session = GameSession::whereHas('gamePlayers', function($query) use ($user) {
+                $query->where('user_id', $user->id)->where('is_active', true);
+            })
+            ->where('status', 'active')
+            ->firstOrFail();
+
+        // 1. Marquer le lieu comme complété (non résolu avec score à 0)
+        SessionPlace::where('game_session_id', $session->id)
+            ->where('place_id', $riddle->place_id)
+            ->update([
+                'is_completed' => true,
+                'completed_at' => now(),
+            ]);
+
+        // 2. Création d'un enregistrement de score de 0 point pour le bilan détaillé
+        Score::create([
+            'game_session_id'    => $session->id,
+            'user_id'            => $session->mode === 'mercenaire' ? $user->id : null,
+            'riddle_id'          => $riddle->id,
+            'points_earned'      => 0,
+            'points_speed'       => 0,
+            'points_distance'    => 0,
+            'points_hints_bonus' => 0,
+            'points_difficulty'  => 0,
+            'hints_used'         => 0,
+            'time_taken_seconds' => 0,
+            'distance_m'         => 0,
+            'resolved_at'        => now(),
+        ]);
+
+        $session->increment('solved_places');
+        $session->refresh();
+
+        if ($session->solved_places >= $session->total_places) {
+            $session->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
+            return redirect()->route('player.game-sessions.summary', $session);
+        } else {
+            $session->increment('current_place_index');
+            // Trouver la prochaine énigme du lieu suivant
+            $nextPlace = $session->sessionPlaces()
+                ->where('order_index', $session->current_place_index)
+                ->first();
+
+            if ($nextPlace) {
+                $nextRiddle = Riddle::where('place_id', $nextPlace->place_id)->first();
+                if ($nextRiddle) {
+                    return redirect()->route('player.riddle.show', $nextRiddle);
+                }
+            }
+        }
+
+        return redirect()->route('player.dashboard');
+    }
 }

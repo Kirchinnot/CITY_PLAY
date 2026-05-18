@@ -23,6 +23,9 @@ const isValidating      = ref(false);
 const isUnlockingHint   = ref(false);
 const showResult        = ref(false);
 const showHints         = ref(false);
+const showWrongAnswerModal = ref(false);
+const revealSolutionState = ref(false);
+const isSkipping        = ref(false);
 const resultData        = ref(null);
 const answerError       = ref(null);
 const answerInput       = ref('');
@@ -190,6 +193,7 @@ const submitValidation = async () => {
                 showResult.value = true;
             } else {
                 answerError.value = "Réponse incorrecte (vérification locale).";
+                showWrongAnswerModal.value = true;
             }
         } else {
             offlineToastMessage.value = "Connexion perdue 📶. Réponse enregistrée localement. Elle sera synchronisée dès le retour du réseau.";
@@ -210,10 +214,26 @@ const submitValidation = async () => {
         showResult.value = true;
     } catch (err) {
         const msg = err.response?.data?.message || 'Une erreur est survenue.';
-        if (err.response?.status === 422) answerError.value = msg;
-        else alert(msg);
+        if (err.response?.status === 422) {
+            answerError.value = msg;
+            showWrongAnswerModal.value = true;
+        } else {
+            alert(msg);
+        }
     } finally {
         isValidating.value = false;
+    }
+};
+
+const skipRiddle = () => {
+    if (confirm("Voulez-vous vraiment passer cette énigme ? Vous obtiendrez 0 points sur cette étape.")) {
+        isSkipping.value = true;
+        router.post(route('player.riddle.skip', props.riddle.id), {}, {
+            onFinish: () => {
+                isSkipping.value = false;
+                showWrongAnswerModal.value = false;
+            }
+        });
     }
 };
 
@@ -632,32 +652,105 @@ onUnmounted(() => {
             </Transition>
         </Teleport>
 
-        <!-- ══ MODAL RÉSULTAT ══ -->
+        <!-- ══ MODAL RÉSULTAT (BONNE RÉPONSE) ══ -->
         <div v-if="showResult" class="fixed inset-0 z-[60] flex items-center justify-center p-6"
              style="background: rgba(13,17,23,0.95); backdrop-filter: blur(16px);">
-            <div class="max-w-xs w-full text-center animate-bounce-in">
-                <div class="w-24 h-24 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_50px_rgba(34,197,94,0.4)]">
-                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="max-w-sm w-full text-center animate-bounce-in max-h-screen overflow-y-auto pb-6 scrollbar-hide">
+                <div class="w-20 h-20 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-[0_0_40px_rgba(34,197,94,0.3)]">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"/>
                     </svg>
                 </div>
-                <h2 class="text-4xl font-black text-white italic tracking-tighter uppercase mb-2">Gagné !</h2>
-                <p class="text-[#d65a31] font-black uppercase tracking-widest text-xs mb-10">Lieu découvert avec succès</p>
-                <div class="grid grid-cols-2 gap-4 mb-10">
-                    <div class="rounded-2xl p-4" style="background: var(--bg-card); border: 1px solid var(--border-card);">
-                        <span class="block text-[10px] font-black cp-text-muted uppercase tracking-widest mb-1">Points</span>
-                        <span class="text-2xl font-black cp-text-primary">+{{ resultData?.score }}</span>
+                <h2 class="text-3xl font-black text-white italic tracking-tighter uppercase mb-1">Gagné !</h2>
+                <p class="text-[#d65a31] font-black uppercase tracking-widest text-xs mb-6">Lieu découvert avec succès</p>
+
+                <!-- Photos du lieu (max 3-4) -->
+                <div v-if="riddle.place?.images?.length" class="flex gap-2 overflow-x-auto snap-x scrollbar-hide mb-6" style="scroll-behavior: smooth;">
+                    <img v-for="img in riddle.place.images.slice(0, 4)" :key="img.id"
+                         :src="'/storage/' + img.path"
+                         alt="Lieu découvert"
+                         class="w-40 h-32 object-cover rounded-xl shadow-md snap-center shrink-0 border border-white/10" />
+                </div>
+
+                <!-- Présentation du lieu (max 500 caractères) -->
+                <div v-if="riddle.place?.description" class="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6 text-left">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">À propos de ce lieu</h3>
+                    <p class="text-sm text-gray-200 leading-relaxed font-medium">
+                        {{ riddle.place.description.length > 500 ? riddle.place.description.substring(0, 500) + '...' : riddle.place.description }}
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="rounded-xl p-3" style="background: var(--bg-card); border: 1px solid var(--border-card);">
+                        <span class="block text-[9px] font-black cp-text-muted uppercase tracking-widest mb-1">Points</span>
+                        <span class="text-xl font-black cp-text-primary">+{{ resultData?.score }}</span>
                     </div>
-                    <div class="rounded-2xl p-4" style="background: var(--bg-card); border: 1px solid var(--border-card);">
-                        <span class="block text-[10px] font-black cp-text-muted uppercase tracking-widest mb-1">Temps</span>
-                        <span class="text-2xl font-black cp-text-primary">{{ Math.floor(resultData?.details?.time_taken / 60) }}m {{ resultData?.details?.time_taken % 60 }}s</span>
+                    <div class="rounded-xl p-3" style="background: var(--bg-card); border: 1px solid var(--border-card);">
+                        <span class="block text-[9px] font-black cp-text-muted uppercase tracking-widest mb-1">Temps</span>
+                        <span class="text-xl font-black cp-text-primary">{{ Math.floor(resultData?.details?.time_taken / 60) }}m {{ resultData?.details?.time_taken % 60 }}s</span>
                     </div>
                 </div>
+                
                 <button @click="resultData?.is_finished ? router.visit(route('player.game-sessions.summary', resultData.session_id)) : router.visit(route('player.dashboard'))"
                         class="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-white transition"
                         style="background: linear-gradient(135deg, #d65a31, #b84a24); box-shadow: 0 8px 28px rgba(214,90,49,0.4);">
-                    {{ resultData?.is_finished ? 'Voir le bilan' : 'Continuer' }}
+                    {{ resultData?.is_finished ? 'Voir le bilan' : 'Continuer vers l\'étape suivante' }}
                 </button>
+            </div>
+        </div>
+
+        <!-- ══ MODAL MAUVAISE RÉPONSE ══ -->
+        <div v-if="showWrongAnswerModal" class="fixed inset-0 z-[65] flex items-center justify-center p-6"
+             style="background: rgba(13,17,23,0.95); backdrop-filter: blur(16px);">
+            <div class="max-w-sm w-full text-center animate-bounce-in bg-[#1c2128] border border-white/5 rounded-3xl p-6 shadow-2xl">
+                
+                <div v-if="!revealSolutionState">
+                    <div class="w-20 h-20 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-black text-white italic tracking-tighter uppercase mb-2">Mauvaise réponse</h2>
+                    <p class="text-xs text-gray-400 font-medium mb-6">Que souhaitez-vous faire ?</p>
+
+                    <div class="space-y-3">
+                        <button @click="showWrongAnswerModal = false; showHints = true"
+                                class="w-full h-12 rounded-xl text-xs font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 transition bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20">
+                            <span>🔍</span> Obtenir d'autres indices
+                        </button>
+                        <button @click="revealSolutionState = true"
+                                class="w-full h-12 rounded-xl text-xs font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 transition bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20">
+                            <span>💡</span> Fournir la solution
+                        </button>
+                        <button @click="skipRiddle" :disabled="isSkipping"
+                                class="w-full h-12 rounded-xl text-xs font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 transition bg-gray-500/10 border border-gray-500/20 hover:bg-gray-500/20">
+                            <svg v-if="isSkipping" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                            <span v-else>⏭️ Passer à une autre énigme</span>
+                        </button>
+                    </div>
+                    
+                    <button @click="showWrongAnswerModal = false" class="mt-5 text-[10px] text-gray-500 uppercase tracking-widest font-black hover:text-white">
+                        Fermer et réessayer
+                    </button>
+                </div>
+
+                <div v-else>
+                    <div class="w-20 h-20 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-3xl">💡</span>
+                    </div>
+                    <h2 class="text-xl font-black text-white uppercase mb-2">Solution</h2>
+                    <div class="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6">
+                        <p class="text-2xl font-black text-amber-500">{{ riddle.answer || 'Aucune réponse attendue' }}</p>
+                    </div>
+                    <button @click="revealSolutionState = false; showWrongAnswerModal = false"
+                            class="w-full h-12 rounded-xl font-black uppercase tracking-widest text-white bg-amber-600 hover:bg-amber-500 transition">
+                        Compris
+                    </button>
+                </div>
+
             </div>
         </div>
 

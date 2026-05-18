@@ -1,5 +1,5 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -23,7 +23,7 @@ const submit = () => {
 <template>
     <Head title="Créer une Invitation - CityPlay" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div style="display: flex; justify-content: space-between; align-items: center; max-width: 800px; margin: 0 auto; width: 100%;">
                 <div>
@@ -155,5 +155,5 @@ const submit = () => {
 
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>

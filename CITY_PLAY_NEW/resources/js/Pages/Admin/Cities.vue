@@ -1,5 +1,5 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -10,7 +10,6 @@ const props = defineProps({
 
 const isModalOpen = ref(false);
 const isEditing = ref(false);
-const selectedCity = ref(null);
 
 const form = useForm({
     id: null,
@@ -64,21 +63,12 @@ const publish = (cityId) => {
 const unpublish = (cityId) => {
     router.post(route('admin.cities.unpublish', cityId));
 };
-
-const selectCityDetails = (city) => {
-    selectedCity.value = selectedCity.value?.id === city.id ? null : city;
-    if (selectedCity.value) {
-        setTimeout(() => {
-            document.getElementById('mobile-preview-frame')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 50);
-    }
-};
 </script>
 
 <template>
     <Head title="CityPlay - Liste des Parcours" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; width: 100%;">
                 <div>
@@ -100,9 +90,9 @@ const selectCityDetails = (city) => {
                 <p style="color: var(--color-danger); margin-top: 0.25rem; font-size: 0.9rem;">{{ errors.publish }}</p>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr; lg:grid-template-columns: 2fr 1fr; gap: 2.5rem; align-items: start;">
+            <div style="display: grid; grid-template-columns: 1fr; gap: 2.5rem; align-items: start;">
                 
-                <!-- Colonne Gauche : Liste des Villes (Simulation Onboarding / Explorateur mobile) -->
+                <!-- Liste des Villes -->
                 <div>
                     <h3 style="font-family: var(--font-family-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--color-text-main); display: flex; align-items: center; gap: 0.5rem;">
                         <span style="color: var(--color-primary);">🗺️</span> Explorateur d'aventures
@@ -155,8 +145,7 @@ const selectCityDetails = (city) => {
 
                                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                                     <div style="display: flex; gap: 0.5rem;">
-                                        <button @click.stop="selectCityDetails(city)" class="premium-btn premium-btn-outline" style="flex: 1; padding: 0.5rem; font-size: 0.8rem; border-color: var(--color-primary); color: var(--color-primary);">Aperçu</button>
-                                        <button @click.stop="openEditModal(city)" class="premium-btn premium-btn-outline" style="padding: 0.5rem; font-size: 0.8rem; border-color: var(--border-color); color: var(--color-text-muted);" title="Modifier les infos">✏️</button>
+                                        <button @click.stop="openEditModal(city)" class="premium-btn premium-btn-outline" style="flex: 1; padding: 0.5rem; font-size: 0.8rem; border-color: var(--border-color); color: var(--color-text-muted);" title="Modifier les infos">✏️</button>
                                         <button @click.stop="deleteCity(city.id)" class="premium-btn premium-btn-danger" style="padding: 0.5rem; font-size: 0.8rem;" title="Supprimer le parcours">🗑️</button>
                                     </div>
                                     <button
@@ -174,86 +163,6 @@ const selectCityDetails = (city) => {
                                         style="width: 100%; font-size: 0.8rem; padding: 0.6rem; color: var(--color-danger); border-color: var(--color-danger);"
                                     >
                                         🔒 Retirer de l'App
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Colonne Droite : Simulation de l'Écran de Détail Immersif (Dribbble style Mockup) -->
-                <div id="mobile-preview-frame">
-                    <h3 style="font-family: var(--font-family-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--color-text-main); display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="color: var(--color-secondary);">📱</span> Rendu Mobile Live
-                    </h3>
-
-                    <!-- Simulated Smartphone Frame -->
-                    <div style="width: 100%; max-width: 340px; margin: 0 auto; background: var(--color-bg-dark); border: 10px solid #111; border-radius: var(--border-radius-xl); box-shadow: var(--shadow-premium); overflow: hidden; position: relative;">
-                        <!-- Speaker / Camera Notch -->
-                        <div style="width: 110px; height: 18px; background: #111; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; margin: 0 auto; position: absolute; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; justify-content: center; align-items: center;">
-                            <div style="width: 40px; height: 3px; background: #333; border-radius: 2px;"></div>
-                        </div>
-
-                        <!-- Screen Content -->
-                        <div style="background: var(--color-bg-light); color: var(--color-text-main); font-family: var(--font-family-sans); min-height: 520px; max-height: 520px; overflow-y: auto; padding-top: 18px; scrollbar-width: none;">
-                            <!-- Header Info -->
-                            <div v-if="!selectedCity" style="padding: 2.5rem 1.5rem 1.5rem 1.5rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 480px;">
-                                <span style="font-size: 3rem;">🦁</span>
-                                <h4 style="font-family: var(--font-family-display); font-size: 1.25rem; font-weight: 800; color: var(--color-primary-dark); margin: 1rem 0 0.5rem 0;">CityPlay Bénin</h4>
-                                <p style="font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.4; margin: 0;">Sélectionnez l'aperçu d'un parcours à gauche pour simuler l'écran touristique du jeu.</p>
-                            </div>
-
-                            <div v-else>
-                                <!-- Immersive Screen 6: Détails d'une aventure -->
-                                <div style="height: 180px; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(28,24,22,0.85)), url('https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?q=80&w=800') center/cover; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 1.25rem;">
-                                    <span style="position: absolute; top: 1rem; left: 1rem; width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: white; cursor: pointer; backdrop-filter: blur(4px);">←</span>
-                                    <span style="position: absolute; top: 1rem; right: 1rem; background: var(--color-secondary); color: var(--color-bg-dark); font-weight: 800; font-size: 0.6rem; padding: 0.25rem 0.5rem; border-radius: 10px; font-family: var(--font-family-display);">SPECIAL XP</span>
-                                    
-                                    <h4 style="font-family: var(--font-family-display); font-size: 1.4rem; font-weight: 800; color: white; margin: 0 0 0.25rem 0; line-height: 1.2;">{{ selectedCity.name }}</h4>
-                                    <p style="font-size: 0.7rem; color: #FFFDFB; opacity: 0.85; margin: 0; display: flex; align-items: center; gap: 0.25rem;">
-                                        <span>🇧🇯</span> Aventure Culturelle Moderne
-                                    </p>
-                                </div>
-
-                                <!-- Screen statistics -->
-                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.25rem; background: var(--color-surface-light); padding: 0.75rem; border-bottom: 1px solid var(--border-color); text-align: center;">
-                                    <div>
-                                        <span style="display: block; font-size: 0.85rem; font-weight: 800; color: var(--color-primary);">{{ selectedCity.places_count }}</span>
-                                        <span style="display: block; font-size: 0.55rem; color: var(--color-text-muted); font-weight: 700; text-transform: uppercase;">Étapes</span>
-                                    </div>
-                                    <div>
-                                        <span style="display: block; font-size: 0.85rem; font-weight: 800; color: var(--color-primary);">45m</span>
-                                        <span style="display: block; font-size: 0.55rem; color: var(--color-text-muted); font-weight: 700; text-transform: uppercase;">Durée</span>
-                                    </div>
-                                    <div>
-                                        <span style="display: block; font-size: 0.85rem; font-weight: 800; color: var(--color-primary);">2.4k</span>
-                                        <span style="display: block; font-size: 0.55rem; color: var(--color-text-muted); font-weight: 700; text-transform: uppercase;">Mètres</span>
-                                    </div>
-                                    <div>
-                                        <span style="display: block; font-size: 0.85rem; font-weight: 800; color: var(--color-secondary);">★ 4.8</span>
-                                        <span style="display: block; font-size: 0.55rem; color: var(--color-text-muted); font-weight: 700; text-transform: uppercase;">Avis</span>
-                                    </div>
-                                </div>
-
-                                <!-- Description -->
-                                <div style="padding: 1.25rem;">
-                                    <h5 style="font-family: var(--font-family-display); font-size: 0.9rem; font-weight: 800; color: var(--color-primary-dark); margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.05em;">L'Histoire</h5>
-                                    <p style="font-size: 0.75rem; color: var(--color-text-muted); line-height: 1.5; margin: 0 0 1.5rem 0;">
-                                        {{ selectedCity.description }}
-                                    </p>
-
-                                    <!-- Immersive Benin Heritage Highlight Card -->
-                                    <div style="background: linear-gradient(135deg, var(--color-surface-light), var(--color-bg-light)); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 0.85rem; display: flex; gap: 0.75rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);">
-                                        <span style="font-size: 1.75rem;">🎭</span>
-                                        <div>
-                                            <span style="display: block; font-size: 0.75rem; font-weight: 800; color: var(--color-text-main);">Patrimoine Culturel</span>
-                                            <span style="display: block; font-size: 0.65rem; color: var(--color-text-muted); line-height: 1.4; margin-top: 0.25rem;">Cette quête intègre des légendes royales d'Abomey et des énigmes authentiques.</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Big CTA for Player (Commencer) -->
-                                    <button class="premium-btn premium-btn-primary" style="width: 100%; padding: 0.85rem; font-size: 0.85rem; font-weight: 800; font-family: var(--font-family-display); display: flex; justify-content: center; gap: 0.5rem; box-shadow: 0 8px 16px rgba(200,92,50,0.35);">
-                                        <span>⚔️</span> COMMENCER L'AVENTURE
                                     </button>
                                 </div>
                             </div>
@@ -326,5 +235,5 @@ const selectCityDetails = (city) => {
             </div>
         </div>
 
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>

@@ -1,5 +1,6 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
+import { ref, onMounted } from 'vue';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
 
 const props = defineProps({
@@ -11,6 +12,39 @@ const formatTime = (seconds) => {
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hrs > 0 ? hrs + 'h ' : ''}${mins}m ${secs}s`;
+};
+
+const userLat = ref(null);
+const userLng = ref(null);
+const selectedUnsolvedPlace = ref(null);
+
+onMounted(() => {
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition((position) => {
+            userLat.value = position.coords.latitude;
+            userLng.value = position.coords.longitude;
+        });
+    }
+});
+
+const calculateDistance = (lat2, lon2) => {
+    if (!userLat.value || !userLng.value) return 'Calcul...';
+    const lat1 = userLat.value;
+    const lon1 = userLng.value;
+    const R = 6371; // Rayon de la terre en km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    const distanceKm = R * c;
+    
+    if (distanceKm < 1) {
+        return Math.round(distanceKm * 1000) + ' m';
+    }
+    return distanceKm.toFixed(1) + ' km';
 };
 </script>
 
@@ -82,6 +116,41 @@ const formatTime = (seconds) => {
                 </div>
             </div>
 
+            <!-- Unsolved Places Section -->
+            <div v-if="session.unsolved_places && session.unsolved_places.length > 0" class="mt-8">
+                <h3 class="text-lg font-black text-white mb-4 uppercase tracking-tighter">Lieux Non Découverts</h3>
+                <p class="text-xs text-gray-400 mb-4">Découvrez les secrets que vous avez manqués :</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div v-for="place in session.unsolved_places" :key="place.id"
+                         @click="selectedUnsolvedPlace = place"
+                         class="bg-[#1c2128] border border-white/5 rounded-2xl overflow-hidden shadow-lg cursor-pointer hover:border-[#d65a31]/50 transition group">
+                        <div class="h-24 bg-gray-800 relative">
+                            <img v-if="place.images && place.images[0]" :src="'/storage/' + place.images[0].path" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition" />
+                            <div v-else class="w-full h-full flex items-center justify-center text-3xl bg-gray-900">🏛️</div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                            <span class="absolute bottom-2 left-2 text-xs font-black text-white uppercase truncate pr-2 w-full">{{ place.name }}</span>
+                        </div>
+                        <div class="p-3 bg-[#1c2128]">
+                            <span class="text-[10px] font-bold text-[#d65a31] uppercase tracking-widest flex items-center gap-1">
+                                📍 {{ calculateDistance(place.latitude, place.longitude) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conclusion Mairie (Outro) -->
+            <div v-if="session.outro_config" class="mt-8 bg-gradient-to-br from-[#d65a31]/10 to-transparent border border-[#d65a31]/20 p-6 rounded-3xl shadow-xl text-center">
+                <h3 class="text-lg font-black text-[#d65a31] mb-2 uppercase tracking-tighter">Mot de la fin</h3>
+                <p class="text-sm text-gray-300 mb-4 leading-relaxed font-medium">
+                    {{ session.outro_config.message || 'Merci d\'avoir joué !' }}
+                </p>
+                <div v-if="session.outro_config.recommendations" class="text-left bg-black/20 rounded-xl p-4 border border-white/5">
+                    <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Recommandations de la Mairie :</h4>
+                    <p class="text-xs text-white leading-relaxed whitespace-pre-line">{{ session.outro_config.recommendations }}</p>
+                </div>
+            </div>
+
             <!-- Actions -->
             <div class="pt-4">
                 <Link 
@@ -92,5 +161,39 @@ const formatTime = (seconds) => {
                 </Link>
             </div>
         </div>
+
+        <!-- Modal Lieu Non Résolu -->
+        <Teleport to="body">
+            <Transition enter-active-class="transition-all duration-200" enter-from-class="opacity-0 translate-y-4" leave-active-class="transition-all duration-150" leave-to-class="opacity-0 translate-y-4">
+                <div v-if="selectedUnsolvedPlace" class="fixed inset-0 z-[100] flex items-center justify-center p-4" style="background: rgba(13,17,23,0.9); backdrop-filter: blur(12px);" @click.self="selectedUnsolvedPlace = null">
+                    <div class="bg-[#1c2128] border border-white/10 w-full max-w-sm rounded-[28px] overflow-hidden shadow-2xl animate-bounce-in flex flex-col max-h-[80vh]">
+                        <div class="relative h-48 shrink-0 bg-gray-800">
+                            <img v-if="selectedUnsolvedPlace.images && selectedUnsolvedPlace.images[0]" :src="'/storage/' + selectedUnsolvedPlace.images[0].path" class="w-full h-full object-cover" />
+                            <div v-else class="w-full h-full flex items-center justify-center text-5xl bg-gray-900">🏛️</div>
+                            <div class="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-xs font-black text-white">
+                                📍 À {{ calculateDistance(selectedUnsolvedPlace.latitude, selectedUnsolvedPlace.longitude) }}
+                            </div>
+                            <button @click="selectedUnsolvedPlace = null" class="absolute top-4 left-4 w-8 h-8 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/10 transition hover:bg-black/80">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                        <div class="p-6 overflow-y-auto scrollbar-hide">
+                            <h3 class="text-2xl font-black text-white italic tracking-tighter uppercase mb-2">{{ selectedUnsolvedPlace.name }}</h3>
+                            <h4 class="text-[10px] font-black text-[#d65a31] uppercase tracking-widest mb-4">Ce que vous avez manqué</h4>
+                            <p class="text-sm text-gray-300 leading-relaxed font-medium">
+                                {{ selectedUnsolvedPlace.description || 'Aucune description disponible pour ce lieu.' }}
+                            </p>
+                            
+                            <div v-if="selectedUnsolvedPlace.images && selectedUnsolvedPlace.images.length > 1" class="mt-6">
+                                <h4 class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Autres photos</h4>
+                                <div class="flex gap-2 overflow-x-auto snap-x scrollbar-hide pb-2">
+                                    <img v-for="(img, idx) in selectedUnsolvedPlace.images.slice(1, 4)" :key="idx" :src="'/storage/' + img.path" class="w-24 h-24 object-cover rounded-xl shrink-0 snap-center shadow-md border border-white/10" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
     </PlayerLayout>
 </template>

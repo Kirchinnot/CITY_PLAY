@@ -11,6 +11,8 @@ const form = useForm({
     email: '',
     password: '',
     password_confirmation: '',
+    accept_cgu: false,
+    two_factor_enabled: false,
 });
 
 const submit = () => {
@@ -100,6 +102,34 @@ const submit = () => {
                     class="mt-2"
                     :message="form.errors.password_confirmation"
                 />
+            </div>
+
+            <!-- Double Identification (2FA) switch -->
+            <div class="mt-4 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-black text-cityplay-brown">Activer la double identification (2FA)</p>
+                        <p class="text-[10px] text-gray-500 font-medium">Un code de sécurité par SMS/e-mail vous sera demandé.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" v-model="form.two_factor_enabled" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cityplay-orange"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- CGU & Data Policy Checkbox -->
+            <div class="mt-4 flex items-start gap-3">
+                <input
+                    id="accept_cgu"
+                    type="checkbox"
+                    v-model="form.accept_cgu"
+                    required
+                    class="mt-1 rounded border-gray-300 text-cityplay-orange focus:ring-cityplay-orange"
+                />
+                <label for="accept_cgu" class="text-[11px] text-gray-500 font-semibold leading-relaxed">
+                    J'accepte les <a href="#" class="text-cityplay-orange font-bold hover:underline">Conditions Générales d'Utilisation (CGU)</a> et la <a href="#" class="text-cityplay-orange font-bold hover:underline">politique de gestion des données</a>.
+                </label>
             </div>
 
             <div class="pt-4">

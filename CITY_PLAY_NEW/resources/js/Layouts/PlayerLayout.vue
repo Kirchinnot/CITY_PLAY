@@ -56,6 +56,12 @@ const { isDark } = useTheme();
                         </span>
                         <span class="text-[10px] font-black text-green-500 uppercase tracking-widest">En jeu</span>
                     </div>
+                    <Link :href="route('logout')" method="post" as="button" aria-label="Déconnexion"
+                          class="cp-icon-btn relative w-8 h-8 rounded-xl flex items-center justify-center transition text-[#d65a31] border border-[#d65a31]/20 hover:bg-[#d65a31]/10">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1"/>
+                        </svg>
+                    </Link>
                     <button class="cp-icon-btn relative w-8 h-8 rounded-xl flex items-center justify-center transition">
                         <svg class="w-4 h-4 cp-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>

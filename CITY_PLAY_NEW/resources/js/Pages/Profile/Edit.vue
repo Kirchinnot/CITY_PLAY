@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, usePage, router } from '@inertiajs/vue3';
 import { gsap } from 'gsap';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
@@ -50,6 +50,34 @@ const switchTab = (id) => {
     );
     activeTab.value = id;
 };
+
+// ── Gestion Déconnexion Premium ──
+const showLogoutModal = ref(false);
+const isLoggingOut = ref(false);
+const isDeletingProfile = ref(false);
+
+const logoutAndKeep = () => {
+    isLoggingOut.value = true;
+    router.post(route('logout'), {}, {
+        onFinish: () => { isLoggingOut.value = false; }
+    });
+};
+
+const logoutAndDelete = () => {
+    isDeletingProfile.value = true;
+    router.delete(route('profile.destroy'), {
+        data: { password: '' }, // On force la suppression sans mot de passe pour la démo, ou on redirige vers l'onglet compte
+        onSuccess: () => {
+            router.post(route('logout'));
+        },
+        onError: () => {
+            // Si le mot de passe est requis, on ferme la modale et on bascule sur l'onglet danger
+            showLogoutModal.value = false;
+            switchTab('danger');
+        },
+        onFinish: () => { isDeletingProfile.value = false; }
+    });
+};
 </script>
 
 <template>
@@ -69,8 +97,16 @@ const switchTab = (id) => {
                      style="background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%); transform: translate(-30%, 30%);"></div>
 
                 <div class="relative z-10 p-6 flex items-center gap-5">
+                    
+                    <!-- Bouton Déconnexion Premium -->
+                    <button @click="showLogoutModal = true" class="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                    </button>
+
                     <!-- Avatar -->
-                    <div class="relative shrink-0">
+                    <div class="relative shrink-0 mt-2">
                         <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-xl"
                              style="background: linear-gradient(135deg, #d65a31 0%, #b84a24 100%); box-shadow: 0 12px 32px rgba(214,90,49,0.4);">
                             {{ initials.toUpperCase() }}
@@ -83,8 +119,8 @@ const switchTab = (id) => {
                     </div>
 
                     <!-- Infos -->
-                    <div class="flex-1 min-w-0">
-                        <h1 class="text-xl font-black text-white leading-tight truncate">{{ user.name }}</h1>
+                    <div class="flex-1 min-w-0 mt-2">
+                        <h1 class="text-xl font-black text-white leading-tight truncate pr-8">{{ user.name }}</h1>
                         <p class="text-sm text-white/40 font-medium truncate mt-0.5">{{ user.email }}</p>
                         <!-- Stats rapides -->
                         <div class="flex items-center gap-3 mt-3">
@@ -135,5 +171,56 @@ const switchTab = (id) => {
             </div>
 
         </div>
+
+        <!-- ══ MODAL DÉCONNEXION & RÉTENTION RGPD ══ -->
+        <Teleport to="body">
+            <Transition enter-active-class="transition-all duration-200" enter-from-class="opacity-0" leave-active-class="transition-all duration-150" leave-to-class="opacity-0">
+                <div v-if="showLogoutModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4" style="background: rgba(13,17,23,0.9); backdrop-filter: blur(12px);" @click.self="showLogoutModal = false">
+                    <div class="bg-[#1c2128] border border-white/10 w-full max-w-sm rounded-[28px] overflow-hidden shadow-2xl animate-bounce-in p-6">
+                        
+                        <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                        </div>
+
+                        <h3 class="text-xl font-black text-white text-center uppercase tracking-tight mb-2">Déconnexion</h3>
+                        <p class="text-xs text-gray-400 text-center font-medium leading-relaxed mb-6">
+                            Souhaitez-vous supprimer définitivement votre profil ou le conserver pour continuer plus tard ?
+                        </p>
+
+                        <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mb-6">
+                            <p class="text-[10px] text-amber-500/90 font-bold leading-relaxed text-center">
+                                <span class="text-amber-400 block mb-1 text-sm">⚠️ Info Rétention</span>
+                                Si vous le conservez, votre profil sera actif pendant la durée maximale de conservation des données définie par la mairie. Au-delà, vos données seront purgées.
+                            </p>
+                        </div>
+
+                        <div class="space-y-3">
+                            <button @click="logoutAndKeep" :disabled="isLoggingOut || isDeletingProfile"
+                                    class="w-full h-12 rounded-xl text-xs font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 transition bg-[#C85C32] hover:bg-[#A04422] shadow-lg shadow-[#C85C32]/20">
+                                <svg v-if="isLoggingOut" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                </svg>
+                                <span>Conserver et Quitter</span>
+                            </button>
+                            <button @click="logoutAndDelete" :disabled="isLoggingOut || isDeletingProfile"
+                                    class="w-full h-12 rounded-xl text-xs font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 transition bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-500 hover:text-red-400">
+                                <svg v-if="isDeletingProfile" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                </svg>
+                                <span>Supprimer le profil</span>
+                            </button>
+                            <button @click="showLogoutModal = false" :disabled="isLoggingOut || isDeletingProfile"
+                                    class="w-full h-10 mt-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition">
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
     </PlayerLayout>
 </template>

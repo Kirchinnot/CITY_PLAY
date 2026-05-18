@@ -1,5 +1,5 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
@@ -68,18 +68,12 @@ const submit = () => {
 };
 
 const activeTab = ref('enfant');
-
-watch(activeTab, () => {
-    setTimeout(() => {
-        document.getElementById('mobile-riddle-preview-frame')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 50);
-});
 </script>
 
 <template>
     <Head :title="'Énigmes - ' + place.name" />
 
-    <AuthenticatedLayout>
+    <AdminLayout>
         <template #header>
             <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; width: 100%;">
                 <div>
@@ -289,104 +283,8 @@ watch(activeTab, () => {
                     </div>
                 </div>
 
-                <!-- Rendu Mobile Live - Gameplay de l'énigme (Screen 7) -->
-                <div>
-                    <h3 style="font-family: var(--font-family-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--color-text-main); display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="color: var(--color-secondary);">📱</span> Rendu Gameplay Live
-                    </h3>
-
-                    <!-- Simulated Smartphone Frame -->
-                    <div id="mobile-riddle-preview-frame" style="width: 100%; max-width: 340px; margin: 0 auto; background: var(--color-bg-dark); border: 10px solid #111; border-radius: var(--border-radius-xl); box-shadow: var(--shadow-premium); overflow: hidden; position: relative;">
-                        <!-- Speaker notch -->
-                        <div style="width: 110px; height: 18px; background: #111; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; margin: 0 auto; position: absolute; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; justify-content: center; align-items: center;">
-                            <div style="width: 40px; height: 3px; background: #333; border-radius: 2px;"></div>
-                        </div>
-
-                        <!-- Screen Content (Simulates Screen 7: Gameplay principal) -->
-                        <div v-for="riddle in form.riddles" :key="riddle.difficulty" v-show="activeTab === riddle.difficulty" style="background: var(--color-bg-light); color: var(--color-text-main); font-family: var(--font-family-sans); min-height: 520px; max-height: 520px; overflow-y: auto; padding-top: 18px; scrollbar-width: none; display: flex; flex-direction: column;">
-                            
-                            <!-- Gameplay Top Stats Panel -->
-                            <div style="background: var(--color-surface-light); padding: 0.75rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem;">
-                                <div style="display: flex; align-items: center; gap: 0.25rem; font-weight: 800; color: var(--color-primary-dark);">
-                                    <span>🏆</span> {{ riddle.points_base }} XP
-                                </div>
-                                <div style="font-weight: 800; color: var(--color-danger); display: flex; align-items: center; gap: 0.25rem;">
-                                    <span>⏱️</span> {{ Math.floor(riddle.time_limit_seconds / 60) }}:{{ (riddle.time_limit_seconds % 60).toString().padStart(2, '0') }}
-                                </div>
-                                <div style="background: var(--color-bg-light); padding: 0.2rem 0.4rem; border-radius: 4px; font-weight: 700; color: var(--color-text-muted);">
-                                    Niveau {{ activeTab.toUpperCase() }}
-                                </div>
-                            </div>
-
-                            <!-- Game Body -->
-                            <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; flex: 1;">
-                                <!-- Question Box -->
-                                <div style="background: var(--color-surface-light); border-radius: var(--border-radius-md); padding: 0.85rem; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
-                                    <span style="font-size: 0.55rem; text-transform: uppercase; font-weight: 800; color: var(--color-primary-light); letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">Énigme Secrète</span>
-                                    <h4 style="margin: 0; font-family: var(--font-family-display); font-size: 0.85rem; font-weight: 800; color: var(--color-primary-dark); line-height: 1.3;">
-                                        {{ riddle.title || 'Devinette mystère' }}
-                                    </h4>
-                                    <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: var(--color-text-muted); line-height: 1.45;">
-                                        {{ riddle.question || 'Écrivez une énigme captivante à gauche pour voir la simulation.' }}
-                                    </p>
-                                </div>
-
-                                <!-- 4-Image Grid -->
-                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
-                                    <div v-for="imgIdx in [0, 1, 2, 3]" :key="imgIdx" style="height: 70px; background: #e6dfd5; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;">
-                                        <img 
-                                            v-if="riddle.previews[imgIdx]" 
-                                            :src="riddle.previews[imgIdx]" 
-                                            style="width: 100%; height: 100%; object-fit: cover;"
-                                        />
-                                        <img 
-                                            v-else-if="riddle.existing_images.find(i => i.display_order === imgIdx + 1)" 
-                                            :src="riddle.existing_images.find(i => i.display_order === imgIdx + 1).image_url" 
-                                            style="width: 100%; height: 100%; object-fit: cover;"
-                                        />
-                                        <div v-else style="font-size: 0.55rem; color: var(--color-text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Illustr. {{ imgIdx + 1 }}</div>
-                                    </div>
-                                </div>
-
-                                <!-- Answer Selection Buttons (Gamified QCM) -->
-                                <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
-                                    <div 
-                                        v-for="(opt, oIndex) in riddle.options" 
-                                        :key="oIndex" 
-                                        style="border-radius: var(--border-radius-md); padding: 0.65rem 0.85rem; font-size: 0.75rem; font-weight: 700; transition: all var(--transition-bounce); display: flex; align-items: center; justify-content: space-between;"
-                                        :style="{
-                                            background: riddle.answer && riddle.answer === opt ? 'linear-gradient(135deg, var(--color-primary), var(--color-primary-light))' : 'var(--color-surface-light)',
-                                            color: riddle.answer && riddle.answer === opt ? 'white' : 'var(--color-text-main)',
-                                            border: riddle.answer && riddle.answer === opt ? '1px solid var(--color-primary-dark)' : '1px solid var(--border-color)',
-                                            boxShadow: riddle.answer && riddle.answer === opt ? '0 4px 8px rgba(200,92,50,0.25)' : 'var(--shadow-sm)'
-                                        }"
-                                    >
-                                        <span>{{ opt || 'Option de réponse vide...' }}</span>
-                                        <span v-if="riddle.answer && riddle.answer === opt" style="font-size: 0.8rem;">🎯</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Bottom Help & Submit Drawer (Gamified) -->
-                            <div style="background: var(--color-surface-light); padding: 0.85rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem; margin-top: auto;">
-                                <button 
-                                    type="button" 
-                                    style="flex: 1; background: var(--color-warning-bg); border: 1px solid #fcd34d; border-radius: var(--border-radius-sm); padding: 0.6rem; color: #b45309; font-size: 0.7rem; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 0.25rem;"
-                                    @click="alert(riddle.hints.length > 0 ? 'Indice 1: ' + riddle.hints[0].content : 'Aucun indice disponible.')"
-                                >
-                                    💡 INDICE ({{ riddle.hints.length }})
-                                </button>
-                                <button type="button" class="premium-btn premium-btn-primary" style="flex: 1.5; padding: 0.6rem; font-size: 0.75rem; font-family: var(--font-family-display); font-weight: 800; border-radius: var(--border-radius-sm); display: flex; justify-content: center; align-items: center; gap: 0.25rem;">
-                                    VALIDER ⚔️
-                                </button>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-
             </div>
 
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>

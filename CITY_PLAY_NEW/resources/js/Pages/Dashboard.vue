@@ -44,12 +44,26 @@ const orb2Ref         = ref(null);
 const setCityCardRef = (el, i) => { if (el) cityCardsRef.value[i] = el; };
 
 // ── Démarrer une session ──────────────────────────────────────────────────────
-const startSessionForm = useForm({ city_id: null });
-const startSession = (cityId) => {
-    if (confirm('Voulez-vous démarrer une nouvelle aventure dans cette ville ?')) {
-        startSessionForm.city_id = cityId;
-        startSessionForm.post(route('player.game-sessions.store'));
-    }
+const showSetupModal = ref(false);
+const startSessionForm = useForm({
+    city_id: null,
+    team_members: 4,
+    duration_minutes: 120,
+    locomotion: 'marche',
+    difficulty: 'force_1'
+});
+
+const openSetupModal = (cityId) => {
+    startSessionForm.city_id = cityId;
+    showSetupModal.value = true;
+};
+
+const startSession = () => {
+    startSessionForm.post(route('player.game-sessions.store'), {
+        onSuccess: () => {
+            showSetupModal.value = false;
+        }
+    });
 };
 
 // ── Palettes villes ───────────────────────────────────────────────────────────
@@ -119,15 +133,15 @@ const animateToggle = () => {
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 class="text-gray-500 text-sm font-bold uppercase mb-2">Sessions Actives</h3>
-                    <p class="text-3xl font-black text-[#d65a31]">{{ adminStats.active_sessions }}</p>
+                    <p class="text-3xl font-black text-[#d65a31]">{{ adminStats?.active_sessions ?? 0 }}</p>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 class="text-gray-500 text-sm font-bold uppercase mb-2">Joueurs Connectés</h3>
-                    <p class="text-3xl font-black text-blue-600">{{ adminStats.total_players }}</p>
+                    <p class="text-3xl font-black text-blue-600">{{ adminStats?.total_players ?? 0 }}</p>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 class="text-gray-500 text-sm font-bold uppercase mb-2">Alertes Triche</h3>
-                    <p class="text-3xl font-black text-red-500">{{ adminStats.suspicious_logs }}</p>
+                    <p class="text-3xl font-black text-red-500">{{ adminStats?.suspicious_logs ?? 0 }}</p>
                 </div>
             </div>
         </div>
@@ -323,7 +337,7 @@ const animateToggle = () => {
                         v-for="(city, i) in cities"
                         :key="city.id"
                         :ref="el => setCityCardRef(el, i)"
-                        @click="startSession(city.id)"
+                        @click="openSetupModal(city.id)"
                         class="city-card group relative rounded-[22px] overflow-hidden text-left focus:outline-none"
                         :style="{ '--accent': cityAccents[i % cityAccents.length] }"
                         style="min-height: 172px;"
@@ -378,6 +392,90 @@ const animateToggle = () => {
                 </div>
             </div>
         </div>
+
+        <!-- Modal Configuration de l'Aventure -->
+        <Teleport to="body">
+            <Transition enter-active-class="transition-all duration-200" enter-from-class="opacity-0" leave-active-class="transition-all duration-150" leave-to-class="opacity-0">
+                <div v-if="showSetupModal" class="fixed inset-0 z-[80] flex items-center justify-center p-4" style="background: rgba(28,24,22,0.75); backdrop-filter: blur(8px);" @click.self="showSetupModal = false">
+                    <div class="bg-[#FFFDFB] dark:bg-[#1C1816] w-full max-w-sm rounded-[28px] overflow-hidden border border-gray-200 dark:border-white/5 shadow-2xl">
+                        
+                        <!-- Header Terracotta & Gold accent -->
+                        <div style="background: linear-gradient(135deg, #C85C32, #A04422); padding: 1.5rem; color: white; position: relative;">
+                            <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #1E6B43 33%, #D4AF37 33%, #D4AF37 66%, #962D2D 66%);"></div>
+                            <h3 class="font-black uppercase tracking-tight text-lg">Configurer l'Équipe</h3>
+                            <p class="text-[10px] opacity-90 font-medium">Configure ton parcours sur-mesure avant de partir !</p>
+                        </div>
+
+                        <!-- Form Parameters -->
+                        <form @submit.prevent="startSession" class="p-5 space-y-4">
+                            
+                            <!-- Team members -->
+                            <div>
+                                <label class="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Membres de l'équipe (inférieur à 10)</label>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @click="startSessionForm.team_members = Math.max(1, startSessionForm.team_members - 1)" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 font-bold flex items-center justify-center text-gray-700 dark:text-white">-</button>
+                                    <input type="number" v-model="startSessionForm.team_members" min="1" max="9" required class="flex-1 text-center font-black rounded-lg border border-gray-200 dark:border-white/10 dark:bg-[#1C1816] dark:text-white h-8 text-xs" />
+                                    <button type="button" @click="startSessionForm.team_members = Math.min(9, startSessionForm.team_members + 1)" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 font-bold flex items-center justify-center text-gray-700 dark:text-white">+</button>
+                                </div>
+                            </div>
+
+                            <!-- Duration -->
+                            <div>
+                                <label class="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Durée prévue pour le jeu</label>
+                                <select v-model="startSessionForm.duration_minutes" class="w-full rounded-lg border border-gray-200 dark:border-white/10 dark:bg-[#1C1816] dark:text-white h-9 text-xs font-bold px-2">
+                                    <option :value="30">30 Minutes (Rapide ⚡)</option>
+                                    <option :value="60">1 Heure (Standard 🧭)</option>
+                                    <option :value="120">2 Heures (Aventure 🗺️)</option>
+                                    <option :value="180">3 Heures (Exploration 👑)</option>
+                                    <option :value="240">4 Heures (Grand Défi 🦁)</option>
+                                </select>
+                            </div>
+
+                            <!-- Locomotion -->
+                            <div>
+                                <label class="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Moyen de Locomotion</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" @click="startSessionForm.locomotion = 'marche'" :class="startSessionForm.locomotion === 'marche' ? 'bg-[#C85C32] text-white border-[#C85C32]' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/5'" class="h-12 rounded-lg border flex flex-col items-center justify-center transition-all">
+                                        <span class="text-lg">🚶</span>
+                                        <span class="text-[8px] font-black uppercase">Pieds</span>
+                                    </button>
+                                    <button type="button" @click="startSessionForm.locomotion = 'velo'" :class="startSessionForm.locomotion === 'velo' ? 'bg-[#C85C32] text-white border-[#C85C32]' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/5'" class="h-12 rounded-lg border flex flex-col items-center justify-center transition-all">
+                                        <span class="text-lg">🚲</span>
+                                        <span class="text-[8px] font-black uppercase">Vélos</span>
+                                    </button>
+                                    <button type="button" @click="startSessionForm.locomotion = 'voiture'" :class="startSessionForm.locomotion === 'voiture' ? 'bg-[#C85C32] text-white border-[#C85C32]' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/5'" class="h-12 rounded-lg border flex flex-col items-center justify-center transition-all">
+                                        <span class="text-lg">🚗</span>
+                                        <span class="text-[8px] font-black uppercase">Voiture</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Difficulty -->
+                            <div>
+                                <label class="block text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Difficulté des énigmes</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" @click="startSessionForm.difficulty = 'force_1'" :class="startSessionForm.difficulty === 'force_1' ? 'bg-[#D4AF37] text-white border-[#D4AF37]' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/5'" class="h-9 rounded-lg border flex items-center justify-center transition-all text-[9px] font-black uppercase">
+                                        F1 🏹
+                                    </button>
+                                    <button type="button" @click="startSessionForm.difficulty = 'force_2'" :class="startSessionForm.difficulty === 'force_2' ? 'bg-[#D4AF37] text-white border-[#D4AF37]' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/5'" class="h-9 rounded-lg border flex items-center justify-center transition-all text-[9px] font-black uppercase">
+                                        F2 🦁
+                                    </button>
+                                    <button type="button" @click="startSessionForm.difficulty = 'force_3'" :class="startSessionForm.difficulty === 'force_3' ? 'bg-[#D4AF37] text-white border-[#D4AF37]' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/5'" class="h-9 rounded-lg border flex items-center justify-center transition-all text-[9px] font-black uppercase">
+                                        F3 👑
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="pt-2 flex gap-2">
+                                <button type="button" @click="showSetupModal = false" class="flex-1 h-9 rounded-lg border border-gray-200 dark:border-white/5 text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">Annuler</button>
+                                <button type="submit" :disabled="startSessionForm.processing" class="flex-1 h-9 rounded-lg text-[10px] font-black uppercase tracking-wider text-white bg-[#C85C32] hover:bg-[#A04422] transition-all shadow-md">Démarrer !</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
     </component>
 </template>
 
