@@ -84,6 +84,7 @@ Route::prefix('player')
         Route::post('/game-sessions/{session}/pause',    [GameSessionController::class, 'pause'])->name('game-sessions.pause');
         Route::post('/game-sessions/{session}/resume',   [GameSessionController::class, 'resume'])->name('game-sessions.resume');
         Route::post('/game-sessions/{session}/abandon',  [GameSessionController::class, 'abandon'])->name('game-sessions.abandon');
+        Route::post('/game-sessions/{session}/select-place', [GameSessionController::class, 'selectPlace'])->name('game-sessions.select-place');
 
         // Carte
         Route::get('/map', [GameSessionController::class, 'map'])->name('game.map');

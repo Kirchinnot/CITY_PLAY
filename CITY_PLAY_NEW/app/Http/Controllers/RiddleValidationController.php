@@ -35,13 +35,11 @@ class RiddleValidationController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
-        // Vérifier que l'énigme appartient bien au lieu actuel de la session
-        $currentSessionPlace = $session->sessionPlaces()
-            ->where('order_index', $session->current_place_index)
-            ->first();
+        // Vérifier que l'énigme appartient bien à un lieu de cette session
+        $hasPlace = $session->sessionPlaces()->where('place_id', $riddle->place_id)->exists();
 
-        if (!$currentSessionPlace || $currentSessionPlace->place_id !== $riddle->place_id) {
-            return redirect()->route('player.dashboard')->with('error', 'Cette énigme ne correspond pas à votre lieu actuel.');
+        if (!$hasPlace) {
+            return redirect()->route('player.dashboard')->with('error', 'Cette énigme ne correspond pas à votre parcours.');
         }
 
         $unlockedHintIds = HintUsage::where('game_session_id', $session->id)
@@ -214,16 +212,33 @@ class RiddleValidationController extends Controller
                 'resolved_at' => now(),
             ]);
 
-            // Mise à jour de SessionPlace
-            SessionPlace::where('game_session_id', $session->id)
-                ->where('place_id', $riddle->place_id)
-                ->update([
-                    'is_completed' => true,
-                    'completed_at' => now(),
-                ]);
+            // Récupérer tous les IDs des énigmes de ce lieu filtrées par la difficulté de la session
+            $placeRiddleIds = \App\Models\Riddle::where('place_id', $riddle->place_id)
+                ->where('difficulty', $session->difficulty)
+                ->pluck('id')
+                ->toArray();
 
-            // Mise à jour de la session — on recharge après increment() pour avoir la valeur fraîche
-            $session->increment('solved_places');
+            // Récupérer les IDs des énigmes déjà résolues dans cette session (incluant celle qu'on vient d'enregistrer)
+            $solvedRiddleIds = Score::where('game_session_id', $session->id)
+                ->pluck('riddle_id')
+                ->toArray();
+            
+            // Si toutes les énigmes de ce lieu ont été résolues
+            $allPlaceRiddlesSolved = empty(array_diff($placeRiddleIds, $solvedRiddleIds));
+
+            if ($allPlaceRiddlesSolved) {
+                // Mise à jour de SessionPlace comme complétée
+                SessionPlace::where('game_session_id', $session->id)
+                    ->where('place_id', $riddle->place_id)
+                    ->update([
+                        'is_completed' => true,
+                        'completed_at' => now(),
+                    ]);
+
+                // On n'incrémente solved_places que lorsque le lieu entier est résolu
+                $session->increment('solved_places');
+            }
+
             $session->refresh();
 
             $isFinished = false;
@@ -234,7 +249,35 @@ class RiddleValidationController extends Controller
                 ]);
                 $isFinished = true;
             } else {
-                $session->increment('current_place_index');
+                // Si le lieu actuel est complété, on passe à l'index du lieu suivant
+                if ($allPlaceRiddlesSolved) {
+                    $session->increment('current_place_index');
+                }
+            }
+
+            // Trouver la prochaine énigme à résoudre dans toute la session
+            $nextRiddleId = null;
+            if (!$isFinished) {
+                // Recharger les énigmes résolues
+                $solvedRiddleIds = Score::where('game_session_id', $session->id)
+                    ->pluck('riddle_id')
+                    ->toArray();
+
+                // Parcourir les lieux dans l'ordre de la session pour trouver le premier ayant encore des énigmes de la bonne difficulté non résolues
+                foreach ($session->sessionPlaces as $sessionPlace) {
+                    $placeRiddle = \App\Models\Riddle::where('place_id', $sessionPlace->place_id)
+                        ->where('difficulty', $session->difficulty)
+                        ->whereNotIn('id', $solvedRiddleIds)
+                        ->get()
+                        ->sortBy(function($r) use ($session) {
+                            return md5($r->id . '_' . $session->id);
+                        })
+                        ->first();
+                    if ($placeRiddle) {
+                        $nextRiddleId = $placeRiddle->id;
+                        break;
+                    }
+                }
             }
 
             // 8. Achievements
@@ -250,6 +293,7 @@ class RiddleValidationController extends Controller
             return response()->json([
                 'score' => $scoreData['total'],
                 'is_finished' => $isFinished,
+                'next_riddle_id' => $nextRiddleId,
                 'session_id' => $session->id,
                 'details' => array_merge($scoreData, ['time_taken' => $timeTakenSeconds])
             ]);

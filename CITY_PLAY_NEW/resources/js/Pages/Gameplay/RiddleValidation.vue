@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { Head, router, Link } from '@inertiajs/vue3';
 import axios from 'axios';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
+import InputError from '@/Components/InputError.vue';
 
 const props = defineProps({
     riddle:          Object,
@@ -690,8 +691,7 @@ onUnmounted(() => {
                         <span class="text-xl font-black cp-text-primary">{{ Math.floor(resultData?.details?.time_taken / 60) }}m {{ resultData?.details?.time_taken % 60 }}s</span>
                     </div>
                 </div>
-                
-                <button @click="resultData?.is_finished ? router.visit(route('player.game-sessions.summary', resultData.session_id)) : router.visit(route('player.dashboard'))"
+                <button @click="resultData?.is_finished ? router.visit(route('player.game-sessions.summary', resultData.session_id)) : (resultData?.next_riddle_id ? router.visit(route('player.riddle.show', resultData.next_riddle_id)) : router.visit(route('player.dashboard')))"
                         class="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-white transition"
                         style="background: linear-gradient(135deg, #d65a31, #b84a24); box-shadow: 0 8px 28px rgba(214,90,49,0.4);">
                     {{ resultData?.is_finished ? 'Voir le bilan' : 'Continuer vers l\'étape suivante' }}

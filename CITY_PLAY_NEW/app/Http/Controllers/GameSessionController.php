@@ -43,7 +43,26 @@ class GameSessionController extends Controller
         }
 
         return Inertia::render('Gameplay/Map', [
-            'session' => $session,
+            'session' => tap($session, function($s) {
+                // Passer l'énigme courante pour le bouton "Jouer" sur la carte
+                if ($s && $s->status === 'active') {
+                    $currentPlace = $s->sessionPlaces()
+                        ->where('order_index', $s->current_place_index)
+                        ->first();
+                    if ($currentPlace) {
+                        $solvedIds = \App\Models\Score::where('game_session_id', $s->id)->pluck('riddle_id')->toArray();
+                        $riddle = \App\Models\Riddle::where('place_id', $currentPlace->place_id)
+                            ->where('difficulty', $s->difficulty)
+                            ->whereNotIn('id', $solvedIds)
+                            ->get()
+                            ->sortBy(function($r) use ($s) {
+                                return md5($r->id . '_' . $s->id);
+                            })
+                            ->first();
+                        $s->current_riddle = $riddle;
+                    }
+                }
+            }),
         ]);
     }
 
@@ -207,18 +226,19 @@ class GameSessionController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'city_id'          => 'required|exists:cities,id',
-            'team_members'     => 'required|integer|min:1|max:9',
-            'duration_minutes' => 'required|integer|min:20|max:480',
-            'locomotion'       => 'required|in:marche,velo,voiture',
-            'difficulty'       => 'required|in:force_1,force_2,force_3',
+        $request->validate([
+            'city_id' => 'required|exists:cities,id',
+            'difficulty' => 'nullable|in:facile,moyen,difficile',
+            'mode' => 'nullable|in:solo,collectif,mercenaire',
+            'start_place_id' => 'nullable|exists:places,id',
         ]);
 
         $user = $request->user();
-        $city = City::with(['places' => function ($query) {
-            $query->orderBy('order_index');
-        }])->findOrFail($validated['city_id']);
+        $city = City::with('places')->findOrFail($request->city_id);
+        $difficulty = $request->input('difficulty', 'moyen');
+        $inputMode = $request->input('mode', 'collectif');
+        $mode = $inputMode === 'solo' ? 'mercenaire' : $inputMode;
+        $startPlaceId = $request->input('start_place_id');
 
         // Vérifier si une session active existe déjà
         $activeSession = GameSession::whereHas('gamePlayers', function($query) use ($user) {
@@ -231,50 +251,60 @@ class GameSessionController extends Controller
             return redirect()->route('player.dashboard')->with('error', 'Vous avez déjà une partie en cours.');
         }
 
-        if ($city->places->count() === 0) {
-            return redirect()->route('player.dashboard')->with('error', 'Cette ville n\'a pas encore de lieux configurés.');
-        }
-
-        // 1. Calcul du nombre d'énigmes en fonction de la locomotion et de la durée
-        $factor = 30; // par défaut pieds / marche (30 min par étape)
-        if ($validated['locomotion'] === 'velo') {
-            $factor = 15; // velo (15 min par étape)
-        } elseif ($validated['locomotion'] === 'voiture') {
-            $factor = 10; // voiture (10 min par étape)
-        }
-
-        $calculatedCount = max(1, (int) floor($validated['duration_minutes'] / $factor));
-        $calculatedCount = min($calculatedCount, $city->places->count());
-
-        // Choisir les énigmes/lieux en fonction du classement effectué par la mairie (order_index)
-        $selectedPlaces = $city->places->take($calculatedCount);
-
-        return DB::transaction(function () use ($user, $city, $validated, $selectedPlaces) {
-            // Création de l'invitation liée à cette session de jeu personnalisée
+        return DB::transaction(function () use ($user, $city, $difficulty, $mode, $startPlaceId) {
+            // 1. Créer une invitation personnalisée pour cette ville
             $invitation = Invitation::create([
-                'city_id'          => $city->id,
-                'created_by'       => $user->id,
-                'token'            => (string) Str::uuid(),
-                'mode'             => 'collectif',
-                'difficulty'       => $validated['difficulty'],
-                'locomotion'       => $validated['locomotion'],
-                'max_players'      => 10,
-                'duration_minutes' => $validated['duration_minutes'],
+                'city_id' => $city->id,
+                'created_by' => $user->id,
+                'token' => (string) Str::uuid(),
+                'mode' => $mode,
+                'difficulty' => $difficulty,
+                'locomotion' => 'marche',
+                'max_players' => 10,
+                'duration_minutes' => $city->avg_duration_minutes ?? 120,
             ]);
+
+            // Filtre les lieux pour ne garder que ceux qui possèdent au moins une énigme de la difficulté choisie
+            $placesWithDifficulty = $city->places->filter(function($place) use ($difficulty) {
+                return \App\Models\Riddle::where('place_id', $place->id)
+                    ->where('difficulty', $difficulty)
+                    ->exists();
+            });
+
+            if ($placesWithDifficulty->isEmpty()) {
+                return redirect()->route('player.dashboard')->with('error', 'Cette ville n\'a pas de lieux configurés pour la difficulté choisie.');
+            }
+
+            // Déterminer le lieu unique pour cette session de jeu
+            $selectedPlace = null;
+            if ($startPlaceId) {
+                $selectedPlace = $placesWithDifficulty->firstWhere('id', $startPlaceId);
+            } else {
+                // Fallback si aucun lieu n'est explicitement cliqué : on prend le premier disponible
+                $selectedPlace = $placesWithDifficulty->shuffle()->first();
+            }
+
+            if (!$selectedPlace) {
+                return redirect()->route('player.dashboard')->with('error', 'Le lieu choisi n\'est pas disponible pour cette difficulté.');
+            }
+
+            // Une session de jeu est maintenant restreinte à un SEUL lieu (succession d'énigmes liée à ce lieu)
+            $totalPlaces = 1;
+            $startIndex = 0;
 
             // 2. Création de la session
             $session = GameSession::create([
-                'invitation_id'       => $invitation->id,
-                'city_id'             => $city->id,
-                'host_user_id'        => $user->id,
-                'mode'                => 'collectif',
-                'difficulty'          => $validated['difficulty'],
-                'locomotion'          => $validated['locomotion'],
-                'available_minutes'   => $validated['duration_minutes'],
-                'status'              => 'active',
-                'total_places'        => $selectedPlaces->count(),
-                'current_place_index' => 0,
-                'started_at'          => now(),
+                'invitation_id' => $invitation->id,
+                'city_id' => $city->id,
+                'host_user_id' => $user->id,
+                'mode' => $invitation->mode,
+                'difficulty' => $invitation->difficulty,
+                'locomotion' => $invitation->locomotion,
+                'available_minutes' => $invitation->duration_minutes,
+                'status' => 'active',
+                'total_places' => $totalPlaces,
+                'current_place_index' => $startIndex,
+                'started_at' => now(),
             ]);
 
             // 3. Ajout du joueur (Chef de l'équipe)
@@ -285,17 +315,71 @@ class GameSessionController extends Controller
                 'is_active'       => true,
             ]);
 
-            // 4. Initialisation des lieux de la session filtrés et ordonnés
-            foreach ($selectedPlaces as $index => $place) {
-                SessionPlace::create([
-                    'game_session_id' => $session->id,
-                    'place_id'        => $place->id,
-                    'order_index'     => $index,
-                    'is_completed'    => false,
-                ]);
+            // 4. Initialisation du lieu unique de la session
+            SessionPlace::create([
+                'game_session_id' => $session->id,
+                'place_id' => $selectedPlace->id,
+                'order_index' => 0,
+                'is_completed' => false,
+            ]);
+
+            // Redirection directe vers la première énigme de ce lieu
+            $riddle = \App\Models\Riddle::where('place_id', $selectedPlace->id)
+                ->where('difficulty', $session->difficulty)
+                ->get()
+                ->sortBy(function($r) use ($session) {
+                    return md5($r->id . '_' . $session->id);
+                })
+                ->first();
+            
+            if ($riddle) {
+                return redirect()->route('player.riddle.show', $riddle->id)->with('success', 'L\'aventure commence !');
             }
 
             return redirect()->route('player.dashboard')->with('success', 'Partie démarrée avec ' . $selectedPlaces->count() . ' énigmes calculées pour votre parcours !');
         });
+    }
+
+    /**
+     * Sélectionne librement un lieu sur la carte.
+     */
+    public function selectPlace(Request $request, GameSession $session)
+    {
+        $request->validate([
+            'place_id' => 'required|exists:places,id',
+        ]);
+
+        $user = $request->user();
+
+        // Trouver la SessionPlace correspondante
+        $sessionPlace = $session->sessionPlaces()
+            ->where('place_id', $request->place_id)
+            ->firstOrFail();
+
+        if ($sessionPlace->is_completed) {
+            return response()->json(['message' => 'Ce lieu a déjà été complété.'], 422);
+        }
+
+        // Mettre à jour l'index actuel de la session pour correspondre à l'index de ce lieu
+        $session->update([
+            'current_place_index' => $sessionPlace->order_index,
+        ]);
+
+        // Trouver la première énigme non résolue de ce lieu selon la difficulté de la session, mélangée de manière stable
+        $solvedRiddleIds = \App\Models\Score::where('game_session_id', $session->id)->pluck('riddle_id')->toArray();
+        $riddle = \App\Models\Riddle::where('place_id', $request->place_id)
+            ->where('difficulty', $session->difficulty)
+            ->whereNotIn('id', $solvedRiddleIds)
+            ->get()
+            ->sortBy(function($r) use ($session) {
+                return md5($r->id . '_' . $session->id);
+            })
+            ->first();
+
+        return response()->json([
+            'status' => 'success',
+            'current_place_index' => $session->current_place_index,
+            'next_riddle_id' => $riddle ? $riddle->id : null,
+        ]);
     }
 }
