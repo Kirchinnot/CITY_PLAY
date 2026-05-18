@@ -43,8 +43,9 @@ class GameSessionController extends Controller
     public function lobby(GameSession $session)
     {
         return Inertia::render('Game/Lobby', [
-            'session' => $session->load(['city', 'players', 'host']),
-            'currentUser' => auth()->user()
+            'session' => $session->load(['city', 'players', 'host', 'invitation']),
+            'currentUser' => auth()->user(),
+            'invitationUrl' => $this->invitationService->getInvitationUrl($session->invitation)
         ]);
     }
 

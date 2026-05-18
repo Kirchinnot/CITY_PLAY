@@ -1,15 +1,18 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import QRCodeDisplay from '@/Components/QRCodeDisplay.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { onMounted, onUnmounted, ref } from 'vue';
 
 const props = defineProps({
     session: Object,
-    currentUser: Object
+    currentUser: Object,
+    invitationUrl: String
 });
 
 const players = ref([...props.session.players]);
+const showQRModal = ref(false);
 
 const startForm = useForm({});
 
@@ -35,13 +38,11 @@ onMounted(() => {
             console.log('Joueurs présents:', users);
         })
         .joining((user) => {
-            // Ajouter le joueur s'il n'est pas déjà dans la liste locale
             if (!players.value.find(p => p.id === user.id)) {
                 players.value.push(user);
             }
         })
         .leaving((user) => {
-            // Optionnel: marquer comme déconnecté
         })
         .listen('PlayerJoined', (e) => {
             if (!players.value.find(p => p.id === e.user.id)) {
@@ -133,7 +134,14 @@ onUnmounted(() => {
                             </div>
 
                             <div v-if="isHost" class="space-y-4">
-                                <PrimaryButton 
+                                <PrimaryButton
+                                    @click="showQRModal = true"
+                                    class="w-full justify-center py-4 bg-cityplay-brown hover:bg-cityplay-yellow text-white font-black text-base rounded-2xl shadow-lg transform transition active:scale-95 border-b-4 border-black/20 uppercase"
+                                >
+                                    📱 Inviter des amis
+                                </PrimaryButton>
+
+                                <PrimaryButton
                                     @click="startSession"
                                     class="w-full justify-center py-6 bg-cityplay-orange hover:bg-cityplay-yellow text-white font-black text-xl rounded-2xl shadow-xl transform transition active:scale-95 border-b-8 border-cityplay-brown/20 uppercase"
                                     :class="{ 'opacity-25': startForm.processing }"
@@ -154,5 +162,31 @@ onUnmounted(() => {
                 </div>
             </div>
         </div>
+
+        <!-- QR Code Modal -->
+        <Teleport to="body">
+            <div v-if="showQRModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @click.self="showQRModal = false">
+                <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden transform transition-all">
+                    <div class="bg-cityplay-orange p-6 text-white text-center">
+                        <h3 class="text-2xl font-black uppercase tracking-tight">Invite tes amis !</h3>
+                        <p class="text-sm opacity-80 mt-1">Qu'ils scannent ce QR Code pour te rejoindre</p>
+                    </div>
+                    
+                    <div class="p-6 flex flex-col items-center">
+                        <QRCodeDisplay 
+                            :url="invitationUrl || route('game.join', { token: session.invitation?.token })"
+                            :size="220"
+                        />
+                        
+                        <button 
+                            @click="showQRModal = false"
+                            class="mt-6 w-full py-3 bg-gray-100 hover:bg-gray-200 text-cityplay-brown font-bold rounded-xl transition-colors uppercase text-sm"
+                        >
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AuthenticatedLayout>
 </template>
