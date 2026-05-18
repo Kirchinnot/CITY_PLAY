@@ -100,7 +100,7 @@ class GameSession extends Model
         return $this->hasMany(Score::class);
     }
 
-    /** Badges gagnés dans cette session */
+    /** Badges débloqués durant cette session */
     public function achievements(): HasMany
     {
         return $this->hasMany(Achievement::class);

@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
     place: Object,
@@ -68,6 +68,12 @@ const submit = () => {
 };
 
 const activeTab = ref('enfant');
+
+watch(activeTab, () => {
+    setTimeout(() => {
+        document.getElementById('mobile-riddle-preview-frame')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+});
 </script>
 
 <template>
@@ -290,7 +296,7 @@ const activeTab = ref('enfant');
                     </h3>
 
                     <!-- Simulated Smartphone Frame -->
-                    <div style="width: 100%; max-width: 340px; margin: 0 auto; background: var(--color-bg-dark); border: 10px solid #111; border-radius: var(--border-radius-xl); box-shadow: var(--shadow-premium); overflow: hidden; position: relative;">
+                    <div id="mobile-riddle-preview-frame" style="width: 100%; max-width: 340px; margin: 0 auto; background: var(--color-bg-dark); border: 10px solid #111; border-radius: var(--border-radius-xl); box-shadow: var(--shadow-premium); overflow: hidden; position: relative;">
                         <!-- Speaker notch -->
                         <div style="width: 110px; height: 18px; background: #111; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; margin: 0 auto; position: absolute; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; justify-content: center; align-items: center;">
                             <div style="width: 40px; height: 3px; background: #333; border-radius: 2px;"></div>

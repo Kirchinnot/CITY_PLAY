@@ -4,9 +4,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Premium Design System - Modern African (Benin) Premium Theme */
+/* ═══════════════════════════════════════════════════════════════
+   CITYPLAY THEME SYSTEM & PREMIUM BRAND SYSTEM
+   dark  → #1A1B26 bleu nuit
+   light → #F4F4F0 crème doux
+═══════════════════════════════════════════════════════════════ */
+
 :root {
-  /* Colors */
+  /* Brand Colors (Terracotta modern Benin theme) */
   --color-primary: #C85C32;          /* Terre cuite */
   --color-primary-dark: #8C2D19;     /* Rouge profond */
   --color-primary-light: #E26D37;    /* Orange chaud */
@@ -52,11 +57,81 @@
   --transition-bounce: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Global resets for the new UI */
+/* ── Variables dark (défaut) ── */
+:root,
+.theme-dark {
+    --bg-base:        #1A1B26;
+    --bg-surface:     #1e2030;
+    --bg-card:        #1e2030;
+    --bg-card-alt:    #181926;
+    --bg-header:      rgba(26, 27, 38, 0.88);
+    --bg-nav:         rgba(26, 27, 38, 0.92);
+
+    --text-primary:   #e8eaf0;
+    --text-secondary: rgba(232, 234, 240, 0.55);
+    --text-muted:     rgba(232, 234, 240, 0.25);
+
+    --border-subtle:  rgba(255, 255, 255, 0.06);
+    --border-card:    rgba(255, 255, 255, 0.07);
+
+    --orb-orange:     rgba(214, 90, 49, 0.10);
+    --orb-indigo:     rgba(99, 102, 241, 0.08);
+    --orb-violet:     rgba(139, 92, 246, 0.06);
+
+    --city-card-bg:   #181926;
+    --session-card-bg-from: #1e2030;
+    --session-card-bg-to:   #181926;
+
+    --input-bg:       rgba(255, 255, 255, 0.04);
+    --input-border:   rgba(255, 255, 255, 0.08);
+    --input-text:     #e8eaf0;
+}
+
+/* ── Variables light ── */
+.theme-light {
+    --bg-base:        #F4F4F0;
+    --bg-surface:     #EEEEE9;
+    --bg-card:        #FFFFFF;
+    --bg-card-alt:    #F0F0EB;
+    --bg-header:      rgba(244, 244, 240, 0.90);
+    --bg-nav:         rgba(244, 244, 240, 0.94);
+
+    --text-primary:   #1a1b26;
+    --text-secondary: rgba(26, 27, 38, 0.60);
+    --text-muted:     rgba(26, 27, 38, 0.35);
+
+    --border-subtle:  rgba(26, 27, 38, 0.08);
+    --border-card:    rgba(26, 27, 38, 0.10);
+
+    --orb-orange:     rgba(214, 90, 49, 0.07);
+    --orb-indigo:     rgba(99, 102, 241, 0.05);
+    --orb-violet:     rgba(139, 92, 246, 0.04);
+
+    --city-card-bg:   #FFFFFF;
+    --session-card-bg-from: #FFFFFF;
+    --session-card-bg-to:   #F4F4F0;
+
+    --input-bg:       rgba(26, 27, 38, 0.04);
+    --input-border:   rgba(26, 27, 38, 0.12);
+    --input-text:     #1a1b26;
+}
+
+/* ── Transition globale douce ── */
+html {
+    transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+/* ── Scrollbar thémée ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: rgba(214, 90, 49, 0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(214, 90, 49, 0.5); }
+
+/* ── Global Styles ── */
 body {
   font-family: var(--font-family-sans);
-  background-color: var(--color-bg-light);
-  color: var(--color-text-main);
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -65,8 +140,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
 }
 
-/* Premium UI Utility Classes */
-
+/* ── Premium UI Utility Classes ── */
 .premium-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -74,10 +148,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .premium-card {
-  background: var(--color-surface-light);
+  background: var(--bg-card);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--border-card);
   padding: 1.5rem;
   transition: all var(--transition-normal);
   position: relative;
@@ -89,17 +163,15 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: var(--shadow-premium);
 }
 
-/* Glassmorphism effects */
 .premium-glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-lg);
   border-radius: var(--border-radius-xl);
 }
 
-/* Buttons */
 .premium-btn {
   display: inline-flex;
   align-items: center;
@@ -117,7 +189,7 @@ h1, h2, h3, h4, h5, h6 {
 .premium-btn-primary {
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: white;
-  box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 6px rgba(200, 92, 50, 0.3);
 }
 
 .premium-btn-primary:hover {
@@ -147,13 +219,13 @@ h1, h2, h3, h4, h5, h6 {
   color: white;
 }
 
-/* Form inputs */
 .premium-input {
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: var(--border-radius-md);
-  border: 1px solid var(--border-color);
-  background: #fff;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--input-text);
   transition: all var(--transition-fast);
   font-family: var(--font-family-sans);
   font-size: 0.95rem;
@@ -162,18 +234,17 @@ h1, h2, h3, h4, h5, h6 {
 .premium-input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 0 3px rgba(200, 92, 50, 0.2);
 }
 
 .premium-label {
   display: block;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: var(--color-text-main);
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
-/* Badges */
 .premium-badge {
   display: inline-flex;
   align-items: center;
@@ -188,43 +259,3 @@ h1, h2, h3, h4, h5, h6 {
 .badge-success { background: var(--color-success-bg); color: var(--color-success); }
 .badge-warning { background: var(--color-warning-bg); color: var(--color-warning); }
 .badge-danger { background: var(--color-danger-bg); color: var(--color-danger); }
-
-/* Modals */
-.premium-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  animation: fadeIn var(--transition-fast) forwards;
-}
-
-.premium-modal-content {
-  background: var(--color-surface-light);
-  border-radius: var(--border-radius-xl);
-  box-shadow: var(--shadow-premium);
-  width: 100%;
-  max-width: 600px;
-  padding: 2rem;
-  transform: scale(0.95);
-  opacity: 0;
-  animation: modalIn var(--transition-bounce) forwards;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-/* Animations */
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
-
-@keyframes modalIn {
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}

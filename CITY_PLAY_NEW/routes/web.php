@@ -2,33 +2,43 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\RiddleValidationController;
 use App\Http\Controllers\GameSessionController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+/*
+|--------------------------------------------------------------------------
+| Page d'accueil publique
+|--------------------------------------------------------------------------
+*/
+Route::get('/', fn () => Inertia::render('Welcome', [
+    'canLogin'       => Route::has('login'),
+    'canRegister'    => Route::has('register'),
+    'laravelVersion' => Application::VERSION,
+    'phpVersion'     => PHP_VERSION,
+]));
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-// Routes d'invitation publiques (Entrée du jeu)
+/*
+|--------------------------------------------------------------------------
+| Routes d'invitation publiques (Entrée du jeu)
+|--------------------------------------------------------------------------
+*/
 Route::get('/join/{token}', [InvitationController::class, 'join'])->name('game.join');
 
+/*
+|--------------------------------------------------------------------------
+| Routes Authentifiées de Session de Jeu & Administration des invitations
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth')->group(function () {
+    // Profil utilisateur générique
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Routes de session de jeu
+    // Sessions de jeu
     Route::prefix('game')->name('game.')->group(function () {
         Route::post('/join/{token}', [GameSessionController::class, 'join'])->name('session.join');
         Route::get('/lobby/{session}', [GameSessionController::class, 'lobby'])->name('lobby');
@@ -38,14 +48,51 @@ Route::middleware('auth')->group(function () {
         Route::get('/map/{session}', function() { return Inertia::render('Game/Map'); })->name('map');
     });
 
-    // Routes d'administration des invitations
+    // Administration des invitations de jeu
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/cities/{city}/invitations/create', [InvitationController::class, 'create'])->name('invitations.create');
         Route::post('/cities/{city}/invitations', [InvitationController::class, 'store'])->name('invitations.store');
     });
 });
 
-// Admin → Gestion du contenu (Énigmes)
+/*
+|--------------------------------------------------------------------------
+| Routes joueur  →  préfixe /player (Dashboard, Énigmes et Gameplay en cours)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('player')
+    ->middleware(['auth', 'verified'])
+    ->name('player.')
+    ->group(function () {
+        // Dashboard joueur
+        Route::get('/dashboard', fn () => Inertia::render('Dashboard'))->name('dashboard');
+
+        // Profil joueur
+        Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+        // Énigmes
+        Route::get('/riddles/{riddle}',              [RiddleValidationController::class, 'show'])->name('riddle.show');
+        Route::post('/riddles/{riddle}/validate',    [RiddleValidationController::class, 'validate'])->middleware('verify.speed')->name('riddle.validate');
+        Route::post('/riddles/{riddle}/unlock-hint', [RiddleValidationController::class, 'unlockHint'])->name('riddle.unlock-hint');
+
+        // Sessions de jeu gameplay
+        Route::post('/game-sessions',                    [GameSessionController::class, 'store'])->name('game-sessions.store');
+        Route::get('/game-sessions/{session}/summary',   [GameSessionController::class, 'summary'])->name('game-sessions.summary');
+        Route::post('/game-sessions/{session}/pause',    [GameSessionController::class, 'pause'])->name('game-sessions.pause');
+        Route::post('/game-sessions/{session}/resume',   [GameSessionController::class, 'resume'])->name('game-sessions.resume');
+        Route::post('/game-sessions/{session}/abandon',  [GameSessionController::class, 'abandon'])->name('game-sessions.abandon');
+
+        // Carte
+        Route::get('/map', [GameSessionController::class, 'map'])->name('game.map');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Admin → Gestion du contenu (Villes, Lieux, Énigmes)
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
     // Villes / Parcours
     Route::get('/cities', [\App\Http\Controllers\Admin\CityController::class, 'index'])->name('cities.index');
@@ -65,5 +112,12 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::get('/places/{place}/riddles', [\App\Http\Controllers\Admin\RiddleController::class, 'index'])->name('riddles.index');
     Route::post('/places/{place}/riddles', [\App\Http\Controllers\Admin\RiddleController::class, 'store'])->name('riddles.store');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Redirection rétro-compatible  /dashboard  →  /player/dashboard
+|--------------------------------------------------------------------------
+*/
+Route::redirect('/dashboard', '/player/dashboard')->middleware(['auth', 'verified']);
 
 require __DIR__.'/auth.php';
