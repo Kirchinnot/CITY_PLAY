@@ -51,18 +51,17 @@ class HandleInertiaRequests extends Middleware
                     ->first();
                 
                 if ($currentPlace) {
-                    // On récupère la première énigme de ce lieu selon la difficulté de la session
-                    // Si aucune énigme de cette difficulté, on prend la première disponible
+                    // Récupérer les IDs des énigmes déjà résolues dans cette session
+                    $solvedRiddleIds = \App\Models\Score::where('game_session_id', $session->id)
+                        ->pluck('riddle_id')
+                        ->toArray();
+
+                    // On récupère la première énigme non résolue de ce lieu selon la difficulté de la session
                     $riddle = \App\Models\Riddle::where('place_id', $currentPlace->place_id)
                         ->where('difficulty', $session->difficulty)
+                        ->whereNotIn('id', $solvedRiddleIds)
                         ->with(['hints', 'images'])
                         ->first();
-
-                    if (!$riddle) {
-                        $riddle = \App\Models\Riddle::where('place_id', $currentPlace->place_id)
-                            ->with(['hints', 'images'])
-                            ->first();
-                    }
 
                     $session->current_riddle = $riddle;
                 }
@@ -74,15 +73,35 @@ class HandleInertiaRequests extends Middleware
             }
 
             // Liste des villes disponibles pour l'accueil
-            $cities = \App\Models\City::withCount('places')->get()->map(function($city) {
+            $cities = \App\Models\City::with(['places.riddles'])->withCount('places')->get()->map(function($city) {
                 return [
                     'id' => $city->id,
                     'name' => $city->name,
+                    'description' => $city->description,
                     'riddles' => $city->places_count, // Nombre de lieux/énigmes
                     'duration' => '2h', // À dynamiser plus tard si besoin
                     'tag' => 'Découverte',
                     'color' => 'bg-blue-900/40',
-                    'icon' => 'M12 2L2 7l10 5 10-5-10-5z'
+                    'icon' => 'M12 2L2 7l10 5 10-5-10-5z',
+                    'places' => $city->places->map(function($place) {
+                        return [
+                            'id' => $place->id,
+                            'name' => $place->name,
+                            'description' => $place->description,
+                            'validation_radius' => $place->validation_radius,
+                            'estimated_time_min' => $place->estimated_time_min,
+                            'order_index' => $place->order_index,
+                            'riddles' => $place->riddles->map(function($riddle) {
+                                return [
+                                    'id' => $riddle->id,
+                                    'title' => $riddle->title,
+                                    'difficulty' => $riddle->difficulty,
+                                    'points_base' => $riddle->points_base,
+                                    'time_limit_seconds' => $riddle->time_limit_seconds,
+                                ];
+                            })
+                        ];
+                    })
                 ];
             });
 

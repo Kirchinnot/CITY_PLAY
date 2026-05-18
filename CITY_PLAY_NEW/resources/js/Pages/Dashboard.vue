@@ -44,12 +44,47 @@ const orb2Ref         = ref(null);
 const setCityCardRef = (el, i) => { if (el) cityCardsRef.value[i] = el; };
 
 // ── Démarrer une session ──────────────────────────────────────────────────────
-const startSessionForm = useForm({ city_id: null });
-const startSession = (cityId) => {
-    if (confirm('Voulez-vous démarrer une nouvelle aventure dans cette ville ?')) {
-        startSessionForm.city_id = cityId;
-        startSessionForm.post(route('player.game-sessions.store'));
-    }
+const startSessionForm = useForm({
+    city_id: null,
+    difficulty: null,
+    mode: null,
+    start_place_id: null
+});
+const showConfirmModal = ref(false);
+const selectedCityId   = ref(null);
+const selectedCityName = ref('');
+
+const selectedCity = computed(() => {
+    return cities.value?.find(c => c.id === selectedCityId.value) || null;
+});
+
+const confirmStartSession = (cityId) => {
+    if (!cityId) return;
+    const parsedId = parseInt(cityId);
+    const city = cities.value.find(c => c.id === parsedId);
+    selectedCityId.value = parsedId;
+    selectedCityName.value = city ? city.name : 'cette ville';
+    
+    // Réinitialiser les paramètres pour obliger la configuration par le joueur
+    startSessionForm.difficulty = null;
+    startSessionForm.mode = null;
+    startSessionForm.start_place_id = null;
+    
+    showConfirmModal.value = true;
+};
+
+const executeStartSession = () => {
+    startSessionForm.city_id = selectedCityId.value;
+    startSessionForm.start_place_id = null;
+    startSessionForm.post(route('player.game-sessions.store'));
+};
+
+
+const startSessionAtPlace = (place) => {
+    if (startSessionForm.processing) return;
+    startSessionForm.city_id = selectedCityId.value;
+    startSessionForm.start_place_id = place.id;
+    startSessionForm.post(route('player.game-sessions.store'));
 };
 
 // ── Palettes villes ───────────────────────────────────────────────────────────
@@ -289,11 +324,23 @@ const animateToggle = () => {
                     <p class="text-sm cp-text-secondary font-medium mb-6 leading-relaxed">
                         Choisis une ville ci-dessous et<br>lance ton aventure urbaine.
                     </p>
-                    <div class="flex items-center justify-center gap-2 text-[#d65a31]">
-                        <span class="text-[11px] font-black uppercase tracking-[0.2em]">Sélectionne une ville</span>
-                        <svg class="w-4 h-4 animate-bounce-down" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-                        </svg>
+                    <!-- Sélecteur de ville fonctionnel et magnifique -->
+                    <div class="relative w-full max-w-xs mx-auto mt-2">
+                        <select
+                            @change="e => confirmStartSession(e.target.value)"
+                            class="w-full h-11 px-4 rounded-2xl bg-transparent border border-[#d65a31]/30 text-[#d65a31] text-xs font-black uppercase tracking-widest outline-none text-center appearance-none cursor-pointer hover:bg-[#d65a31]/5 transition"
+                            style="text-align-last: center;"
+                        >
+                            <option value="" disabled selected>Sélectionne une ville</option>
+                            <option v-for="city in cities" :key="city.id" :value="city.id" class="bg-[#1c1816] text-[#d65a31] font-bold">
+                                {{ city.name }}
+                            </option>
+                        </select>
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#d65a31]">
+                            <svg class="w-4 h-4 animate-bounce-down" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -323,7 +370,7 @@ const animateToggle = () => {
                         v-for="(city, i) in cities"
                         :key="city.id"
                         :ref="el => setCityCardRef(el, i)"
-                        @click="startSession(city.id)"
+                        @click="confirmStartSession(city.id)"
                         class="city-card group relative rounded-[22px] overflow-hidden text-left focus:outline-none"
                         :style="{ '--accent': cityAccents[i % cityAccents.length] }"
                         style="min-height: 172px;"
@@ -378,6 +425,184 @@ const animateToggle = () => {
                 </div>
             </div>
         </div>
+
+        <!-- ══ CONFIRMATION DÉMARRAGE DE PARTIE (overlay premium) ══ -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition-all duration-200"
+                enter-from-class="opacity-0 scale-95"
+                leave-active-class="transition-all duration-150"
+                leave-to-class="opacity-0 scale-95"
+            >
+                <div v-if="showConfirmModal" class="fixed inset-0 z-[90] flex items-center justify-center p-6"
+                     style="background: rgba(13,17,23,0.85); backdrop-filter: blur(12px);">
+                    <div class="confirm-modal w-full max-w-md rounded-[32px] p-6 text-center border relative"
+                         style="background: var(--bg-card); border-color: var(--border-card); box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4);">
+                        
+                        <!-- Header Ville -->
+                        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3.5"
+                             style="background: rgba(214, 90, 49, 0.1); border: 1px solid rgba(214, 90, 49, 0.2);">
+                            <svg class="w-7 h-7 text-[#d65a31]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        
+                        <h3 class="text-xl font-black cp-text-primary mb-1">{{ selectedCityName }}</h3>
+                        
+                        <p v-if="selectedCity?.description" class="text-xs cp-text-secondary font-medium mb-5 px-3 leading-relaxed">
+                            {{ selectedCity.description }}
+                        </p>
+                        
+                        <!-- Erreurs de validation du formulaire -->
+                        <div v-if="startSessionForm.hasErrors" class="mb-4 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-left">
+                            <p class="text-[9px] font-black uppercase tracking-wider mb-1">Erreur de lancement :</p>
+                            <ul class="list-disc pl-4 text-[9px] font-bold text-red-400 space-y-0.5">
+                                <li v-for="(error, key) in startSessionForm.errors" :key="key">{{ error }}</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Ligne de séparation -->
+                        <div class="h-[1px] w-full mb-4" style="background: var(--border-subtle);"></div>
+
+                        <!-- Paramètres de partie -->
+                        <div class="space-y-4 mb-5 text-left bg-[var(--input-bg)] p-4 rounded-2xl border border-[var(--border-subtle)]">
+                            <div class="text-[10px] font-black uppercase tracking-widest text-[#d65a31] mb-1">
+                                Configuration de l'aventure
+                            </div>
+                            
+                            <!-- Choix du Mode -->
+                            <div class="space-y-1.5">
+                                <label class="text-[9px] font-black uppercase tracking-wider cp-text-muted">Mode de jeu</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button v-for="m in [
+                                                { id: 'solo', label: 'Solo', desc: 'Score perso' },
+                                                { id: 'collectif', label: 'Équipe', desc: 'Score commun' },
+                                                { id: 'mercenaire', label: 'Rival', desc: 'Mercenaire' }
+                                            ]" 
+                                            :key="m.id"
+                                            type="button"
+                                            @click="startSessionForm.mode = m.id"
+                                            class="p-2 rounded-xl border text-center transition flex flex-col items-center justify-center"
+                                            :class="startSessionForm.mode === m.id 
+                                                ? 'border-[#d65a31] bg-[#d65a31]/10 text-white' 
+                                                : 'border-[var(--border-card)] bg-[var(--bg-card)] cp-text-secondary hover:border-gray-500'">
+                                        <span class="text-[10px] font-black uppercase tracking-wider">{{ m.label }}</span>
+                                        <span class="text-[7px] font-bold cp-text-muted mt-0.5">{{ m.desc }}</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Choix de la Difficulté -->
+                            <div class="space-y-1.5">
+                                <label class="text-[9px] font-black uppercase tracking-wider cp-text-muted">Difficulté</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button v-for="d in [
+                                                { id: 'facile', label: 'Facile', color: 'text-green-500' },
+                                                { id: 'moyen', label: 'Moyen', color: 'text-amber-500' },
+                                                { id: 'difficile', label: 'Difficile', color: 'text-red-500' }
+                                            ]" 
+                                            :key="d.id"
+                                            type="button"
+                                            @click="startSessionForm.difficulty = d.id"
+                                            class="p-2 rounded-xl border text-center transition flex flex-col items-center justify-center"
+                                            :class="startSessionForm.difficulty === d.id 
+                                                ? 'border-[#d65a31] bg-[#d65a31]/10 text-white' 
+                                                : 'border-[var(--border-card)] bg-[var(--bg-card)] cp-text-secondary hover:border-gray-500'">
+                                        <span class="text-[10px] font-black uppercase tracking-wider" :class="d.color">{{ d.label }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── ÉTAPE 2 : SÉLECTION DU LIEU DE DÉPART ── -->
+                        <Transition
+                            enter-active-class="transition-all duration-300 ease-out"
+                            enter-from-class="opacity-0 translate-y-4"
+                            leave-active-class="transition-all duration-200 ease-in"
+                            leave-to-class="opacity-0 translate-y-4"
+                        >
+                            <div v-if="startSessionForm.mode && startSessionForm.difficulty" class="space-y-3 text-left">
+                                <!-- Ligne de séparation -->
+                                <div class="h-[1px] w-full mb-4" style="background: var(--border-subtle);"></div>
+                                
+                                <!-- Titre Liste des Lieux -->
+                                <div class="flex items-center justify-between mb-3.5 px-1">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-[#d65a31]">Lieux à explorer</span>
+                                    <span class="text-[10px] font-black uppercase tracking-widest cp-text-muted">
+                                        {{ selectedCity?.places?.filter(p => p.riddles.some(r => r.difficulty === startSessionForm.difficulty)).length || 0 }} étapes
+                                    </span>
+                                </div>
+                                
+                                <!-- Liste des Lieux (Vertical Timeline Roadmap) -->
+                                <div v-if="selectedCity?.places?.filter(p => p.riddles.some(r => r.difficulty === startSessionForm.difficulty)).length" class="text-left mb-6 max-h-[360px] overflow-y-auto pr-1.5 space-y-5 custom-scrollbar">
+                                    <div v-for="(place, index) in selectedCity.places.filter(p => p.riddles.some(r => r.difficulty === startSessionForm.difficulty))" 
+                                         :key="place.id" 
+                                         @click="startSessionAtPlace(place)"
+                                         class="flex gap-3.5 items-start relative group p-2.5 rounded-2xl border border-transparent hover:border-[#d65a31]/20 hover:bg-[#d65a31]/5 cursor-pointer transition-all duration-200">
+                                        <!-- Connecting vertical line -->
+                                        <div v-if="index < selectedCity.places.filter(p => p.riddles.some(r => r.difficulty === startSessionForm.difficulty)).length - 1" class="absolute left-[13px] top-6 bottom-[-18px] w-[2px]" 
+                                             style="background: linear-gradient(to bottom, rgba(214, 90, 49, 0.4) 0%, rgba(214, 90, 49, 0.05) 100%);"></div>
+                                        
+                                        <!-- Bullet Point Number / Loading Spinner -->
+                                        <div class="w-7 h-7 rounded-xl shrink-0 flex items-center justify-center text-[10px] font-black text-white shadow-md transition-all duration-200 group-hover:scale-105"
+                                             :style="startSessionForm.processing && startSessionForm.start_place_id === place.id
+                                                 ? 'background: linear-gradient(135deg, #3b82f6, #60a5fa); box-shadow: 0 4px 12px rgba(59,130,246,0.3);'
+                                                 : 'background: linear-gradient(135deg, #d65a31, #f07040); box-shadow: 0 4px 12px rgba(214,90,49,0.3);'">
+                                            <svg v-if="startSessionForm.processing && startSessionForm.start_place_id === place.id" class="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                            </svg>
+                                            <span v-else>{{ index + 1 }}</span>
+                                        </div>
+                                        
+                                        <!-- Location Description & Details -->
+                                        <div class="flex-1 pt-0.5">
+                                            <div class="flex items-center justify-between gap-2 flex-wrap mb-1">
+                                                <h4 class="text-xs font-black cp-text-primary leading-tight transition-colors duration-200 group-hover:text-[#d65a31]">{{ place.name }}</h4>
+                                                <div class="flex items-center gap-1.5">
+                                                    <span v-if="place.estimated_time_min" class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black bg-[#d65a31]/10 text-[#d65a31] border border-[#d65a31]/15">
+                                                        ⏱ {{ place.estimated_time_min }} min
+                                                    </span>
+                                                    <span v-if="place.validation_radius" class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black bg-blue-500/10 text-blue-500 border border-blue-500/15">
+                                                        📍 Rayon : {{ place.validation_radius }}m
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <p v-if="place.description" class="text-[10px] cp-text-secondary font-medium leading-relaxed mb-2.5">
+                                                {{ place.description }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-else class="text-center py-6 cp-text-muted text-xs font-bold uppercase tracking-wider">
+                                    Aucun lieu configuré pour cette ville.
+                                </div>
+                            </div>
+                        </Transition>
+                        
+                        <!-- Ligne de séparation -->
+                        <div class="h-[1px] w-full mb-5" style="background: var(--border-subtle);"></div>
+                        
+                        <!-- Actions -->
+                        <div class="flex gap-3">
+                            <button @click="showConfirmModal = false" class="flex-1 h-11 rounded-2xl text-xs font-black uppercase tracking-widest cp-text-secondary transition"
+                                    style="background: var(--input-bg); border: 1px solid var(--border-subtle);">
+                                Retour
+                            </button>
+                            <button @click="executeStartSession" :disabled="startSessionForm.processing || !selectedCity?.places?.length || !startSessionForm.mode || !startSessionForm.difficulty"
+                                    class="flex-1 h-11 rounded-2xl text-xs font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 transition cta-btn disabled:opacity-50 disabled:cursor-not-allowed">
+                                <svg v-if="startSessionForm.processing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                </svg>
+                                <span>{{ startSessionForm.processing ? 'Lancement...' : 'C\'est parti' }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
     </component>
 </template>
 
@@ -510,4 +735,19 @@ const animateToggle = () => {
     75%, 100% { transform: scale(2.2); opacity: 0; }
 }
 .animate-ping { animation: ping 1.3s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+/* ── Custom Scrollbar ── */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(214, 90, 49, 0.3);
+    border-radius: 99px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(214, 90, 49, 0.55);
+}
 </style>

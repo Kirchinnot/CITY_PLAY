@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import axios from 'axios';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
 
 const props = defineProps({
@@ -13,6 +14,9 @@ let userMarker = null;
 let watchId = null;
 const userLocation = ref(null);
 const geoError = ref(null);
+
+const selectedMapPlace = ref(null);
+const isSelectingPlace = ref(false);
 
 const places = computed(() => {
     if (!props.session?.session_places) return [];
@@ -29,6 +33,89 @@ const places = computed(() => {
 const currentPlace = computed(() => {
     return places.value.find(p => p.order_index === props.session.current_place_index);
 });
+
+let placeMarkers = [];
+
+const drawPlaces = () => {
+    // Supprimer les anciens marqueurs s'ils existent
+    placeMarkers.forEach(marker => {
+        if (map) {
+            map.removeLayer(marker);
+        }
+    });
+    placeMarkers = [];
+
+    // Ajouter les lieux de la session
+    places.value.forEach(place => {
+        const isCurrent = place.order_index === props.session.current_place_index;
+        const color = place.is_completed ? '#10b981' : (isCurrent ? '#d65a31' : '#4b5563');
+        const size = isCurrent ? 16 : 12;
+        
+        // Place utilise lat/lng
+        const placeLat = place.lat ?? place.latitude;
+        const placeLng = place.lng ?? place.longitude;
+
+        if (!placeLat || !placeLng) return; // Ignorer les lieux sans coordonnées
+        
+        const icon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div class="w-10 h-10 flex items-center justify-center relative cursor-pointer" style="pointer-events: auto;">
+                ${isCurrent ? `<div class="absolute w-8 h-8 bg-[#d65a31]/35 rounded-full animate-pulse"></div>` : ''}
+                <div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 15px ${color}"></div>
+            </div>`,
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+        });
+
+        const marker = L.marker([placeLat, placeLng], { icon }).addTo(map);
+        
+        // Au clic sur le marqueur, on définit le lieu sélectionné
+        marker.on('click', () => {
+            selectedMapPlace.value = place;
+        });
+
+        placeMarkers.push(marker);
+    });
+};
+
+const selectThisPlace = async (place) => {
+    if (isSelectingPlace.value) return;
+    isSelectingPlace.value = true;
+    try {
+        const response = await axios.post(route('player.game-sessions.select-place', props.session.id), {
+            place_id: place.id
+        });
+        
+        const data = response.data;
+        if (data.next_riddle_id) {
+            // Lance immédiatement la succession d'énigmes du lieu sélectionné !
+            router.visit(route('player.riddle.show', data.next_riddle_id));
+        } else {
+            // Recharger les props de la session de manière transparente
+            router.reload({
+                only: ['session'],
+                onSuccess: () => {
+                    const updated = places.value.find(p => p.id === place.id);
+                    if (updated) {
+                        selectedMapPlace.value = updated;
+                    }
+                }
+            });
+        }
+    } catch (e) {
+        console.error("Erreur sélection lieu:", e);
+        alert(e.response?.data?.message || "Impossible de sélectionner ce lieu.");
+    } finally {
+        isSelectingPlace.value = false;
+    }
+};
+
+// Réagir dynamiquement aux modifications des lieux ou de l'index actuel
+watch(places, () => {
+    if (map) {
+        drawPlaces();
+    }
+}, { deep: true });
 
 const initMap = () => {
     if (!mapContainer.value) return;
@@ -59,37 +146,8 @@ const initMap = () => {
     const mapEl = mapContainer.value;
     mapEl.style.filter = 'none';
 
-    // Ajouter les lieux de la session
-    places.value.forEach(place => {
-        const isCurrent = place.order_index === props.session.current_place_index;
-        const color = place.is_completed ? '#10b981' : (isCurrent ? '#d65a31' : '#4b5563');
-        const size = isCurrent ? 16 : 12;
-        
-        // Place utilise lat/lng
-        const placeLat = place.lat ?? place.latitude;
-        const placeLng = place.lng ?? place.longitude;
-
-        if (!placeLat || !placeLng) return; // Ignorer les lieux sans coordonnées
-        
-        const icon = L.divIcon({
-            className: 'custom-div-icon',
-            html: `<div class="relative">
-                ${isCurrent ? `<div class="absolute -inset-2 bg-[#d65a31]/40 rounded-full animate-pulse"></div>` : ''}
-                <div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 15px ${color}"></div>
-            </div>`,
-            iconSize: [size, size],
-            iconAnchor: [size/2, size/2]
-        });
-
-        L.marker([placeLat, placeLng], { icon })
-            .addTo(map)
-            .bindPopup(`<div class="p-1 font-sans">
-                <b class="text-gray-900 block border-b mb-1">${place.name}</b>
-                <span class="text-[10px] uppercase font-black ${place.is_completed ? 'text-green-600' : (isCurrent ? 'text-[#d65a31]' : 'text-gray-500')}">
-                    ${place.is_completed ? '✓ Découvert' : (isCurrent ? '● Objectif actuel' : '○ À venir')}
-                </span>
-            </div>`);
-    });
+    // Dessiner les lieux de la session
+    drawPlaces();
 
     startWatchingLocation();
 };
@@ -221,6 +279,78 @@ onUnmounted(() => {
                 </div>
             </div>
 
+            <!-- Floating Place Details Card -->
+            <Transition
+                enter-active-class="transition-all duration-300 ease-out"
+                enter-from-class="opacity-0 translate-y-10 scale-95"
+                leave-active-class="transition-all duration-200 ease-in"
+                leave-to-class="opacity-0 translate-y-10 scale-95"
+            >
+                <div v-if="selectedMapPlace" class="absolute bottom-20 left-4 right-4 z-10 max-w-sm mx-auto">
+                    <div class="bg-[#1c2128]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl relative overflow-hidden">
+                        
+                        <!-- Close button -->
+                        <button @click="selectedMapPlace = null" class="absolute top-3 right-3 text-gray-400 hover:text-white transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+
+                        <div class="mb-3.5">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-[#d65a31] block mb-1">
+                                {{ selectedMapPlace.is_completed ? 'Lieu Découvert' : 'Lieu À Explorer' }}
+                            </span>
+                            <h3 class="text-base font-black text-white leading-tight pr-6">{{ selectedMapPlace.name }}</h3>
+                        </div>
+
+                        <p v-if="selectedMapPlace.description" class="text-[11px] text-gray-300 font-medium leading-relaxed mb-4 line-clamp-3">
+                            {{ selectedMapPlace.description }}
+                        </p>
+
+                        <!-- Place Stats Badges -->
+                        <div class="flex items-center gap-2 flex-wrap mb-4">
+                            <span v-if="selectedMapPlace.estimated_time_min" class="inline-flex items-center px-2 py-0.5 rounded text-[8px] font-black bg-[#d65a31]/10 text-[#d65a31] border border-[#d65a31]/15">
+                                ⏱ {{ selectedMapPlace.estimated_time_min }} min
+                            </span>
+                            <span v-if="selectedMapPlace.validation_radius" class="inline-flex items-center px-2 py-0.5 rounded text-[8px] font-black bg-blue-500/10 text-blue-500 border border-blue-500/15">
+                                📍 Rayon : {{ selectedMapPlace.validation_radius }}m
+                            </span>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex items-center gap-2.5">
+                            <div v-if="selectedMapPlace.is_completed" class="w-full h-11 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                                <span>✓ Découvert avec succès</span>
+                            </div>
+                            
+                            <template v-else>
+                                <!-- Si c'est l'objectif actuel, on affiche Jouer -->
+                                <Link v-if="selectedMapPlace.order_index === session.current_place_index && session.current_riddle"
+                                      :href="route('player.riddle.show', session.current_riddle.id)"
+                                      class="w-full h-11 bg-[#d65a31] hover:bg-[#b84a26] text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg flex items-center justify-center gap-1.5 transition-all">
+                                    <span>Résoudre les énigmes</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                    </svg>
+                                </Link>
+                                
+                                <!-- Si ce n'est pas l'objectif actuel, on affiche Sélectionner -->
+                                <button v-else
+                                        @click="selectThisPlace(selectedMapPlace)"
+                                        :disabled="isSelectingPlace"
+                                        class="w-full h-11 bg-white hover:bg-gray-100 text-gray-900 text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-50">
+                                    <span v-if="!isSelectingPlace">Sélectionner comme objectif</span>
+                                    <svg v-else class="animate-spin w-4 h-4 text-gray-900" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                    </svg>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+
             <!-- Geolocation Error -->
             <div v-if="geoError" class="absolute top-24 left-4 right-4 z-10 bg-red-500/90 backdrop-blur text-white p-3 rounded-xl text-center text-[10px] font-black uppercase tracking-widest">
                 {{ geoError }}
@@ -232,6 +362,10 @@ onUnmounted(() => {
 <style>
 .leaflet-container {
     background: #0f111a !important;
+}
+.custom-div-icon {
+    background: transparent !important;
+    border: none !important;
 }
 .no-scrollbar::-webkit-scrollbar {
     display: none;
