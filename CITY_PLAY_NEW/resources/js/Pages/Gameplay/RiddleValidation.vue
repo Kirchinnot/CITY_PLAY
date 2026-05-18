@@ -551,3 +551,159 @@ onUnmounted(() => {
 
     </PlayerLayout>
 </template>
+
+<style scoped>
+/* ── Textes thémés ── */
+.cp-text-primary   { color: var(--text-primary); }
+.cp-text-secondary { color: var(--text-secondary); }
+.cp-text-muted     { color: var(--text-muted); }
+
+/* ── Bouton pause (header) ── */
+.pause-btn {
+    width: 36px; height: 36px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--input-bg);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.pause-btn:hover { background: var(--bg-surface); color: var(--text-primary); }
+.pause-btn-active {
+    background: rgba(245,158,11,0.15);
+    border-color: rgba(245,158,11,0.3);
+    color: #f59e0b;
+}
+
+/* ── Bannière pause ── */
+.pause-banner {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.2);
+}
+.resume-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 36px; padding: 0 16px; border-radius: 12px;
+    font-size: 12px; font-weight: 900;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: #fff;
+    background: linear-gradient(135deg, #d65a31, #b84a24);
+    box-shadow: 0 4px 14px rgba(214,90,49,0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.resume-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(214,90,49,0.45); }
+.resume-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Carte énigme ── */
+.riddle-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    transition: background 0.35s, opacity 0.3s;
+}
+
+/* ── QCM ── */
+.qcm-btn {
+    width: 100%; height: 56px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: 16px;
+    color: var(--text-primary);
+    padding: 0 20px;
+    font-weight: 700;
+    text-align: left;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: border-color 0.2s, background 0.2s;
+}
+.qcm-btn:hover:not(:disabled) { border-color: rgba(214,90,49,0.4); background: var(--bg-surface); }
+.qcm-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Input réponse ── */
+.answer-input {
+    width: 100%; height: 52px;
+    padding: 0 16px; border-radius: 16px;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--input-text);
+    font-size: 14px; font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+}
+.answer-input::placeholder { color: var(--text-muted); }
+.answer-input:focus { border-color: rgba(214,90,49,0.5); background: rgba(214,90,49,0.03); }
+
+/* ── Bouton valider ── */
+.validate-btn-active {
+    background: linear-gradient(135deg, #d65a31, #b84a24);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(214,90,49,0.35);
+}
+.validate-btn-active:hover { box-shadow: 0 10px 28px rgba(214,90,49,0.45); }
+.validate-btn-disabled {
+    background: var(--input-bg);
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
+    cursor: not-allowed;
+}
+
+/* ── Bouton indice ── */
+.hint-btn {
+    width: 64px; height: 64px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    color: #d65a31;
+    transition: background 0.2s;
+}
+.hint-btn:hover { background: var(--bg-surface); }
+
+/* ── Menu pause (bottom sheet) ── */
+.pause-menu {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    box-shadow: 0 -8px 48px rgba(0,0,0,0.3);
+}
+.menu-action-btn {
+    width: 100%;
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    transition: background 0.2s, border-color 0.2s;
+    text-align: left;
+}
+.menu-action-btn:hover { background: var(--bg-card); }
+.menu-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.menu-icon {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid;
+    flex-shrink: 0;
+}
+.menu-pause:hover  { border-color: rgba(245,158,11,0.25); }
+.menu-resume:hover { border-color: rgba(34,197,94,0.25); }
+.menu-abandon:hover { border-color: rgba(239,68,68,0.25); }
+.menu-cancel-btn {
+    width: 100%; height: 48px; border-radius: 16px;
+    font-size: 13px; font-weight: 900;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-muted);
+    background: var(--input-bg);
+    border: 1px solid var(--border-subtle);
+    transition: background 0.15s, color 0.15s;
+}
+.menu-cancel-btn:hover { background: var(--bg-surface); color: var(--text-secondary); }
+
+/* ── Animations ── */
+@keyframes bounceIn {
+    0%   { transform: scale(0.3); opacity: 0; }
+    50%  { transform: scale(1.05); }
+    70%  { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}
+.animate-bounce-in { animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-spin { animation: spin 0.8s linear infinite; }
+</style>
