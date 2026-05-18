@@ -70,4 +70,34 @@ class PlaceController extends Controller
 
         return redirect()->back()->with('success', 'Image supprimée.');
     }
+
+    /**
+     * Supprime un lieu et ses ressources associées (images, énigmes).
+     */
+    public function destroy(Place $place, \App\Services\ImageUploadService $uploader)
+    {
+        // 1. Supprimer les images physiques du lieu
+        foreach ($place->images as $img) {
+            $uploader->delete($img->image_url);
+        }
+
+        // 2. Supprimer les images physiques des énigmes du lieu
+        $place->load('riddles.images');
+        foreach ($place->riddles as $riddle) {
+            foreach ($riddle->images as $rimg) {
+                $uploader->delete($rimg->image_url);
+            }
+        }
+
+        // 3. Nettoyage des données associées en cascade
+        foreach ($place->riddles as $riddle) {
+            $riddle->hints()->delete();
+            $riddle->images()->delete();
+            $riddle->delete();
+        }
+        $place->images()->delete();
+        $place->delete();
+
+        return redirect()->back()->with('success', 'Lieu supprimé avec succès.');
+    }
 }

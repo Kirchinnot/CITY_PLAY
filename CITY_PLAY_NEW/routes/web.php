@@ -37,6 +37,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     // Lieux
     Route::get('/places', [\App\Http\Controllers\Admin\PlaceController::class, 'index'])->name('places.index');
     Route::post('/places', [\App\Http\Controllers\Admin\PlaceController::class, 'store'])->name('places.store');
+    Route::delete('/places/{place}', [\App\Http\Controllers\Admin\PlaceController::class, 'destroy'])->name('places.destroy');
     Route::delete('/place-images/{image}', [\App\Http\Controllers\Admin\PlaceController::class, 'destroyImage'])->name('place-images.destroy');
 
     // Énigmes

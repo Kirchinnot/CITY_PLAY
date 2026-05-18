@@ -9,6 +9,12 @@ const deleteImage = (imageId) => {
     }
 };
 
+const deletePlace = (placeId) => {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce lieu ? Cela supprimera également ses énigmes et images.')) {
+        router.delete(route('admin.places.destroy', placeId));
+    }
+};
+
 const props = defineProps({
     places: Array,
     cities: Array,
@@ -226,14 +232,24 @@ watch(showForm, (val) => {
                         </div>
                     </div>
 
-                    <div style="margin-top: auto;">
+                    <div style="margin-top: auto; display: grid; grid-template-columns: 1fr auto; gap: 0.75rem;">
                         <Link
                             :href="route('admin.riddles.index', place.id)"
                             class="premium-btn premium-btn-outline"
-                            style="width: 100%; text-decoration: none; text-align: center;"
+                            style="text-decoration: none; text-align: center; width: 100%;"
                         >
                             Gérer les énigmes
                         </Link>
+                        <button
+                            @click="deletePlace(place.id)"
+                            class="premium-btn premium-btn-danger"
+                            style="padding: 0.75rem; aspect-ratio: 1;"
+                            title="Supprimer ce lieu"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width: 1.25rem; height: 1.25rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
