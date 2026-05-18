@@ -22,19 +22,25 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Register" />
+        <Head title="Inscription" />
 
-        <form @submit.prevent="submit">
+        <div class="mb-8">
+            <h2 class="text-3xl font-black text-cityplay-brown uppercase tracking-tight">Nouvelle aventure ?</h2>
+            <p class="text-gray-500 font-medium">Rejoins CityPlay et explore ta ville autrement.</p>
+        </div>
+
+        <form @submit.prevent="submit" class="space-y-4">
             <div>
-                <InputLabel for="name" value="Name" />
+                <InputLabel for="name" value="Ton nom / Pseudo" class="text-cityplay-brown font-bold" />
 
                 <TextInput
                     id="name"
                     type="text"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full border-2 border-cityplay-lime/30 focus:border-cityplay-orange focus:ring-cityplay-orange rounded-xl shadow-sm"
                     v-model="form.name"
                     required
                     autofocus
+                    placeholder="Ex: ExplorateurLyon69"
                     autocomplete="name"
                 />
 
@@ -42,14 +48,15 @@ const submit = () => {
             </div>
 
             <div class="mt-4">
-                <InputLabel for="email" value="Email" />
+                <InputLabel for="email" value="Email" class="text-cityplay-brown font-bold" />
 
                 <TextInput
                     id="email"
                     type="email"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full border-2 border-cityplay-lime/30 focus:border-cityplay-orange focus:ring-cityplay-orange rounded-xl shadow-sm"
                     v-model="form.email"
                     required
+                    placeholder="ton-email@exemple.com"
                     autocomplete="username"
                 />
 
@@ -57,14 +64,15 @@ const submit = () => {
             </div>
 
             <div class="mt-4">
-                <InputLabel for="password" value="Password" />
+                <InputLabel for="password" value="Mot de passe" class="text-cityplay-brown font-bold" />
 
                 <TextInput
                     id="password"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full border-2 border-cityplay-lime/30 focus:border-cityplay-orange focus:ring-cityplay-orange rounded-xl shadow-sm"
                     v-model="form.password"
                     required
+                    placeholder="••••••••"
                     autocomplete="new-password"
                 />
 
@@ -74,15 +82,17 @@ const submit = () => {
             <div class="mt-4">
                 <InputLabel
                     for="password_confirmation"
-                    value="Confirm Password"
+                    value="Confirme ton mot de passe"
+                    class="text-cityplay-brown font-bold"
                 />
 
                 <TextInput
                     id="password_confirmation"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full border-2 border-cityplay-lime/30 focus:border-cityplay-orange focus:ring-cityplay-orange rounded-xl shadow-sm"
                     v-model="form.password_confirmation"
                     required
+                    placeholder="••••••••"
                     autocomplete="new-password"
                 />
 
@@ -92,21 +102,26 @@ const submit = () => {
                 />
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    :href="route('login')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                    Already registered?
-                </Link>
-
+            <div class="pt-4">
                 <PrimaryButton
-                    class="ms-4"
+                    class="w-full justify-center py-4 bg-cityplay-orange hover:bg-cityplay-yellow text-white font-black text-lg rounded-2xl shadow-lg transform transition active:scale-95 border-b-4 border-cityplay-brown/20 uppercase"
                     :class="{ 'opacity-25': form.processing }"
                     :disabled="form.processing"
                 >
-                    Register
+                    CRÉER MON COMPTE
                 </PrimaryButton>
+            </div>
+
+            <div class="text-center mt-6">
+                <p class="text-gray-500 font-medium">
+                    Déjà inscrit ?
+                    <Link
+                        :href="route('login')"
+                        class="text-cityplay-orange font-black hover:underline"
+                    >
+                        Connecte-toi ici !
+                    </Link>
+                </p>
             </div>
         </form>
     </GuestLayout>
