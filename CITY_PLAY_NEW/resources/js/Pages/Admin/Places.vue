@@ -86,6 +86,11 @@ const submit = () => {
 
 const selectPlacePreview = (place) => {
     activePreviewPlace.value = activePreviewPlace.value?.id === place.id ? null : place;
+    if (activePreviewPlace.value) {
+        setTimeout(() => {
+            document.getElementById('mobile-gps-preview-frame')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 50);
+    }
 };
 
 // On initialise la carte quand on affiche le formulaire
@@ -291,7 +296,7 @@ watch(showForm, (val) => {
                 </div>
 
                 <!-- Simulation GPS Écran Mobile -->
-                <div>
+                <div id="mobile-gps-preview-frame">
                     <h3 style="font-family: var(--font-family-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--color-text-main); display: flex; align-items: center; gap: 0.5rem;">
                         <span style="color: var(--color-secondary);">📱</span> Rendu Boussole / GPS
                     </h3>

@@ -67,6 +67,11 @@ const unpublish = (cityId) => {
 
 const selectCityDetails = (city) => {
     selectedCity.value = selectedCity.value?.id === city.id ? null : city;
+    if (selectedCity.value) {
+        setTimeout(() => {
+            document.getElementById('mobile-preview-frame')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 50);
+    }
 };
 </script>
 
@@ -177,7 +182,7 @@ const selectCityDetails = (city) => {
                 </div>
 
                 <!-- Colonne Droite : Simulation de l'Écran de Détail Immersif (Dribbble style Mockup) -->
-                <div>
+                <div id="mobile-preview-frame">
                     <h3 style="font-family: var(--font-family-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--color-text-main); display: flex; align-items: center; gap: 0.5rem;">
                         <span style="color: var(--color-secondary);">📱</span> Rendu Mobile Live
                     </h3>

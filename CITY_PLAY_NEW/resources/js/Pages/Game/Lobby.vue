@@ -171,11 +171,20 @@ onUnmounted(() => {
                                 Seul le chef de clan peut donner le départ
                             </span>
                         </div>
-                        
-                        <div v-else style="background: var(--color-surface-light); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: var(--border-radius-lg); text-align: center; box-shadow: var(--shadow-sm);">
-                            <div style="font-size: 2.25rem; animation: bounce 2s infinite; margin-bottom: 0.5rem;">👑</div>
-                            <h4 style="font-family: var(--font-family-display); font-size: 1rem; font-weight: 800; color: var(--color-primary-dark); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Attente du Chef</h4>
-                            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.25rem 0 0 0; font-weight: 500;">Le chef d'aventure va démarrer la partie d'un instant à l'autre...</p>
+                        <div v-else style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            <div style="background: var(--color-surface-light); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: var(--border-radius-lg); text-align: center; box-shadow: var(--shadow-sm); margin-bottom: 0.25rem;">
+                                <div style="font-size: 2.25rem; animation: bounce 2s infinite; margin-bottom: 0.5rem;">👑</div>
+                                <h4 style="font-family: var(--font-family-display); font-size: 1rem; font-weight: 800; color: var(--color-primary-dark); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Attente du Chef</h4>
+                                <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.25rem 0 0 0; font-weight: 500;">Le chef d'aventure va démarrer la partie d'un instant à l'autre...</p>
+                            </div>
+                            
+                            <button
+                                @click="showQRModal = true"
+                                class="premium-btn premium-btn-outline"
+                                style="width: 100%; font-family: var(--font-family-display); font-weight: 800; text-transform: uppercase; padding: 0.85rem;"
+                            >
+                                📱 Inviter des amis
+                            </button>
                         </div>
                     </div>
                 </div>
