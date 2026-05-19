@@ -33,6 +33,13 @@ const answerInput       = ref('');
 const localUnlockedHintIds = ref([...props.unlockedHintIds]);
 const unlockedHintsCount   = computed(() => localUnlockedHintIds.value.length);
 
+// ── Haptic Feedback ───────────────────────────────────────────────────────────
+const triggerVibration = (pattern) => {
+    if ('vibrate' in navigator) {
+        navigator.vibrate(pattern);
+    }
+};
+
 // ── Offline-First ─────────────────────────────────────────────────────────────
 const isOnline            = ref(navigator.onLine);
 const showOfflineToast    = ref(false);
@@ -185,6 +192,7 @@ const submitValidation = async () => {
             const cleanInput = answerInput.value.trim().toLowerCase();
             const cleanTarget = props.riddle.answer.trim().toLowerCase();
             if (cleanInput === cleanTarget) {
+                triggerVibration([200, 100, 200]);
                 resultData.value = {
                     score: props.riddle.points_base || 100,
                     is_finished: false,
@@ -193,6 +201,7 @@ const submitValidation = async () => {
                 };
                 showResult.value = true;
             } else {
+                triggerVibration([500]);
                 answerError.value = "Réponse incorrecte (vérification locale).";
                 showWrongAnswerModal.value = true;
             }
@@ -211,9 +220,11 @@ const submitValidation = async () => {
             longitude:  currentLng.value,
             answer:     answerInput.value,
         });
+        triggerVibration([200, 100, 200]);
         resultData.value = data;
         showResult.value = true;
     } catch (err) {
+        triggerVibration([500]);
         const msg = err.response?.data?.message || 'Une erreur est survenue.';
         if (err.response?.status === 422) {
             answerError.value = msg;
@@ -310,6 +321,7 @@ const unlockNextHint = async () => {
             session_id: props.session.id,
             hint_id:    nextHint.id,
         });
+        triggerVibration([50]);
         localUnlockedHintIds.value.push(nextHint.id);
     } catch (e) {
         console.error("Erreur déblocage indice:", e);

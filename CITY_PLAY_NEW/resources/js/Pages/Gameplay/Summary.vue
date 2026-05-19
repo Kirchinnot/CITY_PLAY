@@ -1,5 +1,5 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
 
@@ -12,6 +12,22 @@ const formatTime = (seconds) => {
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hrs > 0 ? hrs + 'h ' : ''}${mins}m ${secs}s`;
+};
+
+// GDPR / Profile Deletion
+const showProfileModal = ref(false);
+const retentionDays = ref(props.session.outro_config?.retention_days || 30);
+const deleteForm = useForm({
+    password: '',
+});
+
+const deleteProfile = () => {
+    // In a real flow, we'd prompt for password or directly delete if 2FA/auth allows.
+    // For this prototype, we'll route to a dedicated GDPR purge route or standard profile destroy.
+    deleteForm.delete(route('player.profile.destroy'), {
+        preserveScroll: true,
+        onSuccess: () => showProfileModal.value = false,
+    });
 };
 
 const userLat = ref(null);
@@ -151,16 +167,53 @@ const calculateDistance = (lat2, lon2) => {
                 </div>
             </div>
 
-            <!-- Actions -->
-            <div class="pt-4">
+            <!-- Actions & GDPR -->
+            <div class="pt-4 space-y-4">
                 <Link 
                     :href="route('player.dashboard')"
                     class="w-full h-16 bg-white text-black rounded-2xl font-black uppercase tracking-widest flex items-center justify-center hover:bg-gray-200 transition shadow-2xl"
                 >
                     Retour à l'accueil
                 </Link>
+                
+                <button 
+                    @click="showProfileModal = true"
+                    class="w-full h-16 bg-transparent border border-red-500/30 text-red-500 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center hover:bg-red-500/10 transition"
+                >
+                    Déconnexion & Gestion Profil
+                </button>
             </div>
         </div>
+
+        <!-- Modal GDPR : Conservation ou Suppression -->
+        <Teleport to="body">
+            <Transition enter-active-class="transition-all duration-200" enter-from-class="opacity-0 translate-y-4" leave-active-class="transition-all duration-150" leave-to-class="opacity-0 translate-y-4">
+                <div v-if="showProfileModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4" style="background: rgba(13,17,23,0.9); backdrop-filter: blur(12px);" @click.self="showProfileModal = false">
+                    <div class="bg-[#1c2128] border border-white/10 w-full max-w-sm rounded-[28px] overflow-hidden shadow-2xl p-6">
+                        <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20">
+                            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-black text-white italic tracking-tighter uppercase mb-2">Fin de session</h3>
+                        <p class="text-sm text-gray-300 mb-6 font-medium leading-relaxed">
+                            Que souhaitez-vous faire de votre compte joueur ?<br><br>
+                            Si vous choisissez de le conserver, vos données seront gardées pendant <strong class="text-white">{{ retentionDays }} jours</strong> conformément aux règles de la mairie.
+                        </p>
+                        
+                        <div class="space-y-3">
+                            <Link :href="route('logout')" method="post" as="button" class="w-full py-3 bg-[#d65a31] text-white rounded-xl font-black uppercase tracking-widest text-xs hover:bg-[#b84a24] transition">
+                                Conserver & Se déconnecter
+                            </Link>
+                            
+                            <button @click="deleteProfile" class="w-full py-3 bg-transparent border border-white/10 text-gray-400 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30 transition">
+                                {{ deleteForm.processing ? 'Suppression...' : 'Supprimer mon profil' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
 
         <!-- Modal Lieu Non Résolu -->
         <Teleport to="body">

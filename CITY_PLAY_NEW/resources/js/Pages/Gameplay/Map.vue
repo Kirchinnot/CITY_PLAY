@@ -2,7 +2,20 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
+
+// Fix Leaflet's default icon path issues with Vite
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 const props = defineProps({
     session: Object,

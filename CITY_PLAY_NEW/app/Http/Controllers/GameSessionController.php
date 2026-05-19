@@ -301,7 +301,7 @@ class GameSessionController extends Controller
                 'difficulty' => $invitation->difficulty,
                 'locomotion' => $invitation->locomotion,
                 'available_minutes' => $invitation->duration_minutes,
-                'status' => 'active',
+                'status' => $mode === 'collectif' ? 'waiting' : 'active',
                 'total_places' => $totalPlaces,
                 'current_place_index' => $startIndex,
                 'started_at' => now(),
@@ -333,9 +333,15 @@ class GameSessionController extends Controller
                 ->first();
             
             if ($riddle) {
+                if ($mode === 'collectif') {
+                    return redirect()->route('game.lobby', $session->id);
+                }
                 return redirect()->route('player.riddle.show', $riddle->id)->with('success', 'L\'aventure commence !');
             }
 
+            if ($mode === 'collectif') {
+                return redirect()->route('game.lobby', $session->id);
+            }
             return redirect()->route('player.dashboard')->with('success', 'Partie démarrée avec ' . $selectedPlaces->count() . ' énigmes calculées pour votre parcours !');
         });
     }
@@ -381,5 +387,102 @@ class GameSessionController extends Controller
             'current_place_index' => $session->current_place_index,
             'next_riddle_id' => $riddle ? $riddle->id : null,
         ]);
+    }
+
+    /**
+     * Rejoindre une session de jeu via un lien d'invitation (token).
+     */
+    public function join(Request $request, string $token)
+    {
+        $invitation = Invitation::where('token', $token)->firstOrFail();
+        $session = GameSession::where('invitation_id', $invitation->id)->latest()->firstOrFail();
+        $user = $request->user();
+
+        // Si le joueur n'est pas déjà dans la partie, on l'ajoute
+        $exists = GamePlayer::where('game_session_id', $session->id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if (!$exists) {
+            GamePlayer::create([
+                'game_session_id' => $session->id,
+                'user_id' => $user->id,
+                'joined_at' => now(),
+                'is_active' => true,
+            ]);
+
+            // Broadcast de l'événement pour mettre à jour le lobby en temps réel
+            if (class_exists(\App\Events\PlayerJoined::class)) {
+                broadcast(new \App\Events\PlayerJoined($session->id, $user))->toOthers();
+            }
+        }
+
+        if ($session->status === 'active') {
+            return redirect()->route('player.dashboard')->with('success', 'Vous avez rejoint la partie en cours !');
+        }
+
+        return redirect()->route('game.lobby', $session->id);
+    }
+
+    /**
+     * Affiche le salon d'attente (Lobby) avant le début de la partie.
+     */
+    public function lobby(Request $request, GameSession $session)
+    {
+        $session->load(['city', 'invitation', 'gamePlayers.user']);
+
+        return Inertia::render('Game/Lobby', [
+            'session' => [
+                'id' => $session->id,
+                'status' => $session->status,
+                'mode' => $session->mode,
+                'difficulty' => $session->difficulty,
+                'locomotion' => $session->locomotion,
+                'available_minutes' => $session->available_minutes,
+                'host_user_id' => $session->host_user_id,
+                'city' => $session->city,
+                'invitation' => $session->invitation,
+                'players' => $session->gamePlayers->map(function ($gp) {
+                    return $gp->user;
+                }),
+            ],
+            'currentUser' => $request->user(),
+            'invitationUrl' => route('game.join', ['token' => $session->invitation->token]),
+        ]);
+    }
+
+    /**
+     * Le chef de clan lance la partie depuis le lobby.
+     */
+    public function start(Request $request, GameSession $session)
+    {
+        $user = $request->user();
+
+        if ($session->host_user_id !== $user->id) {
+            return redirect()->back()->with('error', 'Seul le chef de clan peut démarrer la partie.');
+        }
+
+        $session->update([
+            'status' => 'active',
+            'started_at' => now()
+        ]);
+
+        // Récupération de la première énigme
+        $currentPlace = $session->sessionPlaces()->where('order_index', 0)->first();
+        if ($currentPlace) {
+            $riddle = \App\Models\Riddle::where('place_id', $currentPlace->place_id)
+                ->where('difficulty', $session->difficulty)
+                ->get()
+                ->sortBy(function($r) use ($session) {
+                    return md5($r->id . '_' . $session->id);
+                })
+                ->first();
+                
+            if ($riddle) {
+                return redirect()->route('player.riddle.show', $riddle->id)->with('success', 'L\'aventure commence !');
+            }
+        }
+
+        return redirect()->route('player.dashboard')->with('success', 'L\'aventure commence !');
     }
 }

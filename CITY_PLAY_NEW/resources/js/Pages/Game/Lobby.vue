@@ -1,8 +1,9 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import PlayerLayout from '@/Layouts/PlayerLayout.vue';
 import QRCodeDisplay from '@/Components/QRCodeDisplay.vue';
-import { Head, useForm } from '@inertiajs/vue3';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { Head, useForm, router } from '@inertiajs/vue3';
+import { onMounted, onUnmounted, ref, nextTick } from 'vue';
+import { gsap } from 'gsap';
 
 const props = defineProps({
     session: Object,
@@ -21,26 +22,17 @@ const startSession = () => {
 
 const isHost = props.currentUser.id === props.session.host_user_id;
 
-const getLocomotionIcon = (type) => {
-    const icons = {
-        marche: '🚶',
-        velo: '🚲',
-        moto: '🛵',
-        voiture: '🚗'
-    };
-    return icons[type] || '🚶';
-};
-
-const getDifficultyLabel = (level) => {
-    const labels = {
-        facile: 'Facile 🏹',
-        moyen: 'Moyen 🦁',
-        difficile: 'Difficile 👑'
-    };
-    return labels[level] || level;
-};
+// ── Refs pour GSAP ───────────────────────────────────────────────────────────
+const orb1Ref = ref(null);
+const orb2Ref = ref(null);
+const playersListRef = ref(null);
 
 onMounted(() => {
+    // 1. Animations de fond (Orbes)
+    if (orb1Ref.value) gsap.to(orb1Ref.value, { y: -30, x: 20, duration: 6, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+    if (orb2Ref.value) gsap.to(orb2Ref.value, { y: 25, x: -15, duration: 8, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: 1 });
+
+    // 2. Écoute Pusher
     window.Echo.join(`session.${props.session.id}`)
         .here((users) => {
             console.log('Joueurs présents:', users);
@@ -48,184 +40,142 @@ onMounted(() => {
         .joining((user) => {
             if (!players.value.find(p => p.id === user.id)) {
                 players.value.push(user);
+                animateNewPlayer();
             }
         })
-        .leaving((user) => {
-        })
+        .leaving((user) => {})
         .listen('PlayerJoined', (e) => {
             if (!players.value.find(p => p.id === e.user.id)) {
                 players.value.push(e.user);
+                animateNewPlayer();
             }
         });
+        
+    // Polling basique si Pusher n'est pas configuré pour rediriger les invités quand le host lance la partie
+    if (!isHost) {
+        setInterval(() => {
+            router.reload({ only: ['session'], preserveScroll: true, onSuccess: (page) => {
+                if (page.props.session.status === 'active') {
+                    // Si la partie passe en active, recharger complètement la page pour entrer en jeu
+                    window.location.reload();
+                }
+            }});
+        }, 5000);
+    }
 });
 
 onUnmounted(() => {
     window.Echo.leave(`session.${props.session.id}`);
 });
+
+const animateNewPlayer = () => {
+    nextTick(() => {
+        if (playersListRef.value && playersListRef.value.lastElementChild) {
+            gsap.from(playersListRef.value.lastElementChild, {
+                opacity: 0,
+                y: 20,
+                scale: 0.8,
+                duration: 0.5,
+                ease: "back.out(1.5)"
+            });
+            // Haptic feedback
+            if ('vibrate' in navigator) navigator.vibrate([50, 50, 50]);
+        }
+    });
+};
 </script>
 
 <template>
-    <AuthenticatedLayout>
+    <PlayerLayout>
         <Head title="CityPlay - Salon d'attente" />
 
-        <div class="premium-container" style="max-width: 1000px; margin: 0 auto; padding: 2rem 1rem;">
+        <div class="relative min-h-[calc(100vh-80px)] p-6 overflow-hidden flex flex-col justify-center">
             
-            <div class="premium-card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg); background: var(--color-surface-light);">
-                <!-- Header themed in Terracotta & Gold -->
-                <div style="background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); padding: 2.5rem 2rem; color: white; display: flex; flex-direction: column; md:flex-direction: row; justify-content: space-between; align-items: flex-start; md:align-items: center; gap: 1.5rem; position: relative;">
-                    <!-- Benin subtle accent bar -->
-                    <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, #1E6B43 33%, #D4AF37 33%, #D4AF37 66%, #962D2D 66%);"></div>
-                    
-                    <div>
-                        <span style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(255,255,255,0.2); padding: 0.25rem 0.6rem; border-radius: 4px; display: inline-block; margin-bottom: 0.5rem;">🎮 Salon de jeu (Lobby)</span>
-                        <h1 style="font-family: var(--font-family-display); font-size: 2.25rem; font-weight: 800; text-transform: uppercase; margin: 0; letter-spacing: -0.01em; line-height: 1.1;">
-                            {{ session.city.name }}
-                        </h1>
-                        <p style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin: 0.25rem 0 0 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
-                            Aventure interactive • Mode {{ session.mode }}
-                        </p>
-                    </div>
+            <!-- Orbes décoratifs -->
+            <div ref="orb1Ref" class="pointer-events-none absolute top-[-5%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-40 blur-3xl"
+                 style="background: radial-gradient(circle, var(--cityplay-primary, #d65a31) 0%, transparent 70%);"></div>
+            <div ref="orb2Ref" class="pointer-events-none absolute bottom-[-10%] left-[-10%] w-[250px] h-[250px] rounded-full opacity-30 blur-3xl"
+                 style="background: radial-gradient(circle, var(--cityplay-neon-blue, #3b82f6) 0%, transparent 70%);"></div>
 
-                    <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.3); padding: 0.75rem 1.25rem; border-radius: var(--border-radius-md); text-align: right; min-width: 150px;">
-                        <span style="font-size: 0.6rem; font-weight: 800; uppercase: true; opacity: 0.7; display: block; text-transform: uppercase; letter-spacing: 0.05em;">Statut</span>
-                        <span style="font-family: var(--font-family-display); font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-secondary);">
-                            ⚡ {{ session.status }}
-                        </span>
+            <div class="relative z-10 w-full max-w-lg mx-auto bg-[#1c2128]/90 backdrop-blur-xl border border-white/5 rounded-[32px] p-6 shadow-2xl">
+                
+                <!-- En-tête -->
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 mx-auto bg-[#d65a31]/10 border border-[#d65a31]/30 rounded-2xl flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-[#d65a31] animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-black text-white uppercase tracking-wider mb-2">Salon d'attente</h1>
+                    <p class="text-sm cp-text-secondary font-medium">{{ session.city.name }} • Mode Équipe</p>
+                </div>
+
+                <!-- Joueurs -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xs font-black uppercase tracking-widest text-[#d65a31]">L'Équipe ({{ players.length }})</h2>
+                    </div>
+                    <div ref="playersListRef" class="space-y-3">
+                        <div v-for="player in players" :key="player.id"
+                             class="flex items-center gap-4 bg-white/5 border border-white/5 rounded-2xl p-3 transition-colors hover:bg-white/10">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#d65a31] to-orange-600 flex items-center justify-center text-white font-black shadow-lg">
+                                {{ player.name.charAt(0).toUpperCase() }}
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold text-white">{{ player.name }}</p>
+                                <p v-if="player.id === session.host_user_id" class="text-[10px] text-[#d65a31] font-black uppercase tracking-wider">👑 Chef de clan</p>
+                                <p v-else class="text-[10px] cp-text-secondary font-black uppercase tracking-wider">Explorateur</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div style="padding: 2.5rem; display: grid; grid-template-columns: 1fr; lg:grid-template-columns: 2fr 1fr; gap: 2.5rem; align-items: start;">
-                    <!-- Left: Equipe / Joueurs -->
-                    <div style="display: flex; flex-direction: column; gap: 1.75rem;">
-                        <div>
-                            <h2 style="font-family: var(--font-family-display); font-size: 1.35rem; font-weight: 800; color: var(--color-primary-dark); margin: 0 0 1.25rem 0; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: -0.01em;">
-                                <span>👥</span> L'Équipe d'Exploration ({{ players.length }})
-                            </h2>
-                            
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem;">
-                                <div 
-                                    v-for="player in players" 
-                                    :key="player.id"
-                                    style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: var(--border-radius-md); background: var(--color-bg-light); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); transition: transform 0.2s;"
-                                    class="hover:scale-[1.02]"
-                                >
-                                    <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; font-family: var(--font-family-display); box-shadow: var(--shadow-sm);">
-                                        {{ player.name.charAt(0).toUpperCase() }}
-                                    </div>
-                                    <div>
-                                        <p style="margin: 0; font-weight: 800; color: var(--color-text-main); font-size: 0.95rem;">{{ player.name }}</p>
-                                        <span v-if="player.id === session.host_user_id" style="font-size: 0.65rem; font-weight: 800; color: var(--color-primary); text-transform: uppercase; display: block; letter-spacing: 0.05em;">👑 Chef de clan</span>
-                                        <span v-else style="font-size: 0.65rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; display: block; letter-spacing: 0.05em;">🧭 Explorateur</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                <!-- CTA -->
+                <div class="space-y-4">
+                    <button v-if="isHost" @click="showQRModal = true" class="w-full h-12 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-xs font-black uppercase tracking-widest text-white transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Inviter des amis
+                    </button>
+                    
+                    <button v-if="isHost" @click="startSession" :disabled="startForm.processing" class="w-full h-14 bg-gradient-to-r from-[#d65a31] to-[#ff7a45] rounded-2xl text-sm font-black uppercase tracking-widest text-white shadow-[0_8px_32px_rgba(214,90,49,0.4)] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                        <svg v-if="startForm.processing" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        <span>{{ startForm.processing ? 'Démarrage...' : '🚀 Lancer l\'aventure' }}</span>
+                    </button>
 
-                        <!-- Waiting hint banner -->
-                        <div style="background: var(--color-warning-bg); border: 1px dashed var(--color-secondary); padding: 1.25rem; border-radius: var(--border-radius-md); display: flex; align-items: center; gap: 1rem; color: #b45309; font-size: 0.9rem; font-weight: 600; line-height: 1.4;">
-                            <span style="font-size: 1.75rem;">⏳</span>
-                            <p style="margin: 0;">En attente de vos amis... Partagez le lien d'invitation ou faites-leur scanner le QR Code pour démarrer la chasse ensemble !</p>
-                        </div>
-                    </div>
-
-                    <!-- Right: Info de session & CTA de lancement -->
-                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                        <div style="background: var(--color-bg-light); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-                            <h3 style="font-family: var(--font-family-display); font-size: 1.1rem; font-weight: 800; color: var(--color-primary-dark); margin: 0; text-transform: uppercase; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; letter-spacing: 0.05em;">Configuration</h3>
-                            
-                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700;">
-                                    <span style="color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Difficulté</span>
-                                    <span style="color: var(--color-primary-dark);">{{ getDifficultyLabel(session.difficulty) }}</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700;">
-                                    <span style="color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Moyen de transport</span>
-                                    <span style="color: var(--color-primary-dark);">{{ getLocomotionIcon(session.locomotion) }} {{ session.locomotion }}</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700;">
-                                    <span style="color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Temps disponible</span>
-                                    <span style="color: var(--color-primary-dark);">⏱️ {{ session.available_minutes }} min</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- CTA Lancer / Attente -->
-                        <div v-if="isHost" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                            <button
-                                @click="showQRModal = true"
-                                class="premium-btn premium-btn-outline"
-                                style="width: 100%; font-family: var(--font-family-display); font-weight: 800; text-transform: uppercase; padding: 0.85rem;"
-                            >
-                                📱 Inviter des amis
-                            </button>
-
-                            <button
-                                @click="startSession"
-                                class="premium-btn premium-btn-primary"
-                                style="width: 100%; font-family: var(--font-family-display); font-weight: 800; text-transform: uppercase; padding: 1.25rem; font-size: 1.1rem; box-shadow: var(--shadow-glow);"
-                                :disabled="startForm.processing"
-                            >
-                                🚀 Lancer l'aventure
-                            </button>
-                            <span style="font-size: 0.65rem; color: var(--color-text-muted); font-weight: 800; text-transform: uppercase; text-align: center; display: block; letter-spacing: 0.05em;">
-                                Seul le chef de clan peut donner le départ
-                            </span>
-                        </div>
-                        <div v-else style="display: flex; flex-direction: column; gap: 0.75rem;">
-                            <div style="background: var(--color-surface-light); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: var(--border-radius-lg); text-align: center; box-shadow: var(--shadow-sm); margin-bottom: 0.25rem;">
-                                <div style="font-size: 2.25rem; animation: bounce 2s infinite; margin-bottom: 0.5rem;">👑</div>
-                                <h4 style="font-family: var(--font-family-display); font-size: 1rem; font-weight: 800; color: var(--color-primary-dark); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Attente du Chef</h4>
-                                <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.25rem 0 0 0; font-weight: 500;">Le chef d'aventure va démarrer la partie d'un instant à l'autre...</p>
-                            </div>
-                            
-                            <button
-                                @click="showQRModal = true"
-                                class="premium-btn premium-btn-outline"
-                                style="width: 100%; font-family: var(--font-family-display); font-weight: 800; text-transform: uppercase; padding: 0.85rem;"
-                            >
-                                📱 Inviter des amis
-                            </button>
-                        </div>
+                    <div v-else class="text-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                        <p class="text-xs font-black text-[#d65a31] uppercase tracking-widest animate-pulse mb-1">Attente du Chef...</p>
+                        <p class="text-[10px] cp-text-secondary font-medium">Le jeu commencera quand le chef de clan lancera la partie.</p>
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <!-- QR Code Modal (Premium themed in Terracotta/Gold) -->
+        <!-- Modal QR Code -->
         <Teleport to="body">
-            <div v-if="showQRModal" style="position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(28,24,22,0.6); backdrop-filter: blur(8px);" @click.self="showQRModal = false">
-                <div style="background: var(--color-surface-light); border-radius: var(--border-radius-xl); box-shadow: var(--shadow-premium); max-width: 380px; width: 100%; overflow: hidden; border: 1px solid var(--border-color);">
-                    <div style="background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); padding: 1.5rem; color: white; text-align: center; position: relative;">
-                        <h3 style="font-family: var(--font-family-display); font-size: 1.35rem; font-weight: 800; text-transform: uppercase; margin: 0; letter-spacing: -0.01em;">Invite ton équipe !</h3>
-                        <p style="font-size: 0.8rem; opacity: 0.9; margin: 0.25rem 0 0 0; font-weight: 500;">Faites-leur scanner ce QR code pour rejoindre la session en direct.</p>
-                    </div>
-                    
-                    <div style="padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
-                        <div style="background: white; padding: 1rem; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); box-shadow: var(--shadow-md);">
-                            <QRCodeDisplay 
-                                :url="invitationUrl || route('game.join', { token: session.invitation?.token })"
-                                :size="220"
-                            />
+            <Transition enter-active-class="transition-all duration-300" enter-from-class="opacity-0 scale-95" leave-active-class="transition-all duration-200" leave-to-class="opacity-0 scale-95">
+                <div v-if="showQRModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#0d1117]/90 backdrop-blur-md" @click.self="showQRModal = false">
+                    <div class="w-full max-w-sm bg-[#1c2128] border border-white/10 rounded-[32px] overflow-hidden shadow-2xl relative">
+                        <div class="p-6 text-center border-b border-white/5 bg-gradient-to-b from-[#d65a31]/10 to-transparent">
+                            <h3 class="text-lg font-black text-white uppercase tracking-wider mb-1">Inviter l'équipe</h3>
+                            <p class="text-[10px] cp-text-secondary font-medium">Scannez ce QR Code pour rejoindre</p>
                         </div>
-                        
-                        <button 
-                            @click="showQRModal = false"
-                            class="premium-btn premium-btn-outline"
-                            style="width: 100%; padding: 0.75rem; text-transform: uppercase; font-family: var(--font-family-display); font-weight: 800; font-size: 0.85rem;"
-                        >
-                            Fermer
-                        </button>
+                        <div class="p-8 flex justify-center bg-white">
+                            <QRCodeDisplay :url="invitationUrl || route('game.join', { token: session.invitation?.token })" :size="200" />
+                        </div>
+                        <div class="p-4 bg-[#1c2128]">
+                            <button @click="showQRModal = false" class="w-full h-12 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-black uppercase tracking-widest text-white transition-all">
+                                Fermer
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </Transition>
         </Teleport>
-    </AuthenticatedLayout>
+    </PlayerLayout>
 </template>
 
 <style scoped>
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-}
+.cp-text-secondary { color: rgba(255, 255, 255, 0.6); }
 </style>

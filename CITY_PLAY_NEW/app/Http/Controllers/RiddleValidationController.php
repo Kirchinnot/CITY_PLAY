@@ -101,7 +101,7 @@ class RiddleValidationController extends Controller
     /**
      * Valide une tentative de résolution d'énigme.
      */
-    public function validate(Request $request, Riddle $riddle): JsonResponse
+    public function validate(Request $request, Riddle $riddle, \App\Services\GeofencingService $geofencingService): JsonResponse
     {
         $request->validate([
             'session_id' => 'required|exists:game_sessions,id',
@@ -122,9 +122,9 @@ class RiddleValidationController extends Controller
 
         // 3. Validation GPS — Place utilise lat/lng (pas latitude/longitude)
         $place = $riddle->place;
-        $distanceToTarget = $this->calculateDistance(
-            $request->latitude,
-            $request->longitude,
+        $distanceToTarget = $geofencingService->calculateDistance(
+            (float) $request->latitude,
+            (float) $request->longitude,
             (float) $place->lat,
             (float) $place->lng
         );
