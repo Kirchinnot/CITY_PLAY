@@ -44,7 +44,7 @@ return new class extends Migration
             // ── Paramètres de session pré-configurés ──────────────────────
             $table->enum('mode', ['collectif', 'mercenaire'])->default('collectif')
                   ->comment("collectif = score d'équipe partagé, mercenaire = compétition individuelle");
-            $table->enum('difficulty', ['facile', 'moyen', 'difficile'])->default('moyen')
+            $table->enum('difficulty', ['enfant', 'facile', 'moyen', 'difficile'])->default('moyen')
                   ->comment('Niveau des énigmes sélectionnées pour cette session');
             $table->enum('locomotion', ['marche', 'velo', 'moto', 'voiture'])->default('marche')
                   ->comment('Moyen de transport — influence le nombre de lieux atteignables selon la durée');

@@ -32,11 +32,11 @@ class RiddleController extends Controller
             'riddles' => 'required|array',
             'riddles.*.difficulty' => 'required|in:enfant,facile,moyen,difficile',
             'riddles.*.title' => 'nullable|string|max:150',
-            'riddles.*.question' => 'required|string',
-            'riddles.*.options' => 'required|array|min:2',
-            'riddles.*.answer' => 'required|string',
-            'riddles.*.points_base' => 'required|integer|min:0',
-            'riddles.*.time_limit_seconds' => 'required|integer|min:30',
+            'riddles.*.question' => 'nullable|string',
+            'riddles.*.options' => 'nullable|array',
+            'riddles.*.answer' => 'nullable|string',
+            'riddles.*.points_base' => 'nullable|integer|min:0',
+            'riddles.*.time_limit_seconds' => 'nullable|integer|min:30',
             'riddles.*.images' => 'nullable|array|max:4',
             'riddles.*.images.*' => 'nullable|image|mimes:jpeg,png|max:2048',
             'riddles.*.hints' => 'nullable|array|max:3',
@@ -45,18 +45,23 @@ class RiddleController extends Controller
         ]);
 
         foreach ($validated['riddles'] as $index => $riddleData) {
+            // On ne sauvegarde que si au moins la question est remplie
+            if (empty($riddleData['question'])) {
+                continue;
+            }
+
             $riddle = Riddle::updateOrCreate(
                 [
                     'place_id' => $place->id,
                     'difficulty' => $riddleData['difficulty']
                 ],
                 [
-                    'title' => $riddleData['title'],
+                    'title' => $riddleData['title'] ?? ucfirst($riddleData['difficulty']),
                     'question' => $riddleData['question'],
-                    'options' => $riddleData['options'],
-                    'answer' => $riddleData['answer'],
-                    'points_base' => $riddleData['points_base'],
-                    'time_limit_seconds' => $riddleData['time_limit_seconds'],
+                    'options' => collect($riddleData['options'] ?? [])->filter()->values()->all(),
+                    'answer' => $riddleData['answer'] ?? '',
+                    'points_base' => $riddleData['points_base'] ?? 100,
+                    'time_limit_seconds' => $riddleData['time_limit_seconds'] ?? 300,
                 ]
             );
 

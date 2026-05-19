@@ -63,7 +63,12 @@ const removeHint = (riddleIndex, hintIndex) => {
 
 const submit = () => {
     form.post(route('admin.riddles.store', props.place.id), {
+        forceFormData: true,
         onSuccess: () => alert('Énigmes sauvegardées avec succès !'),
+        onError: (errors) => {
+            console.error(errors);
+            alert('Une erreur est survenue lors de la sauvegarde. Vérifiez les champs saisis.');
+        }
     });
 };
 
@@ -141,14 +146,17 @@ const activeTab = ref('enfant');
                                                 class="premium-input"
                                                 placeholder="Ex: Le secret de la jarre trouée"
                                             />
+                                            <p v-if="form.errors['riddles.' + index + '.title']" style="color: red; font-size: 0.75rem; margin-top: 0.25rem;">{{ form.errors['riddles.' + index + '.title'] }}</p>
                                         </div>
                                         <div>
                                             <label class="premium-label" style="font-weight: 700;">XP Victoire</label>
                                             <input v-model="riddle.points_base" type="number" class="premium-input" />
+                                            <p v-if="form.errors['riddles.' + index + '.points_base']" style="color: red; font-size: 0.75rem; margin-top: 0.25rem;">{{ form.errors['riddles.' + index + '.points_base'] }}</p>
                                         </div>
                                         <div>
                                             <label class="premium-label" style="font-weight: 700;">Chrono (sec)</label>
                                             <input v-model="riddle.time_limit_seconds" type="number" class="premium-input" />
+                                            <p v-if="form.errors['riddles.' + index + '.time_limit_seconds']" style="color: red; font-size: 0.75rem; margin-top: 0.25rem;">{{ form.errors['riddles.' + index + '.time_limit_seconds'] }}</p>
                                         </div>
                                     </div>
 
@@ -161,6 +169,7 @@ const activeTab = ref('enfant');
                                             class="premium-input"
                                             placeholder="Ex: Je suis un roi célèbre d'Abomey, représenté par un oiseau pillard..."
                                         ></textarea>
+                                        <p v-if="form.errors['riddles.' + index + '.question']" style="color: red; font-size: 0.75rem; margin-top: 0.25rem;">{{ form.errors['riddles.' + index + '.question'] }}</p>
                                     </div>
 
                                     <!-- Double panel : Illustrations & QCM -->
@@ -222,6 +231,8 @@ const activeTab = ref('enfant');
                                                     />
                                                 </div>
                                             </div>
+                                            <p v-if="form.errors['riddles.' + index + '.options']" style="color: red; font-size: 0.75rem; margin-top: 0.5rem;">{{ form.errors['riddles.' + index + '.options'] }}</p>
+                                            <p v-if="form.errors['riddles.' + index + '.answer']" style="color: red; font-size: 0.75rem; margin-top: 0.5rem;">{{ form.errors['riddles.' + index + '.answer'] }}</p>
                                             <p style="font-size: 0.7rem; color: var(--color-text-muted); margin-top: 1rem; font-style: italic;">
                                                 ⚠️ Cochez le bouton de gauche pour désigner l'unique bonne réponse.
                                             </p>

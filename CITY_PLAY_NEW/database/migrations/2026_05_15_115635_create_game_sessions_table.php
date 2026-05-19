@@ -50,7 +50,7 @@ return new class extends Migration
 
             // ── Paramètres de jeu (copiés depuis invitation à la création) ─
             $table->enum('mode', ['collectif', 'mercenaire'])->default('collectif');
-            $table->enum('difficulty', ['facile', 'moyen', 'difficile'])->default('moyen');
+            $table->enum('difficulty', ['enfant', 'facile', 'moyen', 'difficile'])->default('moyen');
             $table->enum('locomotion', ['marche', 'velo', 'moto', 'voiture'])->default('marche');
             $table->integer('available_minutes')
                   ->comment('Durée totale disponible — sert au calcul du bonus temps final');

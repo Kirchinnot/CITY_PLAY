@@ -107,4 +107,31 @@ class GameSession extends Model
     {
         return $this->hasMany(Achievement::class);
     }
+
+    /**
+     * Récupère l'énigme actuelle pour cette session.
+     */
+    public function getCurrentRiddleAttribute()
+    {
+        // On récupère le lieu actuel basé sur l'index de progression
+        $currentPlace = $this->sessionPlaces()
+            ->where('order_index', $this->current_place_index)
+            ->first();
+        
+        if (!$currentPlace) return null;
+
+        // On cherche l'énigme correspondante au lieu ET à la difficulté de la session
+        return Riddle::where('place_id', $currentPlace->place_id)
+            ->where('difficulty', $this->difficulty)
+            ->with(['hints', 'images'])
+            ->first();
+    }
+
+    /**
+     * Calcule le score total de la session.
+     */
+    public function getTotalScoreAttribute(): int
+    {
+        return $this->scores()->sum('points_earned');
+    }
 }

@@ -115,6 +115,7 @@ const locomotionOptions = [
 ];
 
 const difficultyOptions = [
+    { value: 'enfant', label: 'Enfant', icon: '👶' },
     { value: 'facile', label: 'Facile', icon: '🏹' },
     { value: 'moyen', label: 'Moyen', icon: '🦁' },
     { value: 'difficile', label: 'Difficile', icon: '👑' },
@@ -179,7 +180,7 @@ const incrementTeamSize = () => {
 
                         <div>
                             <label class="block text-[10px] font-black uppercase text-white/40 mb-2">Difficulté</label>
-                            <div class="grid grid-cols-3 gap-2">
+                            <div class="grid grid-cols-4 gap-2">
                                 <button v-for="opt in difficultyOptions" :key="opt.value" 
                                     @click="startForm.difficulty = opt.value"
                                     :class="startForm.difficulty === opt.value ? 'bg-[#d65a31] border-[#d65a31]' : 'bg-white/5 border-white/10'"

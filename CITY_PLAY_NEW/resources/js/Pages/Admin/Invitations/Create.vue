@@ -101,6 +101,7 @@ const submit = () => {
                         <div>
                             <label class="premium-label" style="font-weight: 700;">Difficulté requise</label>
                             <select v-model="form.difficulty" class="premium-input" required>
+                                <option value="enfant">Enfant 👶</option>
                                 <option value="facile">Facile 🏹</option>
                                 <option value="moyen">Moyen 🦁</option>
                                 <option value="difficile">Difficile 👑</option>

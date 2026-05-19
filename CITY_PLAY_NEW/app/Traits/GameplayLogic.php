@@ -63,40 +63,27 @@ trait GameplayLogic
     }
 
     /**
-     * Calcule le score final pour une énigme résolue.
+     * Calcule le score final simplifié pour une énigme résolue.
      */
-    public function calculateRiddleScore(Riddle $riddle, int $timeTakenSeconds, int $hintsUsed, bool $gpsValid, float $distanceMeters): array
+    public function calculatePoints($riddle, $session): int
     {
-        // 1. Difficulté (Points de base)
-        $pointsDifficulty = match ($riddle->difficulty) {
+        // 1. Points de base par difficulté
+        $points = match ($riddle->difficulty) {
             'enfant' => 50,
             'facile' => 100,
             'moyen' => 150,
             'difficile' => 200,
-            default => $riddle->points_base ?? 50,
+            default => 100,
         };
 
-        // 2. Rapidité : 100 × (1 − t/t_max)
-        $tMax = $riddle->time_limit_seconds ?: 120;
-        $pointsSpeed = (int) max(0, 100 * (1 - ($timeTakenSeconds / $tMax)));
+        // 2. Malus indices (ex: -20 pts par indice utilisé)
+        $hintsUsed = \App\Models\HintUsage::where('game_session_id', $session->id)
+            ->where('riddle_id', $riddle->id)
+            ->count();
+        
+        $malus = $hintsUsed * 20;
 
-        // 3. Distance : 50 pts fixe si GPS valide
-        $pointsDistance = $gpsValid ? 50 : 0;
-
-        // 4. Indices : 30 pts × (dispo - utilisés)
-        // On suppose que chaque énigme a un nombre max d'indices, disons 3 par défaut si non spécifié
-        $maxHints = 3; 
-        $pointsHintsBonus = (int) max(0, 30 * ($maxHints - $hintsUsed));
-
-        $totalPoints = $pointsDifficulty + $pointsSpeed + $pointsDistance + $pointsHintsBonus;
-
-        return [
-            'total' => (int) $totalPoints,
-            'difficulty' => $pointsDifficulty,
-            'speed' => $pointsSpeed,
-            'distance' => $pointsDistance,
-            'hints_bonus' => $pointsHintsBonus,
-        ];
+        return (int) max(10, $points - $malus);
     }
 
     /**

@@ -512,8 +512,9 @@ const animateToggle = () => {
                             <!-- Choix de la Difficulté -->
                             <div class="space-y-1.5">
                                 <label class="text-[9px] font-black uppercase tracking-wider cp-text-muted">Difficulté</label>
-                                <div class="grid grid-cols-3 gap-2">
+                                <div class="grid grid-cols-4 gap-2">
                                     <button v-for="d in [
+                                                { id: 'enfant', label: 'Enfant', color: 'text-blue-400' },
                                                 { id: 'facile', label: 'Facile', color: 'text-green-500' },
                                                 { id: 'moyen', label: 'Moyen', color: 'text-amber-500' },
                                                 { id: 'difficile', label: 'Difficile', color: 'text-red-500' }

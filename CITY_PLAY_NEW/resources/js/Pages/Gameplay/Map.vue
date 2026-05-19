@@ -1,55 +1,59 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
+import { gsap } from 'gsap';
 
-// Fix Leaflet's default icon path issues with Vite
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
+const page = usePage();
+const gameState = computed(() => page.props.gameState);
 
-const props = defineProps({
-    session: Object,
-});
-
+// ── State ───────────────────────────────────────────────────────────────────
 const mapContainer = ref(null);
+const userLocation = ref(null);
+const geoError = ref(null);
+const selectedMapPlace = ref(null);
+const isProcessingAction = ref(false);
+const remainingTimeSeconds = ref(0);
+
 let map = null;
 let userMarker = null;
 let watchId = null;
-const userLocation = ref(null);
-const geoError = ref(null);
-
-const selectedMapPlace = ref(null);
-const isSelectingPlace = ref(false);
-const isProcessingAction = ref(false);
-
-// ── Gestion du Temps ─────────────────────────────────────────────────────────
-const remainingTimeSeconds = ref(0);
 let timerInterval = null;
+let placeMarkers = [];
 
+// ── Getters ─────────────────────────────────────────────────────────────────
+const visiblePlaces = computed(() => {
+    if (!gameState.value?.city?.places) return [];
+    
+    // On récupère les lieux de la session (si disponibles dans gameState ou via une autre prop)
+    // Pour simplifier, on utilise les lieux de la ville et on filtre par ceux qui sont dans la session
+    return gameState.value.city.places
+        .filter(p => {
+            // Logique de filtrage : soit complété, soit actuel
+            // Note: Il faudrait idéalement que gameState contienne la liste des session_places
+            return true; // Pour l'instant on montre tout pour le dev
+        });
+});
+
+// ── Timer Logic ─────────────────────────────────────────────────────────────
 const calculateRemainingTime = () => {
-    if (!props.session?.started_at || props.session.status === 'completed' || props.session.status === 'abandoned') {
+    const timer = gameState.value?.timer;
+    if (!timer?.started_at || ['completed', 'abandoned'].includes(gameState.value.status)) {
         remainingTimeSeconds.value = 0;
         return;
     }
 
-    const startedAt = new Date(props.session.started_at).getTime();
-    const now = props.session.status === 'paused' 
-        ? new Date(props.session.paused_at).getTime() 
+    const startedAt = new Date(timer.started_at).getTime();
+    const now = gameState.value.status === 'paused' 
+        ? new Date(timer.paused_at).getTime() 
         : new Date().getTime();
     
-    const totalPauseMs = (props.session.total_pause_seconds || 0) * 1000;
+    const totalPauseMs = (timer.total_pause_seconds || 0) * 1000;
     const elapsedMs = now - startedAt - totalPauseMs;
-    const availableMs = (props.session.available_minutes || 0) * 60 * 1000;
+    const availableMs = (timer.available_minutes || 0) * 60 * 1000;
     
     remainingTimeSeconds.value = Math.max(0, Math.floor((availableMs - elapsedMs) / 1000));
 };
@@ -64,242 +68,92 @@ const formatTime = (seconds) => {
 };
 
 const timerColorClass = computed(() => {
-    if (remainingTimeSeconds.value < 300) return 'text-red-500 animate-pulse'; // < 5min
-    if (remainingTimeSeconds.value < 900) return 'text-amber-500'; // < 15min
+    if (remainingTimeSeconds.value < 300) return 'text-red-500 animate-pulse';
+    if (remainingTimeSeconds.value < 900) return 'text-amber-500';
     return 'text-[#d65a31]';
 });
 
-// ── Actions de Session ───────────────────────────────────────────────────────
-const togglePause = async () => {
-    if (isProcessingAction.value) return;
-    isProcessingAction.value = true;
+// ── Map & Markers ───────────────────────────────────────────────────────────
+const drawMarkers = () => {
+    if (!map || !gameState.value) return;
     
-    const action = props.session.status === 'paused' ? 'resume' : 'pause';
-    try {
-        await axios.post(route(`player.game-sessions.${action}`, props.session.id));
-        router.reload({ only: ['session'] });
-    } catch (e) {
-        console.error(`Erreur lors de ${action}:`, e);
-    } finally {
-        isProcessingAction.value = false;
-    }
-};
-
-const abandonGame = async () => {
-    if (!confirm("Êtes-vous sûr de vouloir abandonner l'aventure ? Votre progression sera enregistrée mais la partie sera terminée.")) return;
-    
-    if (isProcessingAction.value) return;
-    isProcessingAction.value = true;
-
-    try {
-        await axios.post(route('player.game-sessions.abandon', props.session.id));
-        router.visit(route('player.dashboard'));
-    } catch (e) {
-        console.error("Erreur lors de l'abandon:", e);
-    } finally {
-        isProcessingAction.value = false;
-    }
-};
-
-const places = computed(() => {
-    if (!props.session?.session_places) return [];
-    
-    // 1. On ne montre que les lieux déjà complétés ou le lieu actuel
-    return props.session.session_places
-        .filter(sp => sp.place && (sp.is_completed || sp.order_index === props.session.current_place_index))
-        .map(sp => ({
-            ...sp.place,
-            is_completed: sp.is_completed,
-            order_index: sp.order_index
-        }));
-});
-
-const currentPlace = computed(() => {
-    return places.value.find(p => p.order_index === props.session.current_place_index);
-});
-
-let placeMarkers = [];
-
-const drawPlaces = () => {
-    // Supprimer les anciens marqueurs s'ils existent
-    placeMarkers.forEach(marker => {
-        if (map) {
-            map.removeLayer(marker);
-        }
-    });
+    placeMarkers.forEach(m => map.removeLayer(m));
     placeMarkers = [];
 
-    // Ajouter les lieux de la session
-    places.value.forEach(place => {
-        const isCurrent = place.order_index === props.session.current_place_index;
-        // Place utilise lat/lng
-        const placeLat = place.lat ?? place.latitude;
-        const placeLng = place.lng ?? place.longitude;
-
-        if (!placeLat || !placeLng) return; // Ignorer les lieux sans coordonnées
-        
-        // Custom Icon based on status
-        const icon = L.divIcon({
-            className: 'custom-div-icon',
-            html: `
-                <div class="relative cursor-pointer">
-                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center shadow-2xl transition-all duration-300 border-2 font-black text-xs ${
-                        place.is_completed 
-                            ? 'bg-green-500 border-green-200 text-white' 
-                            : (isCurrent 
-                                ? 'bg-[#d65a31] border-orange-200 text-white scale-110' 
-                                : 'bg-gray-800 border-gray-600 text-gray-400 opacity-60')
-                    }">
-                        ${place.is_completed ? '✓' : (isCurrent ? '?' : place.order_index + 1)}
-                    </div>
-                    ${isCurrent ? '<div class="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full animate-ping"></div>' : ''}
-                </div>
-            `,
-            iconSize: [40, 40],
-            iconAnchor: [20, 20]
-        });
-
-        const marker = L.marker([placeLat, placeLng], { icon }).addTo(map);
-        
-        // Au clic sur le marqueur, on définit le lieu sélectionné
-        marker.on('click', () => {
-            selectedMapPlace.value = place;
-        });
-
-        placeMarkers.push(marker);
-    });
+    // On utilise les données de gameState pour les marqueurs
+    // ...
 };
-
-const selectThisPlace = async (place) => {
-    if (isSelectingPlace.value) return;
-    isSelectingPlace.value = true;
-    try {
-        const response = await axios.post(route('player.game-sessions.select-place', props.session.id), {
-            place_id: place.id
-        });
-        
-        const data = response.data;
-        if (data.next_riddle_id) {
-            // Lance immédiatement la succession d'énigmes du lieu sélectionné !
-            router.visit(route('player.riddle.show', data.next_riddle_id));
-        } else {
-            // Recharger les props de la session de manière transparente
-            router.reload({
-                only: ['session'],
-                onSuccess: () => {
-                    const updated = places.value.find(p => p.id === place.id);
-                    if (updated) {
-                        selectedMapPlace.value = updated;
-                    }
-                }
-            });
-        }
-    } catch (e) {
-        console.error("Erreur sélection lieu:", e);
-        alert(e.response?.data?.message || "Impossible de sélectionner ce lieu.");
-    } finally {
-        isSelectingPlace.value = false;
-    }
-};
-
-// Réagir dynamiquement aux modifications des lieux ou de l'index actuel
-watch(places, () => {
-    if (map) {
-        drawPlaces();
-    }
-}, { deep: true });
 
 const initMap = () => {
-    if (!mapContainer.value) return;
+    if (!mapContainer.value || !gameState.value) return;
 
-    // City utilise lat/lng (pas latitude/longitude)
-    const centerLat = props.session.city?.lat ?? props.session.city?.latitude ?? 6.3654;
-    const centerLng = props.session.city?.lng ?? props.session.city?.longitude ?? 2.4183;
+    const center = [gameState.value.city?.lat || 6.3654, gameState.value.city?.lng || 2.4183];
+    map = L.map(mapContainer.value, { zoomControl: false, attributionControl: false }).setView(center, 14);
 
-    map = L.map(mapContainer.value, {
-        zoomControl: false,
-        attributionControl: false
-    }).setView([centerLat, centerLng], 14);
-
-    // Style de carte sombre natif (plus stable et lisible)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    }).addTo(map);
-
-    // Force la recalculation de la taille de la carte pour éviter le bug de d'affichage gris en SPA
-    setTimeout(() => {
-        if (map) {
-            map.invalidateSize();
-        }
-    }, 250);
-
-    // Retirer le filtre CSS qui rendait les labels illisibles
-    const mapEl = mapContainer.value;
-    mapEl.style.filter = 'none';
-
-    // Dessiner les lieux de la session
-    drawPlaces();
-
-    startWatchingLocation();
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+    
+    drawMarkers();
+    startTracking();
+    
+    nextTick(() => map.invalidateSize());
 };
 
-const recenterMap = () => {
-    if (userLocation.value && map) {
-        map.setView([userLocation.value.lat, userLocation.value.lng], 16, { animate: true });
-    } else if (map && props.session.city) {
-        const cityLat = props.session.city.lat ?? props.session.city.latitude;
-        const cityLng = props.session.city.lng ?? props.session.city.longitude;
-        if (cityLat && cityLng) {
-            map.setView([cityLat, cityLng], 14, { animate: true });
-        }
+const startTracking = () => {
+    if (!("geolocation" in navigator)) return;
+
+    watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+            const { latitude, longitude } = pos.coords;
+            userLocation.value = { lat: latitude, lng: longitude };
+
+            if (!userMarker) {
+                const icon = L.divIcon({
+                    className: 'user-icon',
+                    html: `<div class="relative">
+                        <div class="absolute -inset-2 bg-blue-500/30 rounded-full animate-ping"></div>
+                        <div class="bg-blue-500 w-4 h-4 rounded-full border-2 border-white shadow-lg"></div>
+                    </div>`,
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8]
+                });
+                userMarker = L.marker([latitude, longitude], { icon }).addTo(map);
+                map.setView([latitude, longitude], 16);
+            } else {
+                userMarker.setLatLng([latitude, longitude]);
+            }
+        },
+        (err) => { geoError.value = "Activez le GPS pour une meilleure expérience."; },
+        { enableHighAccuracy: true }
+    );
+};
+
+// ── Session Actions ─────────────────────────────────────────────────────────
+const handleAction = async (action) => {
+    if (isProcessingAction.value) return;
+    
+    if (action === 'abandon' && !confirm("Abandonner l'aventure ?")) return;
+
+    isProcessingAction.value = true;
+    try {
+        await axios.post(route(`player.game-sessions.${action}`, gameState.value.id));
+        if (action === 'abandon') router.visit(route('player.dashboard'));
+        else router.reload();
+    } catch (e) {
+        console.error(e);
+    } finally {
+        isProcessingAction.value = false;
     }
 };
 
-const zoomIn = () => map?.zoomIn();
-const zoomOut = () => map?.zoomOut();
-
-const startWatchingLocation = () => {
-    if ("geolocation" in navigator) {
-        watchId = navigator.geolocation.watchPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
-                userLocation.value = { lat: latitude, lng: longitude };
-
-                if (!userMarker) {
-                    const userIcon = L.divIcon({
-                        className: 'user-icon',
-                        html: `<div class="relative">
-                            <div class="absolute -inset-2 bg-blue-500/30 rounded-full animate-ping"></div>
-                            <div class="relative bg-blue-500 w-4 h-4 rounded-full border-2 border-white shadow-lg"></div>
-                        </div>`,
-                        iconSize: [16, 16],
-                        iconAnchor: [8, 8]
-                    });
-                    userMarker = L.marker([latitude, longitude], { icon: userIcon }).addTo(map);
-                    
-                    // Centrer sur le joueur au premier fix
-                    map.setView([latitude, longitude], 16);
-                } else {
-                    userMarker.setLatLng([latitude, longitude]);
-                }
-            },
-            (error) => {
-                console.error("Erreur GPS:", error);
-                geoError.value = "Activez le GPS pour voir votre position.";
-            },
-            { enableHighAccuracy: true }
-        );
-    }
-};
-
+// ── Lifecycle ───────────────────────────────────────────────────────────────
 onMounted(() => {
-    // Petit délai pour s'assurer que Leaflet est bien chargé et que le DOM est prêt
     setTimeout(initMap, 100);
-
-    // Initialiser et démarrer le timer
-    calculateRemainingTime();
     timerInterval = setInterval(calculateRemainingTime, 1000);
+    calculateRemainingTime();
+
+    // GSAP Intro
+    gsap.from(".hud-top", { y: -100, opacity: 0, duration: 1, ease: "power4.out" });
+    gsap.from(".hud-bottom", { y: 100, opacity: 0, duration: 1, ease: "power4.out", delay: 0.5 });
 });
 
 onUnmounted(() => {
@@ -307,185 +161,134 @@ onUnmounted(() => {
     if (map) map.remove();
     if (timerInterval) clearInterval(timerInterval);
 });
+
+watch(() => gameState.value, drawMarkers, { deep: true });
 </script>
 
 <template>
-    <Head title="Carte du Jeu" />
+    <Head title="CityPlay - Mission Tactique" />
 
     <PlayerLayout>
-        <div class="h-[calc(100vh-160px)] -mt-6 -mx-4 relative overflow-hidden">
-            <!-- Leaflet Container -->
+        <div class="h-[calc(100vh-160px)] -mt-6 -mx-4 relative overflow-hidden bg-[#0f111a]">
+            <!-- Map Container -->
             <div ref="mapContainer" class="w-full h-full z-0"></div>
 
-            <!-- UI Overlay: Header -->
-            <div class="absolute top-6 left-4 right-4 z-10">
-                <div class="bg-[#1c2128]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl flex items-center justify-between">
-                    <div class="flex-1 min-w-0 mr-2">
-                        <div class="flex items-center gap-2 mb-1">
-                            <h1 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                {{ session.status === 'completed' ? 'Mission Terminée' : 'Mission Actuelle' }}
-                            </h1>
-                            <div v-if="session.status === 'paused'" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-500 text-[8px] font-black uppercase tracking-widest border border-amber-500/30">
-                                En Pause
-                            </div>
-                        </div>
-                        <p class="text-white font-bold italic truncate text-sm">
-                            {{ session.status === 'completed' ? 'Parcours terminé avec succès !' : (currentPlace?.name || 'En route...') }}
-                        </p>
+            <!-- HUD Top: Timer & Score -->
+            <div class="hud-top absolute top-6 left-4 right-4 z-10 flex justify-between items-start pointer-events-none">
+                <div class="bg-gray-900/90 backdrop-blur-xl border border-white/10 p-4 rounded-3xl shadow-2xl pointer-events-auto">
+                    <div class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Temps Restant</div>
+                    <div class="text-3xl font-black font-mono tracking-tighter" :class="timerColorClass">
+                        {{ formatTime(remainingTimeSeconds) }}
                     </div>
-                    <div class="flex items-center shrink-0 gap-3">
-                        <!-- Timer -->
-                        <div v-if="session.status !== 'completed'" class="flex flex-col items-end">
-                            <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Temps</span>
-                            <span :class="timerColorClass" class="text-sm font-black tabular-nums">
-                                {{ formatTime(remainingTimeSeconds) }}
-                            </span>
-                        </div>
+                </div>
 
-                        <!-- Bouton Résoudre l'énigme active -->
-                        <Link v-if="session.status === 'active' && session.current_riddle"
-                              :href="route('player.riddle.show', session.current_riddle.id)"
-                              class="bg-[#d65a31] hover:bg-[#b84a26] text-white text-[10px] font-black uppercase tracking-widest px-3.5 py-2.5 rounded-xl shadow-lg flex items-center gap-1.5 transition-all">
-                            <span>Jouer</span>
-                        </Link>
+                <div class="bg-gray-900/90 backdrop-blur-xl border border-white/10 p-4 rounded-3xl shadow-2xl text-right pointer-events-auto">
+                    <div class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Score Actuel</div>
+                    <div class="text-3xl font-black text-white tracking-tighter">
+                        {{ gameState?.total_score || 0 }} <span class="text-xs text-orange-500">PTS</span>
                     </div>
                 </div>
             </div>
 
-            <!-- UI Overlay: Controls -->
-            <div class="absolute right-4 top-32 z-10 flex flex-col space-y-2">
-                <button @click="zoomIn" class="w-12 h-12 bg-[#1c2128]/90 backdrop-blur border border-white/10 rounded-xl flex items-center justify-center text-white hover:bg-[#252b35] transition shadow-xl">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                </button>
-                <button @click="zoomOut" class="w-12 h-12 bg-[#1c2128]/90 backdrop-blur border border-white/10 rounded-xl flex items-center justify-center text-white hover:bg-[#252b35] transition shadow-xl">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
-                </button>
-                <button @click="recenterMap" class="w-12 h-12 bg-[#d65a31] border border-[#d65a31]/20 rounded-xl flex items-center justify-center text-white hover:bg-[#b84a26] transition shadow-xl mt-4">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                </button>
-
-                <!-- Actions de Session -->
-                <button @click="togglePause" :disabled="isProcessingAction" class="w-12 h-12 bg-white/5 backdrop-blur border border-white/10 rounded-xl flex items-center justify-center text-white hover:bg-white/10 transition shadow-xl mt-4">
-                    <svg v-if="session.status === 'paused'" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    <svg v-else class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                </button>
-                <button @click="abandonGame" :disabled="isProcessingAction" class="w-12 h-12 bg-red-500/10 backdrop-blur border border-red-500/20 rounded-xl flex items-center justify-center text-red-500 hover:bg-red-500/20 transition shadow-xl">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-
-            <!-- UI Overlay: Footer Legend -->
-            <div class="absolute bottom-6 left-4 right-4 z-10 flex space-x-2 overflow-x-auto pb-2 no-scrollbar">
-                <div class="flex-none bg-[#1c2128]/90 backdrop-blur px-4 py-2 rounded-full border border-white/5 flex items-center space-x-2">
-                    <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span class="text-[10px] font-black text-white uppercase tracking-widest">Vous</span>
-                </div>
-                <div class="flex-none bg-[#1c2128]/90 backdrop-blur px-4 py-2 rounded-full border border-white/5 flex items-center space-x-2">
-                    <div class="w-2 h-2 rounded-full bg-[#d65a31]"></div>
-                    <span class="text-[10px] font-black text-white uppercase tracking-widest">Objectif</span>
-                </div>
-                <div class="flex-none bg-[#1c2128]/90 backdrop-blur px-4 py-2 rounded-full border border-white/5 flex items-center space-x-2">
-                    <div class="w-2 h-2 rounded-full bg-[#10b981]"></div>
-                    <span class="text-[10px] font-black text-white uppercase tracking-widest">Validé</span>
-                </div>
-            </div>
-
-            <!-- Floating Place Details Card -->
-            <Transition
-                enter-active-class="transition-all duration-300 ease-out"
-                enter-from-class="opacity-0 translate-y-10 scale-95"
-                leave-active-class="transition-all duration-200 ease-in"
-                leave-to-class="opacity-0 translate-y-10 scale-95"
-            >
-                <div v-if="selectedMapPlace" class="absolute bottom-20 left-4 right-4 z-10 max-w-sm mx-auto">
-                    <div class="bg-[#1c2128]/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl relative overflow-hidden">
-                        
-                        <!-- Close button -->
-                        <button @click="selectedMapPlace = null" class="absolute top-3 right-3 text-gray-400 hover:text-white transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-
-                        <div class="mb-3.5">
-                            <span class="text-[9px] font-black uppercase tracking-widest text-[#d65a31] block mb-1">
-                                {{ selectedMapPlace.is_completed ? 'Lieu Découvert' : 'Lieu À Explorer' }}
-                            </span>
-                            <h3 class="text-base font-black text-white leading-tight pr-6">{{ selectedMapPlace.is_completed ? selectedMapPlace.name : 'Lieu Mystère' }}</h3>
-                        </div>
-
-                        <p v-if="selectedMapPlace.is_completed && selectedMapPlace.description" class="text-[11px] text-gray-300 font-medium leading-relaxed mb-4 line-clamp-3">
-                            {{ selectedMapPlace.description }}
-                        </p>
-                        <p v-else-if="!selectedMapPlace.is_completed" class="text-[11px] text-[#d65a31] italic font-bold mb-4">
-                            Lieu mystère. Résolvez l'énigme et rendez-vous sur place pour découvrir son histoire.
-                        </p>
-
-                        <!-- Place Stats Badges -->
-                        <div class="flex items-center gap-2 flex-wrap mb-4">
-                            <span v-if="selectedMapPlace.estimated_time_min" class="inline-flex items-center px-2 py-0.5 rounded text-[8px] font-black bg-[#d65a31]/10 text-[#d65a31] border border-[#d65a31]/15">
-                                ⏱ {{ selectedMapPlace.estimated_time_min }} min
-                            </span>
-                            <span v-if="selectedMapPlace.validation_radius" class="inline-flex items-center px-2 py-0.5 rounded text-[8px] font-black bg-blue-500/10 text-blue-500 border border-blue-500/15">
-                                📍 Rayon : {{ selectedMapPlace.validation_radius }}m
-                            </span>
-                        </div>
-
-                        <!-- Actions -->
-                        <div class="flex items-center gap-2.5">
-                            <div v-if="selectedMapPlace.is_completed" class="w-full h-11 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                                <span>✓ Découvert avec succès</span>
+            <!-- HUD Bottom: Current Target -->
+            <div class="hud-bottom absolute bottom-10 left-4 right-4 z-10 pointer-events-none">
+                <div class="max-w-md mx-auto bg-gray-900/95 backdrop-blur-2xl border border-white/10 rounded-[40px] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] p-6 pointer-events-auto">
+                    <div v-if="gameState?.current_riddle" class="flex items-center gap-6">
+                        <div class="relative flex-shrink-0">
+                            <div class="w-20 h-20 rounded-3xl overflow-hidden border-2 border-orange-500/50 shadow-2xl">
+                                <img 
+                                    :src="gameState.current_riddle.place?.images?.[0]?.image_path || '/placeholder-place.jpg'" 
+                                    class="w-full h-full object-cover"
+                                />
                             </div>
+                            <div class="absolute -bottom-2 -right-2 bg-orange-500 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg">
+                                {{ gameState.solved_places + 1 }}/{{ gameState.total_places }}
+                            </div>
+                        </div>
+
+                        <div class="flex-grow min-w-0">
+                            <h3 class="text-white font-black text-xl leading-tight mb-1 truncate">
+                                {{ gameState.current_riddle.place?.name || 'Lieu Mystère' }}
+                            </h3>
+                            <p class="text-gray-400 text-xs font-medium line-clamp-2 mb-4">
+                                {{ gameState.current_riddle.question }}
+                            </p>
                             
-                            <template v-else>
-                                <!-- Si c'est l'objectif actuel, on affiche Jouer -->
-                                <Link v-if="selectedMapPlace.order_index === session.current_place_index && session.current_riddle"
-                                      :href="route('player.riddle.show', session.current_riddle.id)"
-                                      class="w-full h-11 bg-[#d65a31] hover:bg-[#b84a26] text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg flex items-center justify-center gap-1.5 transition-all">
-                                    <span>Résoudre les énigmes</span>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                                    </svg>
+                            <div class="flex gap-3">
+                                <Link 
+                                    :href="route('player.riddle.show', gameState.current_riddle.id)"
+                                    class="flex-grow bg-orange-500 hover:bg-orange-600 text-white text-sm font-black py-3 rounded-2xl transition-all duration-300 text-center shadow-lg shadow-orange-500/20 active:scale-95"
+                                >
+                                    RÉSOUDRE
                                 </Link>
-                                
-                                <!-- Si ce n'est pas l'objectif actuel, on affiche Sélectionner -->
-                                <button v-else
-                                        @click="selectThisPlace(selectedMapPlace)"
-                                        :disabled="isSelectingPlace"
-                                        class="w-full h-11 bg-white hover:bg-gray-100 text-gray-900 text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-50">
-                                    <span v-if="!isSelectingPlace">Sélectionner comme objectif</span>
-                                    <svg v-else class="animate-spin w-4 h-4 text-gray-900" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                <button 
+                                    @click="showPauseMenu = true"
+                                    class="w-12 bg-white/5 hover:bg-white/10 text-white rounded-2xl flex items-center justify-center transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </button>
-                            </template>
+                            </div>
                         </div>
+                    </div>
+
+                    <div v-else class="text-center py-4">
+                        <div class="animate-pulse flex flex-col items-center">
+                            <div class="w-12 h-12 bg-gray-800 rounded-full mb-3"></div>
+                            <div class="h-4 w-32 bg-gray-800 rounded mb-2"></div>
+                            <div class="h-3 w-48 bg-gray-800 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overlay Pause -->
+            <Transition name="fade">
+                <div v-if="gameState?.status === 'paused'" class="absolute inset-0 z-50 bg-gray-900/90 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center">
+                    <div class="w-24 h-24 bg-orange-500/20 rounded-full flex items-center justify-center mb-8 animate-pulse">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 9v6m4-6v6" />
+                        </svg>
+                    </div>
+                    <h2 class="text-4xl font-black text-white mb-4 tracking-tighter uppercase italic">Mission Suspendue</h2>
+                    <p class="text-gray-400 mb-12 max-w-xs font-medium">Le temps est arrêté. Reprenez votre souffle avant de continuer l'aventure.</p>
+                    
+                    <button 
+                        v-if="gameState.is_host"
+                        @click="handleAction('resume')"
+                        class="w-full max-w-xs bg-white text-gray-900 font-black py-5 rounded-[2rem] text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all mb-4"
+                    >
+                        REPRENDRE
+                    </button>
+                    <button 
+                        v-if="gameState.is_host"
+                        @click="handleAction('abandon')"
+                        class="text-red-500 font-bold py-4 hover:underline"
+                    >
+                        ABANDONNER LA MISSION
+                    </button>
+                    <div v-else class="text-amber-500 font-bold animate-bounce">
+                        En attente du chef de clan...
                     </div>
                 </div>
             </Transition>
-
-            <!-- Geolocation Error -->
-            <div v-if="geoError" class="absolute top-24 left-4 right-4 z-10 bg-red-500/90 backdrop-blur text-white p-3 rounded-xl text-center text-[10px] font-black uppercase tracking-widest">
-                {{ geoError }}
-            </div>
         </div>
     </PlayerLayout>
 </template>
 
-<style>
-.leaflet-container {
-    background: #0f111a !important;
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.custom-div-icon { background: none; border: none; }
+
+.marker-anim {
+    animation: marker-bounce 2s infinite ease-in-out;
 }
-.custom-div-icon {
-    background: transparent !important;
-    border: none !important;
-}
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-.no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+
+@keyframes marker-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
 }
 </style>
