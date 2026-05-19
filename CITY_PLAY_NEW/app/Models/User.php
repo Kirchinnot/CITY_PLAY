@@ -21,6 +21,9 @@ class User extends Authenticatable
         'role',
         'avatar',
         'two_factor_enabled',
+        'cgu_accepted_at',
+        'privacy_policy_accepted_at',
+        'delete_requested',
     ];
 
     protected $hidden = [

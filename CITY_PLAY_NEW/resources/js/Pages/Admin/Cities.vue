@@ -22,6 +22,13 @@ const form = useForm({
     id: null,
     name: '',
     description: '',
+    retention_days: 365,
+    outro_config: {
+        message: '',
+        recommendations: '',
+        restaurant_tip: '',
+        shop_url: '',
+    }
 });
 
 const openCreateModal = () => {
@@ -38,13 +45,19 @@ const openEditModal = (city) => {
     form.id = city.id;
     form.name = city.name;
     form.description = city.description;
+    form.retention_days = city.retention_days || 365;
+    form.outro_config = city.outro_config || {
+        message: '',
+        recommendations: '',
+        restaurant_tip: '',
+        shop_url: '',
+    };
     form.clearErrors();
     isModalOpen.value = true;
 };
 
 const closeModal = () => {
     isModalOpen.value = false;
-    // On attend la fin de l'animation CSS avant de reset le contenu visuel
     resetTimeout = setTimeout(() => {
         form.reset();
         form.clearErrors();
@@ -140,7 +153,7 @@ const unpublish = (cityId) => {
 
                         <!-- Cartes des villes -->
                         <div v-for="city in cities" :key="city.id" class="premium-card"
-                            style="padding: 0; overflow: hidden; display: flex; flex-direction: column; height: 380px; position: relative; border-radius: var(--border-radius-md);">
+                            style="padding: 0; overflow: hidden; display: flex; flex-direction: column; height: 420px; position: relative; border-radius: var(--border-radius-md);">
                             <!-- Pattern Visuel -->
                             <div
                                 style="height: 120px; background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary)); position: relative; display: flex; align-items: flex-end; padding: 1rem;">
@@ -180,12 +193,12 @@ const unpublish = (cityId) => {
                                     </div>
                                     <div
                                         style="background: var(--color-bg-light); padding: 0.5rem 0.75rem; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem;">
-                                        <span style="font-size: 1.1rem;">⚡</span>
+                                        <span style="font-size: 1.1rem;">💾</span>
                                         <div>
                                             <span
-                                                style="display: block; font-size: 0.65rem; color: var(--color-text-muted); text-transform: uppercase; font-weight: 700;">Difficulté</span>
+                                                style="display: block; font-size: 0.65rem; color: var(--color-text-muted); text-transform: uppercase; font-weight: 700;">RGPD</span>
                                             <span
-                                                style="display: block; font-size: 0.9rem; font-weight: 800; color: var(--color-primary-dark);">Moyenne</span>
+                                                style="display: block; font-size: 0.9rem; font-weight: 800; color: var(--color-primary-dark);">{{ city.retention_days || 365 }} j</span>
                                         </div>
                                     </div>
                                 </div>
@@ -223,7 +236,7 @@ const unpublish = (cityId) => {
         <div v-if="isModalOpen" class="premium-modal-backdrop" @click.self="closeModal"
             style="backdrop-filter: blur(6px); background: rgba(28,24,22,0.6); position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 100;">
             <div class="premium-modal-content"
-                style="max-width: 480px; width: 100%; background: white; padding: 1.5rem; border-radius: var(--border-radius-lg); border: 2px solid var(--border-color); box-shadow: var(--shadow-premium);">
+                style="max-width: 600px; width: 100%; background: white; padding: 1.5rem; border-radius: var(--border-radius-lg); border: 2px solid var(--border-color); box-shadow: var(--shadow-premium); max-height: 90vh; overflow-y: auto;">
                 <div
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
                     <div>
@@ -240,45 +253,37 @@ const unpublish = (cityId) => {
                 </div>
 
                 <form @submit.prevent="submitForm" style="display: flex; flex-direction: column; gap: 1.25rem;">
-                    <div>
-                        <label class="premium-label"
-                            style="font-weight: 700; color: var(--color-primary-dark); display: block; margin-bottom: 0.35rem;">Nom
-                            de l'aventure</label>
-                        <input v-model="form.name" type="text" class="premium-input" maxlength="150" required
-                            placeholder="Ex: Les secrets de Ouidah" />
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
-                            <span style="font-size: 0.65rem; color: var(--color-text-muted);">Titre court et
-                                accrocheur</span>
-                            <span style="font-size: 0.7rem; font-weight: 600;"
-                                :style="{ color: (form.name || '').length > 140 ? 'var(--color-danger)' : 'var(--color-text-muted)' }">
-                                {{ (form.name || '').length }} / 150
-                            </span>
+                    <!-- Infos de base -->
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                        <div>
+                            <label class="premium-label" style="font-weight: 700; color: var(--color-primary-dark); display: block; margin-bottom: 0.35rem;">Nom de l'aventure</label>
+                            <input v-model="form.name" type="text" class="premium-input" maxlength="150" required placeholder="Ex: Les secrets de Ouidah" />
                         </div>
-                        <p v-if="form.errors.name"
-                            style="color: var(--color-danger); font-size: 0.85rem; margin-top: 0.25rem;">
-                            {{ form.errors.name }}</p>
+                        <div>
+                            <label class="premium-label" style="font-weight: 700; color: var(--color-primary-dark); display: block; margin-bottom: 0.35rem;">RGPD (jours)</label>
+                            <input v-model="form.retention_days" type="number" class="premium-input" min="1" required />
+                        </div>
                     </div>
 
                     <div>
-                        <label class="premium-label"
-                            style="font-weight: 700; color: var(--color-primary-dark); display: block; margin-bottom: 0.35rem;">Présentation
-                            narrative (max 500 car.)</label>
-                        <textarea v-model="form.description" class="premium-input" rows="5" maxlength="500" required
-                            placeholder="Introduisez les mystères de cette ville et l'intrigue historique..."></textarea>
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
-                            <span style="font-size: 0.65rem; color: var(--color-text-muted);">Sera lue par le joueur sur
-                                l'écran
-                                d'accueil</span>
-                            <span style="font-size: 0.7rem; font-weight: 600;"
-                                :style="{ color: (form.description || '').length > 480 ? 'var(--color-danger)' : 'var(--color-text-muted)' }">
-                                {{ (form.description || '').length }} / 500
-                            </span>
+                        <label class="premium-label" style="font-weight: 700; color: var(--color-primary-dark); display: block; margin-bottom: 0.35rem;">Présentation narrative (max 500 car.)</label>
+                        <textarea v-model="form.description" class="premium-input" rows="3" maxlength="500" required placeholder="Introduisez les mystères de cette ville..."></textarea>
+                    </div>
+
+                    <!-- Configuration Conclusion (Outro) -->
+                    <div style="border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--border-radius-md); background: var(--color-bg-light);">
+                        <h4 style="font-size: 0.8rem; font-weight: 800; color: var(--color-primary); text-transform: uppercase; margin-bottom: 1rem;">Conclusion de l'aventure</h4>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div>
+                                <label class="premium-label" style="font-size: 0.75rem;">Message de fin</label>
+                                <textarea v-model="form.outro_config.message" class="premium-input" rows="2" placeholder="Félicitations aux joueurs..."></textarea>
+                            </div>
+                            <div>
+                                <label class="premium-label" style="font-size: 0.75rem;">Recommandations (tourisme, boutique...)</label>
+                                <textarea v-model="form.outro_config.recommendations" class="premium-input" rows="2" placeholder="Allez visiter la boutique..."></textarea>
+                            </div>
                         </div>
-                        <p v-if="form.errors.description"
-                            style="color: var(--color-danger); font-size: 0.85rem; margin-top: 0.25rem;">{{
-                            form.errors.description }}</p>
                     </div>
 
                     <div

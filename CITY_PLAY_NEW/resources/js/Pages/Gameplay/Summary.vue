@@ -22,9 +22,9 @@ const deleteForm = useForm({
 });
 
 const deleteProfile = () => {
-    // In a real flow, we'd prompt for password or directly delete if 2FA/auth allows.
-    // For this prototype, we'll route to a dedicated GDPR purge route or standard profile destroy.
-    deleteForm.delete(route('player.profile.destroy'), {
+    if (!confirm("Cette action supprimera définitivement votre compte et votre progression après votre déconnexion. Confirmer ?")) return;
+    
+    deleteForm.post(route('profile.logout-delete'), {
         preserveScroll: true,
         onSuccess: () => showProfileModal.value = false,
     });

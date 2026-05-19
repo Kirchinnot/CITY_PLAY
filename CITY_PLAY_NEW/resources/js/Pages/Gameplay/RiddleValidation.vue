@@ -46,6 +46,43 @@ const showOfflineToast    = ref(false);
 const offlineToastMessage = ref('');
 const isSyncing           = ref(false);
 
+// ── Gestion du Temps ─────────────────────────────────────────────────────────
+const remainingTimeSeconds = ref(0);
+let remainingTimerInterval = null;
+
+const calculateRemainingTime = () => {
+    if (!props.session?.started_at || props.session.status === 'completed' || props.session.status === 'abandoned') {
+        remainingTimeSeconds.value = 0;
+        return;
+    }
+
+    const startedAt = new Date(props.session.started_at).getTime();
+    const now = props.session.status === 'paused' 
+        ? new Date(props.session.paused_at).getTime() 
+        : new Date().getTime();
+    
+    const totalPauseMs = (props.session.total_pause_seconds || 0) * 1000;
+    const elapsedMs = now - startedAt - totalPauseMs;
+    const availableMs = (props.session.available_minutes || 0) * 60 * 1000;
+    
+    remainingTimeSeconds.value = Math.max(0, Math.floor((availableMs - elapsedMs) / 1000));
+};
+
+const formatTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return h > 0 
+        ? `${h}h ${m.toString().padStart(2, '0')}m` 
+        : `${m}:${s.toString().padStart(2, '0')}`;
+};
+
+const timerColorClass = computed(() => {
+    if (remainingTimeSeconds.value < 300) return 'text-red-500 animate-pulse';
+    if (remainingTimeSeconds.value < 900) return 'text-amber-500';
+    return 'text-[#d65a31]';
+});
+
 // ── PAUSE ─────────────────────────────────────────────────────────────────────
 const isPaused          = ref(props.session?.status === 'paused');
 const showPauseMenu     = ref(false);
@@ -335,6 +372,10 @@ onMounted(() => {
     if (!isPaused.value) startWatchingLocation();
     else startPauseTimer();
 
+    // Gestion du temps restant
+    calculateRemainingTime();
+    remainingTimerInterval = setInterval(calculateRemainingTime, 1000);
+
     // Cacher l'énigme active pour le mode offline
     cacheActiveRiddle();
 
@@ -349,6 +390,7 @@ onMounted(() => {
 onUnmounted(() => {
     if (watchId.value) navigator.geolocation.clearWatch(watchId.value);
     stopPauseTimer();
+    if (remainingTimerInterval) clearInterval(remainingTimerInterval);
 
     window.removeEventListener('online', updateOnlineStatus);
     window.removeEventListener('offline', updateOnlineStatus);
@@ -376,20 +418,30 @@ onUnmounted(() => {
 
             <!-- ── HEADER : titre + difficulté + bouton pause ── -->
             <div class="flex items-center justify-between">
-                <div>
+                <div class="flex-1 min-w-0">
                     <h1 class="text-xl font-black cp-text-primary italic tracking-tighter uppercase">Énigme en cours</h1>
-                    <p class="text-[10px] cp-text-muted font-bold uppercase tracking-widest mt-0.5">
-                        Lieu {{ session.solved_places + 1 }} / {{ session.total_places }}
-                        <span class="text-[#d65a31] ml-1">— {{ riddle.place?.name }}</span>
-                    </p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <p class="text-[10px] cp-text-muted font-bold uppercase tracking-widest">
+                            Lieu {{ session.solved_places + 1 }} / {{ session.total_places }}
+                        </p>
+                        <span class="text-gray-600 text-[10px]">•</span>
+                        <div v-if="session.status !== 'completed'" class="flex items-center gap-1.5">
+                            <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span :class="timerColorClass" class="text-[11px] font-black tabular-nums">
+                                {{ formatTime(remainingTimeSeconds) }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="bg-[#d65a31] text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                    <span class="bg-[#d65a31] text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shrink-0">
                         Force {{ riddle.difficulty === 'force_3' ? '3' : riddle.difficulty === 'force_2' ? '2' : '1' }}
                     </span>
                     <!-- Bouton pause / menu -->
                     <button @click="showPauseMenu = true"
-                            class="pause-btn"
+                            class="pause-btn shrink-0"
                             :class="isPaused ? 'pause-btn-active' : ''"
                             title="Pause">
                         <svg v-if="!isPaused" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -465,7 +517,7 @@ onUnmounted(() => {
                         <span class="text-xs font-black text-[#d65a31] uppercase tracking-widest">Énigme Verrouillée</span>
                     </div>
                     <p class="text-xs font-medium cp-text-secondary leading-relaxed max-w-xs">
-                        Rapprochez-vous de <b class="cp-text-primary">{{ riddle.place?.name }}</b> pour débloquer les réponses. Vous êtes à <b>{{ Math.round(distanceToTarget) }}m</b> (cible à <b>{{ riddle.place?.validation_radius || 30 }}m</b>).
+                        Rapprochez-vous de la destination mystère pour débloquer les réponses. Vous êtes à <b>{{ Math.round(distanceToTarget) }}m</b> (cible à <b>{{ riddle.place?.validation_radius || 30 }}m</b>).
                     </p>
                     <Link :href="route('player.game.map')"
                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#d65a31]/10 hover:bg-[#d65a31]/20 border border-[#d65a31]/30 text-[10px] font-black text-[#d65a31] uppercase tracking-widest transition-all">

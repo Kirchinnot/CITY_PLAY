@@ -35,11 +35,11 @@ class HandleInertiaRequests extends Middleware
         $adminStats = [];
 
         if ($user) {
-            // Données pour le JOUEUR : Session active ou la plus récente terminée
+            // Données pour le JOUEUR : Session active, en attente ou la plus récente terminée
             $session = \App\Models\GameSession::whereHas('gamePlayers', function($query) use ($user) {
                     $query->where('user_id', $user->id);
                 })
-                ->whereIn('status', ['active', 'completed'])
+                ->whereIn('status', ['active', 'completed', 'pending'])
                 ->with(['city'])
                 ->latest()
                 ->first();

@@ -64,17 +64,10 @@ const logoutAndKeep = () => {
 };
 
 const logoutAndDelete = () => {
+    if (!confirm("Cette action supprimera définitivement votre compte et votre progression après votre déconnexion. Confirmer ?")) return;
+    
     isDeletingProfile.value = true;
-    router.delete(route('profile.destroy'), {
-        data: { password: '' }, // On force la suppression sans mot de passe pour la démo, ou on redirige vers l'onglet compte
-        onSuccess: () => {
-            router.post(route('logout'));
-        },
-        onError: () => {
-            // Si le mot de passe est requis, on ferme la modale et on bascule sur l'onglet danger
-            showLogoutModal.value = false;
-            switchTab('danger');
-        },
+    router.post(route('profile.logout-delete'), {}, {
         onFinish: () => { isDeletingProfile.value = false; }
     });
 };

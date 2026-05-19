@@ -31,39 +31,44 @@ class PurgeInactiveUsersCommand extends Command
     {
         $this->info('Démarrage de la purge RGPD des utilisateurs inactifs...');
 
-        // Nous allons chercher les utilisateurs qui ont joué pour une ville spécifique
-        // et appliquer la durée de conservation paramétrée par la mairie de cette ville.
-        // Simplification : nous allons purger les joueurs ayant explicitement demandé la suppression,
-        // ou dont la dernière session complétée dépasse la durée max de la ville.
-
-        // Dans un premier temps, on purge ceux marqués pour suppression immédiate (si applicable via un flag).
+        // 1. Purge immédiate des utilisateurs ayant explicitement demandé la suppression
         $usersToDeleteNow = User::where('delete_requested', true)->get();
-        
-        $count = 0;
+        $countImmediate = 0;
         foreach ($usersToDeleteNow as $user) {
             $user->delete();
-            $count++;
+            $countImmediate++;
         }
+        $this->info("Purge immédiate : $countImmediate utilisateur(s) supprimé(s).");
 
-        $this->info("Purge immédiate : $count utilisateur(s) supprimé(s).");
+        // 2. Rétention basée sur les paramètres des villes
+        // On cherche les utilisateurs (joueurs) dont la dernière activité dépasse la limite de rétention
+        // de la dernière ville visitée (ou la limite par défaut).
+        $cities = City::all();
+        $countRetention = 0;
 
-        // Rétention basée sur la ville : (à implémenter en fonction du modèle de données de rétention)
-        // Parcourons toutes les villes ayant une config outro
-        $cities = City::whereNotNull('outro_config')->get();
-        
         foreach ($cities as $city) {
-            $config = is_string($city->outro_config) ? json_decode($city->outro_config, true) : $city->outro_config;
-            
-            // Si la mairie a défini une durée de conservation en jours (ex: retention_days)
-            if (isset($config['retention_days'])) {
-                $days = (int) $config['retention_days'];
-                $cutoffDate = Carbon::now()->subDays($days);
-                
-                // Chercher les utilisateurs dont la dernière session dans cette ville est plus ancienne que $cutoffDate
-                // (Logique à adapter si nécessaire)
+            $days = $city->retention_days ?? 365; // Défaut 1 an
+            $cutoffDate = Carbon::now()->subDays($days);
+
+            // Trouver les utilisateurs dont la dernière session dans cette ville est trop ancienne
+            // et qui n'ont pas d'autres sessions plus récentes ailleurs.
+            $expiredUsers = User::where('role', 'player')
+                ->whereHas('gameSessions', function($query) use ($city, $cutoffDate) {
+                    $query->where('city_id', $city->id)
+                          ->where('updated_at', '<', $cutoffDate);
+                })
+                ->whereDoesntHave('gameSessions', function($query) use ($cutoffDate) {
+                    $query->where('updated_at', '>=', $cutoffDate);
+                })
+                ->get();
+
+            foreach ($expiredUsers as $user) {
+                $user->delete();
+                $countRetention++;
             }
         }
 
+        $this->info("Purge par rétention : $countRetention utilisateur(s) supprimé(s).");
         $this->info('Purge RGPD terminée.');
     }
 }

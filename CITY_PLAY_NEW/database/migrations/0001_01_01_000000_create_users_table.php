@@ -39,6 +39,13 @@ return new class extends Migration
                   ->comment('Chemin Storage vers la photo de profil');
             $table->boolean('two_factor_enabled')->default(false);
             $table->timestamp('email_verified_at')->nullable();
+            
+            // ── RGPD & CGU ────────────────────────────────────────────────
+            $table->timestamp('cgu_accepted_at')->nullable();
+            $table->timestamp('privacy_policy_accepted_at')->nullable();
+            $table->boolean('delete_requested')->default(false)
+                  ->comment('TRUE si l\'utilisateur a demandé la suppression de son compte');
+
             $table->rememberToken();
 
             $table->timestamps();

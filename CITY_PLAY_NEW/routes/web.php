@@ -37,6 +37,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/logout-delete', [ProfileController::class, 'logoutAndDelete'])->name('profile.logout-delete');
 
     // Sessions de jeu
     Route::prefix('game')->name('game.')->group(function () {
@@ -77,6 +78,7 @@ Route::prefix('player')
         Route::post('/riddles/{riddle}/validate',    [RiddleValidationController::class, 'validate'])->middleware('verify.speed')->name('riddle.validate');
         Route::post('/riddles/{riddle}/unlock-hint', [RiddleValidationController::class, 'unlockHint'])->name('riddle.unlock-hint');
         Route::post('/riddles/{riddle}/skip',        [RiddleValidationController::class, 'skip'])->name('riddle.skip');
+        Route::post('/riddles/{riddle}/reveal-solution', [RiddleValidationController::class, 'revealSolution'])->name('riddle.reveal-solution');
 
         // Sessions de jeu gameplay
         Route::post('/game-sessions',                    [GameSessionController::class, 'store'])->name('game-sessions.store');
@@ -113,6 +115,10 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     // Énigmes
     Route::get('/places/{place}/riddles', [\App\Http\Controllers\Admin\RiddleController::class, 'index'])->name('riddles.index');
     Route::post('/places/{place}/riddles', [\App\Http\Controllers\Admin\RiddleController::class, 'store'])->name('riddles.store');
+
+    // Joueurs & Équipes
+    Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
+    Route::delete('/users/{user}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('users.destroy');
 });
 
 /*

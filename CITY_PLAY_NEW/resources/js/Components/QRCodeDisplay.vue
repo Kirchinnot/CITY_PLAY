@@ -44,7 +44,7 @@ const copyLink = async () => {
             <p style="font-size: 0.65rem; color: var(--color-text-muted); font-weight: 800; text-transform: uppercase; tracking-widest: 0.05em; text-align: center; margin-bottom: 0.5rem;">
                 Lien d'invitation direct
             </p>
-            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--color-bg-light); rounded: var(--border-radius-sm); border: 1px dashed var(--border-color); border-radius: var(--border-radius-sm);">
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--color-bg-light); border: 1px dashed var(--border-color); border-radius: var(--border-radius-sm);">
                 <p style="font-size: 0.75rem; font-family: monospace; color: var(--color-text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; margin: 0;">
                     {{ url }}
                 </p>

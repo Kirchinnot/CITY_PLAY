@@ -69,10 +69,10 @@ trait GameplayLogic
     {
         // 1. Difficulté (Points de base)
         $pointsDifficulty = match ($riddle->difficulty) {
-            'child' => 50,
-            'force_1' => 100,
-            'force_2' => 150,
-            'force_3' => 200,
+            'enfant' => 50,
+            'facile' => 100,
+            'moyen' => 150,
+            'difficile' => 200,
             default => $riddle->points_base ?? 50,
         };
 

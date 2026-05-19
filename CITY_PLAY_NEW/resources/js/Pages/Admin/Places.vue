@@ -162,8 +162,12 @@ onBeforeUnmount(() => {
                         </div>
 
                         <div>
-                            <label class="premium-label">Description d'introduction (Indice ou Lore)</label>
-                            <textarea v-model="form.description" rows="3" class="premium-input" placeholder="Décrivez l'importance historique et donnez de subtils indices de recherche..."></textarea>
+                            <label class="premium-label">Description du lieu (Présentation - max 500 car.)</label>
+                            <textarea v-model="form.description" rows="3" class="premium-input" maxlength="500" required placeholder="Décrivez l'importance historique et donnez de subtils indices de recherche..."></textarea>
+                            <div class="flex justify-between mt-1">
+                                <span class="text-[10px] text-gray-400 italic">Affiché après la découverte du lieu</span>
+                                <span :class="form.description.length > 450 ? 'text-red-500' : 'text-gray-500'" class="text-[10px] font-bold">{{ form.description.length }}/500</span>
+                            </div>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
@@ -186,8 +190,9 @@ onBeforeUnmount(() => {
                         </div>
 
                         <div>
-                            <label class="premium-label">Photos touristiques (Sélection multiple)</label>
+                            <label class="premium-label">Photos touristiques (3 à 4 recommandées)</label>
                             <input type="file" multiple accept="image/jpeg,image/png" @input="handleImageUpload" style="width: 100%; padding: 0.5rem; background: var(--color-bg-light); border-radius: var(--border-radius-md); border: 1px solid var(--border-color); font-size: 0.85rem;" />
+                            <p class="text-[10px] text-gray-500 mt-1 italic">Ces photos illustreront le lieu une fois découvert.</p>
 
                             <!-- Prévisualisation -->
                             <div v-if="imagePreviews.length > 0" style="display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap;">

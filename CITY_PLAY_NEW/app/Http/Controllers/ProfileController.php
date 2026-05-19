@@ -41,7 +41,25 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's account.
+     * Marque le profil pour suppression et déconnecte l'utilisateur.
+     */
+    public function logoutAndDelete(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        
+        // Marquer pour suppression par le cron job
+        $user->update(['delete_requested' => true]);
+
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return Redirect::to('/')->with('success', 'Votre profil a été marqué pour suppression. Merci d\'avoir joué !');
+    }
+
+    /**
+     * Delete the user's account immediately.
      */
     public function destroy(Request $request): RedirectResponse
     {

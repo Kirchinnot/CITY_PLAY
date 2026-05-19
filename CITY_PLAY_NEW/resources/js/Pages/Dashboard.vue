@@ -20,7 +20,8 @@ const currentLayout = computed(() =>
 const { isDark, toggleTheme } = useTheme();
 
 // ── État session ──────────────────────────────────────────────────────────────
-const hasActiveSession = computed(() => session.value?.status === 'active');
+const hasActiveSession = computed(() => session.value?.status === 'active' || session.value?.status === 'pending');
+const isPending        = computed(() => session.value?.status === 'pending');
 const progressPercent  = computed(() => {
     if (!session.value) return 0;
     const { solved_places, total_places } = session.value;
@@ -243,10 +244,12 @@ const animateToggle = () => {
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
                             <span class="relative flex h-2 w-2">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                <span :class="isPending ? 'bg-amber-400' : 'bg-green-400'" class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"></span>
+                                <span :class="isPending ? 'bg-amber-500' : 'bg-green-500'" class="relative inline-flex rounded-full h-2 w-2"></span>
                             </span>
-                            <span class="text-[10px] font-black text-green-500 uppercase tracking-[0.2em]">Partie en cours</span>
+                            <span :class="isPending ? 'text-amber-500' : 'text-green-500'" class="text-[10px] font-black uppercase tracking-[0.2em]">
+                                {{ isPending ? 'En attente de joueurs' : 'Partie en cours' }}
+                            </span>
                         </div>
                         <span class="text-[10px] font-black cp-text-muted uppercase tracking-widest">
                             {{ session.difficulty?.replace('force_', 'Niv. ') }}
@@ -254,11 +257,14 @@ const animateToggle = () => {
                     </div>
 
                     <h2 class="text-2xl font-black cp-text-primary mb-0.5 leading-tight">{{ session.city?.name }}</h2>
-                    <p class="text-xs font-bold cp-text-muted mb-5">
+                    <p v-if="!isPending" class="text-xs font-bold cp-text-muted mb-5">
                         {{ session.solved_places ?? 0 }} / {{ session.total_places ?? 0 }} lieux découverts
                     </p>
+                    <p v-else class="text-xs font-bold cp-text-muted mb-5">
+                        En attente du lancement par le chef de clan
+                    </p>
 
-                    <div class="mb-5">
+                    <div v-if="!isPending" class="mb-5">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-[10px] font-black cp-text-muted uppercase tracking-widest">Progression</span>
                             <span class="text-[10px] font-black text-[#d65a31]">{{ progressPercent }}%</span>
@@ -276,7 +282,7 @@ const animateToggle = () => {
                             </svg>
                             <span>{{ session.available_minutes ?? '—' }} min</span>
                         </div>
-                        <div class="stat-badge" style="--c: rgba(234,179,8,0.1); --b: rgba(234,179,8,0.22); --t: #ca8a04;">
+                        <div v-if="!isPending" class="stat-badge" style="--c: rgba(234,179,8,0.1); --b: rgba(234,179,8,0.22); --t: #ca8a04;">
                             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.539-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
                             </svg>
@@ -289,7 +295,17 @@ const animateToggle = () => {
                     </div>
 
                     <div ref="resumeBtnRef">
-                        <Link v-if="session.current_riddle"
+                        <Link v-if="isPending"
+                              :href="route('game.lobby', session.id)"
+                              class="cta-btn group relative w-full flex items-center justify-center gap-2.5 h-[52px] rounded-2xl font-black uppercase tracking-widest text-sm text-white overflow-hidden"
+                              style="background: linear-gradient(90deg, #ca8a04, #eab308);">
+                            <span class="relative z-10">Rejoindre le salon</span>
+                            <svg class="relative z-10 w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            <div class="shimmer absolute inset-0"></div>
+                        </Link>
+                        <Link v-else-if="session.current_riddle"
                               :href="route('player.riddle.show', session.current_riddle.id)"
                               class="cta-btn group relative w-full flex items-center justify-center gap-2.5 h-[52px] rounded-2xl font-black uppercase tracking-widest text-sm text-white overflow-hidden">
                             <span class="relative z-10">Reprendre l'aventure</span>

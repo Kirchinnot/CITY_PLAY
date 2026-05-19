@@ -64,6 +64,8 @@ class CityController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:150',
             'description' => 'required|string|max:500',
+            'retention_days' => 'required|integer|min:1',
+            'outro_config' => 'nullable|array',
         ]);
 
         $validated['created_by'] = $request->user()->id;
@@ -82,6 +84,8 @@ class CityController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:150',
             'description' => 'required|string|max:500',
+            'retention_days' => 'required|integer|min:1',
+            'outro_config' => 'nullable|array',
         ]);
 
         $city->update($validated);

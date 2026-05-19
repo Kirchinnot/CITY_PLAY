@@ -143,7 +143,13 @@ class RiddleValidationController extends Controller
         // 4. Validation Texte (si réponse attendue)
         if ($riddle->answer) {
             if (!$request->answer || !$this->compareText($request->answer, $riddle->answer)) {
-                return response()->json(['message' => 'Réponse incorrecte.'], 422);
+                return response()->json([
+                    'message' => 'Mauvaise réponse ! Que souhaitez-vous faire ?',
+                    'error_type' => 'wrong_answer',
+                    'can_skip' => true,
+                    'can_see_solution' => true,
+                    'can_get_hint' => $riddle->hints()->count() > HintUsage::where('riddle_id', $riddle->id)->where('game_session_id', $session->id)->count(),
+                ], 422);
             }
         }
 
@@ -301,6 +307,26 @@ class RiddleValidationController extends Controller
     }
 
     /**
+     * Révèle la solution de l'énigme et passe à la suivante (0 points).
+     */
+    public function revealSolution(Request $request, Riddle $riddle)
+    {
+        $user = $request->user();
+        $session = GameSession::whereHas('gamePlayers', function($query) use ($user) {
+                $query->where('user_id', $user->id)->where('is_active', true);
+            })
+            ->where('status', 'active')
+            ->firstOrFail();
+
+        // On peut simplement appeler skip en interne ou dupliquer la logique
+        // Ici on retourne la solution pour l'affichage avant de passer à la suite
+        return response()->json([
+            'solution' => $riddle->answer,
+            'message' => 'Voici la solution. Vous passez à l\'étape suivante sans marquer de points.'
+        ]);
+    }
+
+    /**
      * Permet à l'équipe de passer à l'énigme suivante (avec 0 points).
      */
     public function skip(Request $request, Riddle $riddle)
@@ -353,7 +379,9 @@ class RiddleValidationController extends Controller
                 ->first();
 
             if ($nextPlace) {
-                $nextRiddle = Riddle::where('place_id', $nextPlace->place_id)->first();
+                $nextRiddle = Riddle::where('place_id', $nextPlace->place_id)
+                    ->where('difficulty', $session->difficulty)
+                    ->first();
                 if ($nextRiddle) {
                     return redirect()->route('player.riddle.show', $nextRiddle);
                 }

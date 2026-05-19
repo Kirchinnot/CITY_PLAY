@@ -2,7 +2,7 @@
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
 import QRCodeDisplay from '@/Components/QRCodeDisplay.vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { onMounted, onUnmounted, ref, nextTick } from 'vue';
+import { onMounted, onUnmounted, ref, nextTick, computed } from 'vue';
 import { gsap } from 'gsap';
 
 const props = defineProps({
@@ -11,13 +11,28 @@ const props = defineProps({
     invitationUrl: String
 });
 
-const players = ref([...props.session.players]);
-const showQRModal = ref(false);
+const qrCodeUrl = computed(() => {
+    if (props.invitationUrl) return props.invitationUrl;
+    if (props.session?.invitation?.token) {
+        return window.route('game.join', { token: props.session.invitation.token });
+    }
+    return '';
+});
 
-const startForm = useForm({});
+const players = ref([...(props.session.players || [])]);
+const showQRModal = ref(false);
+const showSettings = ref(false);
+
+const startForm = useForm({
+    mode: props.session.mode,
+    difficulty: props.session.difficulty,
+    locomotion: props.session.locomotion,
+    available_minutes: props.session.available_minutes,
+    team_size: props.session.team_size || 1,
+});
 
 const startSession = () => {
-    startForm.post(route('game.start', props.session.id));
+    startForm.post(window.route('game.start', props.session.id));
 };
 
 const isHost = props.currentUser.id === props.session.host_user_id;
@@ -33,39 +48,47 @@ onMounted(() => {
     if (orb2Ref.value) gsap.to(orb2Ref.value, { y: 25, x: -15, duration: 8, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: 1 });
 
     // 2. Écoute Pusher
-    window.Echo.join(`session.${props.session.id}`)
-        .here((users) => {
-            console.log('Joueurs présents:', users);
-        })
-        .joining((user) => {
-            if (!players.value.find(p => p.id === user.id)) {
-                players.value.push(user);
-                animateNewPlayer();
-            }
-        })
-        .leaving((user) => {})
-        .listen('PlayerJoined', (e) => {
-            if (!players.value.find(p => p.id === e.user.id)) {
-                players.value.push(e.user);
-                animateNewPlayer();
-            }
-        });
+    if (window.Echo) {
+        window.Echo.join(`session.${props.session.id}`)
+            .here((users) => {
+                console.log('Joueurs présents:', users);
+            })
+            .joining((user) => {
+                if (!players.value.find(p => p.id === user.id)) {
+                    players.value.push(user);
+                    animateNewPlayer();
+                }
+            })
+            .leaving((user) => {})
+            .listen('PlayerJoined', (e) => {
+                if (!players.value.find(p => p.id === e.user.id)) {
+                    players.value.push(e.user);
+                    animateNewPlayer();
+                }
+            });
+    }
         
     // Polling basique si Pusher n'est pas configuré pour rediriger les invités quand le host lance la partie
     if (!isHost) {
-        setInterval(() => {
-            router.reload({ only: ['session'], preserveScroll: true, onSuccess: (page) => {
-                if (page.props.session.status === 'active') {
-                    // Si la partie passe en active, recharger complètement la page pour entrer en jeu
-                    window.location.reload();
+        const pollInterval = setInterval(() => {
+            router.reload({ 
+                only: ['session'], 
+                preserveScroll: true, 
+                onSuccess: (page) => {
+                    if (page.props.session.status === 'active') {
+                        clearInterval(pollInterval);
+                        window.location.href = window.route('player.game.map');
+                    }
                 }
-            }});
+            });
         }, 5000);
     }
 });
 
 onUnmounted(() => {
-    window.Echo.leave(`session.${props.session.id}`);
+    if (window.Echo) {
+        window.Echo.leave(`session.${props.session.id}`);
+    }
 });
 
 const animateNewPlayer = () => {
@@ -83,13 +106,34 @@ const animateNewPlayer = () => {
         }
     });
 };
+
+const locomotionOptions = [
+    { value: 'marche', label: 'À pied', icon: '🚶' },
+    { value: 'velo', label: 'Vélo', icon: '🚲' },
+    { value: 'moto', label: 'Zémidjan', icon: '🏍️' },
+    { value: 'voiture', label: 'Voiture', icon: '🚗' },
+];
+
+const difficultyOptions = [
+    { value: 'facile', label: 'Facile', icon: '🏹' },
+    { value: 'moyen', label: 'Moyen', icon: '🦁' },
+    { value: 'difficile', label: 'Difficile', icon: '👑' },
+];
+
+const decrementTeamSize = () => {
+    if (startForm.team_size > 1) startForm.team_size--;
+};
+
+const incrementTeamSize = () => {
+    if (startForm.team_size < 10) startForm.team_size++;
+};
 </script>
 
 <template>
     <PlayerLayout>
         <Head title="CityPlay - Salon d'attente" />
 
-        <div class="relative min-h-[calc(100vh-80px)] p-6 overflow-hidden flex flex-col justify-center">
+        <div class="relative min-h-[calc(100vh-80px)] p-6 overflow-hidden flex flex-col justify-start">
             
             <!-- Orbes décoratifs -->
             <div ref="orb1Ref" class="pointer-events-none absolute top-[-5%] right-[-10%] w-[300px] h-[300px] rounded-full opacity-40 blur-3xl"
@@ -97,7 +141,7 @@ const animateNewPlayer = () => {
             <div ref="orb2Ref" class="pointer-events-none absolute bottom-[-10%] left-[-10%] w-[250px] h-[250px] rounded-full opacity-30 blur-3xl"
                  style="background: radial-gradient(circle, var(--cityplay-neon-blue, #3b82f6) 0%, transparent 70%);"></div>
 
-            <div class="relative z-10 w-full max-w-lg mx-auto bg-[#1c2128]/90 backdrop-blur-xl border border-white/5 rounded-[32px] p-6 shadow-2xl">
+            <div class="relative z-10 w-full max-w-lg mx-auto bg-[#1c2128]/90 backdrop-blur-xl border border-white/5 rounded-[32px] p-6 shadow-2xl mb-6">
                 
                 <!-- En-tête -->
                 <div class="text-center mb-8">
@@ -107,13 +151,80 @@ const animateNewPlayer = () => {
                         </svg>
                     </div>
                     <h1 class="text-2xl font-black text-white uppercase tracking-wider mb-2">Salon d'attente</h1>
-                    <p class="text-sm cp-text-secondary font-medium">{{ session.city.name }} • Mode Équipe</p>
+                    <p class="text-sm cp-text-secondary font-medium">{{ session.city.name }}</p>
+                </div>
+
+                <!-- Paramètres de jeu (Host uniquement) -->
+                <div v-if="isHost" class="mb-8 p-4 bg-white/5 border border-white/10 rounded-2xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xs font-black uppercase tracking-widest text-[#d65a31]">Configuration de l'aventure</h2>
+                        <button @click="showSettings = !showSettings" class="text-xs text-white/50 hover:text-white underline">
+                            {{ showSettings ? 'Réduire' : 'Modifier' }}
+                        </button>
+                    </div>
+
+                    <div v-if="showSettings" class="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-white/40 mb-2">Moyen de transport</label>
+                            <div class="grid grid-cols-4 gap-2">
+                                <button v-for="opt in locomotionOptions" :key="opt.value" 
+                                    @click="startForm.locomotion = opt.value"
+                                    :class="startForm.locomotion === opt.value ? 'bg-[#d65a31] border-[#d65a31]' : 'bg-white/5 border-white/10'"
+                                    class="p-2 rounded-xl border flex flex-col items-center gap-1 transition-all">
+                                    <span class="text-lg">{{ opt.icon }}</span>
+                                    <span class="text-[8px] font-bold text-white uppercase">{{ opt.label }}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-white/40 mb-2">Difficulté</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button v-for="opt in difficultyOptions" :key="opt.value" 
+                                    @click="startForm.difficulty = opt.value"
+                                    :class="startForm.difficulty === opt.value ? 'bg-[#d65a31] border-[#d65a31]' : 'bg-white/5 border-white/10'"
+                                    class="p-2 rounded-xl border flex flex-col items-center gap-1 transition-all">
+                                    <span class="text-lg">{{ opt.icon }}</span>
+                                    <span class="text-[8px] font-bold text-white uppercase">{{ opt.label }}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-white/40 mb-2">Membres de l'équipe (max 10)</label>
+                            <div class="flex items-center gap-4 bg-white/5 border border-white/10 p-2 rounded-xl">
+                                <button @click="decrementTeamSize" class="w-8 h-8 flex items-center justify-center bg-white/10 rounded-lg text-white font-black">-</button>
+                                <span class="flex-1 text-center text-white font-black text-sm">{{ startForm.team_size }}</span>
+                                <button @click="incrementTeamSize" class="w-8 h-8 flex items-center justify-center bg-white/10 rounded-lg text-white font-black">+</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-white/40 mb-2">Durée ({{ startForm.available_minutes }} min)</label>
+                            <input type="range" min="30" max="240" step="15" v-model="startForm.available_minutes" class="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#d65a31]">
+                        </div>
+                    </div>
+
+                    <div v-else class="grid grid-cols-3 gap-2">
+                        <div class="p-2 rounded-xl bg-white/5 border border-white/5 text-center">
+                            <span class="block text-[8px] text-white/40 uppercase">Transport</span>
+                            <span class="text-sm font-bold text-white">{{ locomotionOptions.find(o => o.value === startForm.locomotion)?.icon }}</span>
+                        </div>
+                        <div class="p-2 rounded-xl bg-white/5 border border-white/5 text-center">
+                            <span class="block text-[8px] text-white/40 uppercase">Niveau</span>
+                            <span class="text-sm font-bold text-white">{{ difficultyOptions.find(o => o.value === startForm.difficulty)?.icon }}</span>
+                        </div>
+                        <div class="p-2 rounded-xl bg-white/5 border border-white/5 text-center">
+                            <span class="block text-[8px] text-white/40 uppercase">Durée</span>
+                            <span class="text-sm font-bold text-white">⏱️ {{ startForm.available_minutes }}'</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Joueurs -->
                 <div class="mb-8">
                     <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xs font-black uppercase tracking-widest text-[#d65a31]">L'Équipe ({{ players.length }})</h2>
+                        <h2 class="text-xs font-black uppercase tracking-widest text-[#d65a31]">L'Équipe ({{ players.length }}/10)</h2>
                     </div>
                     <div ref="playersListRef" class="space-y-3">
                         <div v-for="player in players" :key="player.id"
@@ -162,7 +273,7 @@ const animateNewPlayer = () => {
                             <p class="text-[10px] cp-text-secondary font-medium">Scannez ce QR Code pour rejoindre</p>
                         </div>
                         <div class="p-8 flex justify-center bg-white">
-                            <QRCodeDisplay :url="invitationUrl || route('game.join', { token: session.invitation?.token })" :size="200" />
+                            <QRCodeDisplay :url="qrCodeUrl" :size="200" />
                         </div>
                         <div class="p-4 bg-[#1c2128]">
                             <button @click="showQRModal = false" class="w-full h-12 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-black uppercase tracking-widest text-white transition-all">
@@ -178,4 +289,14 @@ const animateNewPlayer = () => {
 
 <style scoped>
 .cp-text-secondary { color: rgba(255, 255, 255, 0.6); }
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #d65a31;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(214, 90, 49, 0.5);
+}
 </style>

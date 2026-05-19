@@ -15,8 +15,10 @@ class GameSession extends Model
     protected $fillable = [
         'invitation_id',
         'city_id',
+        'start_place_id',
         'host_user_id',
         'mode',
+        'team_size',
         'difficulty',
         'locomotion',
         'available_minutes',
