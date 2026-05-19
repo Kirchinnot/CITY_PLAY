@@ -8,7 +8,7 @@ import { useTheme } from '@/composables/useTheme';
 
 const page = usePage();
 const user       = computed(() => page.props.auth.user);
-const session    = computed(() => page.props.session);
+const session    = computed(() => page.props.gameState || page.props.session);
 const cities     = computed(() => page.props.cities);
 const adminStats = computed(() => page.props.adminStats);
 
@@ -20,7 +20,8 @@ const currentLayout = computed(() =>
 const { isDark, toggleTheme } = useTheme();
 
 // ── État session ──────────────────────────────────────────────────────────────
-const hasActiveSession = computed(() => session.value?.status === 'active' || session.value?.status === 'pending');
+const hasActiveSession = computed(() => ['active', 'paused', 'pending'].includes(session.value?.status));
+const isPausedSession = computed(() => session.value?.status === 'paused');
 const isPending        = computed(() => session.value?.status === 'pending');
 const progressPercent  = computed(() => {
     if (!session.value) return 0;

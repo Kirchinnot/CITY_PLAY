@@ -49,7 +49,7 @@ return new class extends Migration
                   ->comment('Joueur principal — seul à pouvoir faire pause/abandon global');
 
             // ── Paramètres de jeu (copiés depuis invitation à la création) ─
-            $table->enum('mode', ['collectif', 'mercenaire'])->default('collectif');
+            $table->enum('mode', ['solo','collectif', 'mercenaire'])->default('collectif');
             $table->enum('difficulty', ['enfant', 'facile', 'moyen', 'difficile'])->default('moyen');
             $table->enum('locomotion', ['marche', 'velo', 'moto', 'voiture'])->default('marche');
             $table->integer('available_minutes')

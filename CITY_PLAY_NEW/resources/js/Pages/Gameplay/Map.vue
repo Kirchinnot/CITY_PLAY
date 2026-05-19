@@ -6,6 +6,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
 import { gsap } from 'gsap';
+import { useGameTimer } from '@/composables/useGameTimer';
 
 const page = usePage();
 const gameState = computed(() => page.props.gameState);
@@ -16,13 +17,20 @@ const userLocation = ref(null);
 const geoError = ref(null);
 const selectedMapPlace = ref(null);
 const isProcessingAction = ref(false);
-const remainingTimeSeconds = ref(0);
 
 let map = null;
 let userMarker = null;
 let watchId = null;
-let timerInterval = null;
 let placeMarkers = [];
+
+const {
+    remainingSeconds: remainingTimeSeconds,
+    timerColorClass,
+    timeAlertMessage,
+    formatTime,
+    start: startTimer,
+    stop: stopTimer,
+} = useGameTimer(gameState);
 
 // ── Getters ─────────────────────────────────────────────────────────────────
 const visiblePlaces = computed(() => {
@@ -36,41 +44,6 @@ const visiblePlaces = computed(() => {
             // Note: Il faudrait idéalement que gameState contienne la liste des session_places
             return true; // Pour l'instant on montre tout pour le dev
         });
-});
-
-// ── Timer Logic ─────────────────────────────────────────────────────────────
-const calculateRemainingTime = () => {
-    const timer = gameState.value?.timer;
-    if (!timer?.started_at || ['completed', 'abandoned'].includes(gameState.value.status)) {
-        remainingTimeSeconds.value = 0;
-        return;
-    }
-
-    const startedAt = new Date(timer.started_at).getTime();
-    const now = gameState.value.status === 'paused' 
-        ? new Date(timer.paused_at).getTime() 
-        : new Date().getTime();
-    
-    const totalPauseMs = (timer.total_pause_seconds || 0) * 1000;
-    const elapsedMs = now - startedAt - totalPauseMs;
-    const availableMs = (timer.available_minutes || 0) * 60 * 1000;
-    
-    remainingTimeSeconds.value = Math.max(0, Math.floor((availableMs - elapsedMs) / 1000));
-};
-
-const formatTime = (seconds) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return h > 0 
-        ? `${h}h ${m.toString().padStart(2, '0')}m` 
-        : `${m}:${s.toString().padStart(2, '0')}`;
-};
-
-const timerColorClass = computed(() => {
-    if (remainingTimeSeconds.value < 300) return 'text-red-500 animate-pulse';
-    if (remainingTimeSeconds.value < 900) return 'text-amber-500';
-    return 'text-[#d65a31]';
 });
 
 // ── Map & Markers ───────────────────────────────────────────────────────────
@@ -129,17 +102,21 @@ const startTracking = () => {
 
 // ── Session Actions ─────────────────────────────────────────────────────────
 const handleAction = async (action) => {
-    if (isProcessingAction.value) return;
-    
+    if (isProcessingAction.value || !gameState.value?.is_host) return;
+
     if (action === 'abandon' && !confirm("Abandonner l'aventure ?")) return;
+    if (action === 'pause' && !confirm('Mettre la mission en pause ? Le chronomètre sera arrêté.')) return;
 
     isProcessingAction.value = true;
     try {
         await axios.post(route(`player.game-sessions.${action}`, gameState.value.id));
-        if (action === 'abandon') router.visit(route('player.dashboard'));
-        else router.reload();
+        if (action === 'abandon') {
+            router.visit(route('player.dashboard'));
+        } else {
+            router.reload({ preserveScroll: true });
+        }
     } catch (e) {
-        console.error(e);
+        alert(e.response?.data?.message || 'Action impossible');
     } finally {
         isProcessingAction.value = false;
     }
@@ -148,8 +125,7 @@ const handleAction = async (action) => {
 // ── Lifecycle ───────────────────────────────────────────────────────────────
 onMounted(() => {
     setTimeout(initMap, 100);
-    timerInterval = setInterval(calculateRemainingTime, 1000);
-    calculateRemainingTime();
+    startTimer();
 
     // GSAP Intro
     gsap.from(".hud-top", { y: -100, opacity: 0, duration: 1, ease: "power4.out" });
@@ -159,7 +135,7 @@ onMounted(() => {
 onUnmounted(() => {
     if (watchId) navigator.geolocation.clearWatch(watchId);
     if (map) map.remove();
-    if (timerInterval) clearInterval(timerInterval);
+    stopTimer();
 });
 
 watch(() => gameState.value, drawMarkers, { deep: true });
@@ -180,6 +156,7 @@ watch(() => gameState.value, drawMarkers, { deep: true });
                     <div class="text-3xl font-black font-mono tracking-tighter" :class="timerColorClass">
                         {{ formatTime(remainingTimeSeconds) }}
                     </div>
+                    <p v-if="timeAlertMessage" class="text-[10px] font-bold mt-1" :class="timerColorClass">{{ timeAlertMessage }}</p>
                 </div>
 
                 <div class="bg-gray-900/90 backdrop-blur-xl border border-white/10 p-4 rounded-3xl shadow-2xl text-right pointer-events-auto">
@@ -197,7 +174,7 @@ watch(() => gameState.value, drawMarkers, { deep: true });
                         <div class="relative flex-shrink-0">
                             <div class="w-20 h-20 rounded-3xl overflow-hidden border-2 border-orange-500/50 shadow-2xl">
                                 <img 
-                                    :src="gameState.current_riddle.place?.images?.[0]?.image_path || '/placeholder-place.jpg'" 
+                                    :src="gameState.current_riddle.place?.images?.[0]?.image_url || gameState.current_riddle.place?.images?.[0]?.image_path || '/placeholder-place.svg'" 
                                     class="w-full h-full object-cover"
                                 />
                             </div>
@@ -221,9 +198,11 @@ watch(() => gameState.value, drawMarkers, { deep: true });
                                 >
                                     RÉSOUDRE
                                 </Link>
-                                <button 
-                                    @click="showPauseMenu = true"
-                                    class="w-12 bg-white/5 hover:bg-white/10 text-white rounded-2xl flex items-center justify-center transition-colors"
+                                <button
+                                    v-if="gameState.is_host && gameState.status === 'active'"
+                                    @click="handleAction('pause')"
+                                    :disabled="isProcessingAction"
+                                    class="w-12 bg-white/5 hover:bg-white/10 text-white rounded-2xl flex items-center justify-center transition-colors disabled:opacity-50"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />

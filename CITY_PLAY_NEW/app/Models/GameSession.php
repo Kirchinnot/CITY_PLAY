@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -56,6 +57,109 @@ class GameSession extends Model
     public function isCompleted(): bool { return $this->status === 'completed'; }
     public function isAbandoned(): bool { return $this->status === 'abandoned'; }
     public function isFinished(): bool  { return in_array($this->status, ['completed', 'abandoned']); }
+
+    public function isInProgress(): bool
+    {
+        return in_array($this->status, ['active', 'paused']);
+    }
+
+    /**
+     * Instant de référence pour le calcul du temps joué (gelé en pause).
+     */
+    public function timerReference(): Carbon
+    {
+        if ($this->isPaused() && $this->paused_at) {
+            return $this->paused_at;
+        }
+
+        return now();
+    }
+
+    /**
+     * Secondes de jeu effectives (hors pauses cumulées).
+     */
+    public function getElapsedSeconds(): int
+    {
+        if (!$this->started_at) {
+            return 0;
+        }
+
+        $elapsed = $this->started_at->diffInSeconds($this->timerReference());
+
+        return max(0, $elapsed - ($this->total_pause_seconds ?? 0));
+    }
+
+    /**
+     * Secondes restantes dans le budget.
+     */
+    public function getRemainingSeconds(): int
+    {
+        if (!$this->started_at || $this->isFinished()) {
+            return 0;
+        }
+
+        $budget = ($this->available_minutes ?? 0) * 60;
+
+        return max(0, $budget - $this->getElapsedSeconds());
+    }
+
+    public function isTimeExpired(): bool
+    {
+        return $this->started_at
+            && !$this->isFinished()
+            && $this->getRemainingSeconds() <= 0;
+    }
+
+    /**
+     * Niveau d'alerte : ok | warning | critical | expired
+     */
+    public function getTimeWarningLevel(): string
+    {
+        $remaining = $this->getRemainingSeconds();
+
+        if ($remaining <= 0) {
+            return 'expired';
+        }
+        if ($remaining <= 300) {
+            return 'critical';
+        }
+        if ($remaining <= 900) {
+            return 'warning';
+        }
+
+        return 'ok';
+    }
+
+    /**
+     * Comptabilise la pause en cours dans total_pause_seconds (sans changer le status).
+     */
+    public function accumulateOpenPause(): void
+    {
+        if (!$this->isPaused() || !$this->paused_at) {
+            return;
+        }
+
+        $this->total_pause_seconds = ($this->total_pause_seconds ?? 0)
+            + $this->paused_at->diffInSeconds(now());
+        $this->paused_at = null;
+    }
+
+    /**
+     * Snapshot timer pour API / Inertia.
+     */
+    public function toTimerArray(): array
+    {
+        return [
+            'started_at' => $this->started_at,
+            'paused_at' => $this->paused_at,
+            'total_pause_seconds' => $this->total_pause_seconds ?? 0,
+            'available_minutes' => $this->available_minutes,
+            'elapsed_seconds' => $this->getElapsedSeconds(),
+            'remaining_seconds' => $this->getRemainingSeconds(),
+            'warning_level' => $this->getTimeWarningLevel(),
+            'is_expired' => $this->isTimeExpired(),
+        ];
+    }
 
     // -----------------------------------------------------------------------
     // Relations

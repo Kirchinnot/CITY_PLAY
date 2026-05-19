@@ -140,7 +140,7 @@ const deleteProfile = () => {
                     <div v-for="place in session.unsolved_places" :key="place.id"
                          class="bg-white/5 border border-white/5 rounded-[2rem] overflow-hidden group">
                         <div class="h-28 relative">
-                            <img :src="place.images?.[0]?.image_path || '/placeholder-place.jpg'" class="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500" />
+                            <img :src="place.images?.[0]?.image_url || place.images?.[0]?.image_path || '/placeholder-place.svg'" class="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500" />
                             <div class="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
                             <span class="absolute bottom-3 left-4 right-4 text-[10px] font-black text-white uppercase truncate">{{ place.name }}</span>
                         </div>

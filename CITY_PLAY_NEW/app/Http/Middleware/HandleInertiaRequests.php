@@ -4,8 +4,9 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use App\Models\GameSession;
 use App\Models\City;
+use App\Models\GameSession;
+use App\Services\Session\GameSessionService;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -30,6 +31,11 @@ class HandleInertiaRequests extends Middleware
                 ->first();
 
             if ($session) {
+                $timerService = app(GameSessionService::class);
+                $timerService->touchPlayerPresence($session, $user);
+                $timer = $timerService->syncTimerState($session);
+                $session->refresh();
+
                 $gameState = [
                     'id' => $session->id,
                     'status' => $session->status,
@@ -40,12 +46,8 @@ class HandleInertiaRequests extends Middleware
                     'total_score' => $session->total_score,
                     'current_riddle' => $session->current_riddle,
                     'is_host' => $session->host_user_id === $user->id,
-                    'timer' => [
-                        'started_at' => $session->started_at,
-                        'paused_at' => $session->paused_at,
-                        'total_pause_seconds' => $session->total_pause_seconds,
-                        'available_minutes' => $session->available_minutes,
-                    ]
+                    'available_minutes' => $session->available_minutes,
+                    'timer' => $timer,
                 ];
             }
         }
@@ -56,6 +58,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
             ],
             'gameState' => $gameState,
+            // Alias rétro-compatible pour Dashboard / layouts
+            'session' => $gameState,
             'cities' => $user ? City::with(['places.riddles'])->withCount('places')->get() : [],
             'flash' => [
                 'message' => $request->session()->get('message'),

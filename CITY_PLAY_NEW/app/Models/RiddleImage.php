@@ -19,6 +19,8 @@ class RiddleImage extends Model
         'caption',
     ];
 
+    protected $appends = ['image_path'];
+
     protected function casts(): array
     {
         return [
@@ -34,5 +36,11 @@ class RiddleImage extends Model
     public function riddle(): BelongsTo
     {
         return $this->belongsTo(Riddle::class);
+    }
+
+    /** Alias utilisé côté frontend (image_path = image_url). */
+    public function getImagePathAttribute(): ?string
+    {
+        return $this->image_url;
     }
 }

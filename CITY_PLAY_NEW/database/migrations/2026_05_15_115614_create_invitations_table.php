@@ -42,7 +42,7 @@ return new class extends Migration
                   ->comment('Admin ayant généré cette invitation');
 
             // ── Paramètres de session pré-configurés ──────────────────────
-            $table->enum('mode', ['collectif', 'mercenaire'])->default('collectif')
+            $table->enum('mode', ['solo','collectif', 'mercenaire'])->default('collectif')
                   ->comment("collectif = score d'équipe partagé, mercenaire = compétition individuelle");
             $table->enum('difficulty', ['enfant', 'facile', 'moyen', 'difficile'])->default('moyen')
                   ->comment('Niveau des énigmes sélectionnées pour cette session');

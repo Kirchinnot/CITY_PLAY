@@ -74,15 +74,18 @@ Route::prefix('player')
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
         // Énigmes
-        Route::get('/riddles/{riddle}',              [RiddleValidationController::class, 'show'])->name('riddle.show');
-        Route::post('/riddles/{riddle}/validate',    [RiddleValidationController::class, 'validate'])->middleware('verify.speed')->name('riddle.validate');
-        Route::post('/riddles/{riddle}/unlock-hint', [RiddleValidationController::class, 'unlockHint'])->name('riddle.unlock-hint');
+        Route::get('/riddles/{riddle}',                    [RiddleValidationController::class, 'show'])->name('riddle.show');
+        Route::post('/riddles/{riddle}/submit-answer',     [RiddleValidationController::class, 'submitAnswer'])->name('riddle.submit-answer');
+        Route::post('/riddles/{riddle}/validate-presence', [RiddleValidationController::class, 'validatePresence'])->middleware('verify.speed')->name('riddle.validate-presence');
+        Route::post('/riddles/{riddle}/validate',          [RiddleValidationController::class, 'validate'])->middleware('verify.speed')->name('riddle.validate');
+        Route::post('/riddles/{riddle}/unlock-hint',       [RiddleValidationController::class, 'unlockHint'])->name('riddle.unlock-hint');
         Route::post('/riddles/{riddle}/skip',        [RiddleValidationController::class, 'skip'])->name('riddle.skip');
         Route::post('/riddles/{riddle}/reveal-solution', [RiddleValidationController::class, 'revealSolution'])->name('riddle.reveal-solution');
 
         // Sessions de jeu gameplay
         Route::post('/game-sessions',                    [GameSessionController::class, 'store'])->name('game-sessions.store');
         Route::get('/game-sessions/{session}/summary',   [GameSessionController::class, 'summary'])->name('game-sessions.summary');
+        Route::post('/game-sessions/{session}/sync',    [GameSessionController::class, 'sync'])->name('game-sessions.sync');
         Route::post('/game-sessions/{session}/pause',    [GameSessionController::class, 'pause'])->name('game-sessions.pause');
         Route::post('/game-sessions/{session}/resume',   [GameSessionController::class, 'resume'])->name('game-sessions.resume');
         Route::post('/game-sessions/{session}/abandon',  [GameSessionController::class, 'abandon'])->name('game-sessions.abandon');

@@ -6,8 +6,9 @@ import { useTheme } from '@/composables/useTheme';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
-const session = computed(() => page.props.session || null);
-const hasActiveSession = computed(() => session.value?.status === 'active');
+const session = computed(() => page.props.gameState || page.props.session || null);
+const hasActiveSession = computed(() => ['active', 'paused'].includes(session.value?.status));
+const isPausedSession = computed(() => session.value?.status === 'paused');
 
 // Initialise le thème dès le montage du layout (appliqué sur toutes les pages)
 const { isDark } = useTheme();
@@ -54,7 +55,9 @@ const { isDark } = useTheme();
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
                         </span>
-                        <span class="text-[10px] font-black text-green-500 uppercase tracking-widest">En jeu</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest" :class="isPausedSession ? 'text-amber-500' : 'text-green-500'">
+                            {{ isPausedSession ? 'En pause' : 'En jeu' }}
+                        </span>
                     </div>
                     <Link :href="route('logout')" method="post" as="button" aria-label="Déconnexion"
                           class="cp-icon-btn relative w-8 h-8 rounded-xl flex items-center justify-center transition text-[#d65a31] border border-[#d65a31]/20 hover:bg-[#d65a31]/10">

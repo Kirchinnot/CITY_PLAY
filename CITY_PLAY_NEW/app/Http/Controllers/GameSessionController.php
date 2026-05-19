@@ -91,6 +91,26 @@ class GameSessionController extends Controller
     }
 
     /**
+     * Synchronise le chronomètre (heartbeat) et retourne l'état à jour.
+     */
+    public function sync(Request $request, GameSession $session)
+    {
+        Gate::authorize('view', $session);
+
+        $this->gameSessionService->touchPlayerPresence($session, $request->user());
+        $timer = $this->gameSessionService->syncTimerState($session);
+        $session->refresh();
+
+        return response()->json([
+            'status' => $session->status,
+            'timer' => $timer,
+            'redirect' => $session->isFinished()
+                ? route('player.game-sessions.summary', $session->id)
+                : null,
+        ]);
+    }
+
+    /**
      * Met la session en pause.
      */
     public function pause(GameSession $session)
@@ -102,8 +122,9 @@ class GameSessionController extends Controller
         }
 
         return response()->json([
-            'status' => 'paused', 
-            'paused_at' => $session->paused_at
+            'status' => 'paused',
+            'paused_at' => $session->paused_at,
+            'timer' => $session->fresh()->toTimerArray(),
         ]);
     }
 
@@ -119,8 +140,9 @@ class GameSessionController extends Controller
         }
 
         return response()->json([
-            'status' => 'active', 
-            'total_pause_seconds' => $session->total_pause_seconds
+            'status' => 'active',
+            'total_pause_seconds' => $session->total_pause_seconds,
+            'timer' => $session->fresh()->toTimerArray(),
         ]);
     }
 

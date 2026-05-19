@@ -19,6 +19,8 @@ class PlaceImage extends Model
         'caption',
     ];
 
+    protected $appends = ['image_path'];
+
     protected function casts(): array
     {
         return [
@@ -34,5 +36,11 @@ class PlaceImage extends Model
     public function place(): BelongsTo
     {
         return $this->belongsTo(Place::class);
+    }
+
+    /** Alias utilisé côté frontend (image_path = image_url). */
+    public function getImagePathAttribute(): ?string
+    {
+        return $this->image_url;
     }
 }

@@ -10,7 +10,7 @@ use App\Models\Score;
 use App\Models\SessionPlace;
 use App\Models\User;
 use App\Events\PlayerJoined;
-use App\Events\RiddleResolved;
+use App\Events\RiddleResolvedEvent;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -161,11 +161,67 @@ class GameSessionService
      */
     public function abandonSession(GameSession $session): bool
     {
-        if ($session->isFinished()) return false;
+        if ($session->isFinished()) {
+            return false;
+        }
+
+        if ($session->isPaused()) {
+            $session->accumulateOpenPause();
+            $session->save();
+        }
 
         return $session->update([
             'status' => 'abandoned',
             'completed_at' => Carbon::now(),
+        ]);
+    }
+
+    /**
+     * Termine la session car le temps de jeu est écoulé.
+     */
+    public function expireSession(GameSession $session): bool
+    {
+        if ($session->isFinished() || !$session->isTimeExpired()) {
+            return false;
+        }
+
+        if ($session->isPaused()) {
+            $session->accumulateOpenPause();
+            $session->save();
+        }
+
+        return $session->update([
+            'status' => 'completed',
+            'completed_at' => Carbon::now(),
+        ]);
+    }
+
+    /**
+     * Synchronise l'état du timer et applique l'expiration si nécessaire.
+     */
+    public function syncTimerState(GameSession $session): array
+    {
+        $session->refresh();
+
+        if ($session->isInProgress() && $session->isTimeExpired()) {
+            $this->expireSession($session);
+            $session->refresh();
+        }
+
+        return $session->toTimerArray();
+    }
+
+    /**
+     * Heartbeat joueur — trace la dernière activité.
+     */
+    public function touchPlayerPresence(GameSession $session, User $user): void
+    {
+        if (!$session->players()->where('user_id', $user->id)->exists()) {
+            return;
+        }
+
+        $session->players()->updateExistingPivot($user->id, [
+            'last_seen_at' => Carbon::now(),
         ]);
     }
 
@@ -235,7 +291,7 @@ class GameSessionService
             $finalPoints = $points ?? $this->calculatePoints($riddle, $session);
 
             // 1. Enregistrer le score
-            Score::create([
+            $score = Score::create([
                 'game_session_id' => $session->id,
                 'user_id'         => $user->id,
                 'riddle_id'       => $riddle->id,
@@ -265,7 +321,7 @@ class GameSessionService
                     'current_place_index' => $nextPlace->order_index,
                     'solved_places' => $solvedCount,
                 ]);
-                broadcast(new RiddleResolved($session, $riddle, $user, $nextPlace->place))->toOthers();
+                broadcast(new RiddleResolvedEvent($score))->toOthers();
             } else {
                 $session->update(['solved_places' => $solvedCount]);
                 $this->completeSession($session);

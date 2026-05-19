@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400" viewBox="0 0 800 400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1f2937"/>
+      <stop offset="100%" style="stop-color:#111827"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#bg)"/>
+  <circle cx="400" cy="160" r="48" fill="none" stroke="#f97316" stroke-width="3" opacity="0.6"/>
+  <path d="M400 120 L400 200 M360 160 L440 160" stroke="#f97316" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <text x="400" y="280" text-anchor="middle" fill="#9ca3af" font-family="system-ui,sans-serif" font-size="22" font-weight="600">Lieu à découvrir</text>
+</svg>

@@ -66,7 +66,7 @@ return new class extends Migration
             // ── Index ─────────────────────────────────────────────────────
             $table->index(['game_session_id', 'is_active'], 'idx_game_players_active');
 
-            $table->timestamp('created_at')->nullable();
+            $table->timestamps();
         });
     }
 
