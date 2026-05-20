@@ -103,7 +103,7 @@ const activeTab = ref('enfant');
                     <button
                         @click="submit"
                         :disabled="form.processing"
-                        class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50 shrink-0"
+                        class="hidden md:inline-flex w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50 shrink-0"
                         :class="form.processing 
                             ? 'bg-[#FFF3DF] text-[#5C4033]/50' 
                             : 'bg-gradient-to-r from-[#E0531C] to-[#FFB700] text-white shadow-lg'"
@@ -317,5 +317,21 @@ const activeTab = ref('enfant');
 
             </div>
         </div>
+
+        <button
+            type="button"
+            @click="submit"
+            :disabled="form.processing"
+            aria-label="Sauvegarder l'énigme"
+            class="lg:hidden fixed right-4 z-50 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-black text-[10px] uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50 shadow-2xl hover:-translate-y-0.5"
+            style="bottom: calc(1.5rem + env(safe-area-inset-bottom));"
+            :class="form.processing 
+                ? 'bg-[#FFF3DF] text-[#5C4033]/50' 
+                : 'bg-gradient-to-r from-[#E0531C] to-[#FFB700] text-white'"
+        >
+            <svg v-if="!form.processing" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5v12h14V9h-2"/></svg>
+            <span v-else class="w-4 h-4 border-2 border-[#5C4033]/30 border-t-[#E0531C] rounded-full animate-spin"></span>
+            <span>{{ form.processing ? 'Enregistrement...' : 'Sauvegarder' }}</span>
+        </button>
     </AdminLayout>
 </template>
