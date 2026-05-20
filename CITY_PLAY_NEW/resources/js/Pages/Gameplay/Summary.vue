@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
 import { gsap } from 'gsap';
+import { confirmModal } from '@/composables/usePrimeDialogs';
 
 const props = defineProps({
     session: Object,
@@ -41,8 +42,14 @@ const deleteForm = useForm({
     password: '',
 });
 
-const deleteProfile = () => {
-    if (!confirm("Cette action supprimera définitivement votre compte et votre progression. Confirmer ?")) return;
+const deleteProfile = async () => {
+    if (!(await confirmModal({
+        header: 'Suppression de compte',
+        message: 'Cette action supprimera définitivement votre compte et votre progression. Confirmer ?',
+        acceptLabel: 'Oui, supprimer',
+        rejectLabel: 'Annuler',
+    }))) return;
+
     deleteForm.post(route('profile.logout-delete'));
 };
 </script>

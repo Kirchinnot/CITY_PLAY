@@ -2,6 +2,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
+import { alertModal } from '@/composables/usePrimeDialogs';
 
 const props = defineProps({
     place: Object,
@@ -64,10 +65,20 @@ const removeHint = (riddleIndex, hintIndex) => {
 const submit = () => {
     form.post(route('admin.riddles.store', props.place.id), {
         forceFormData: true,
-        onSuccess: () => alert('Énigmes sauvegardées avec succès !'),
-        onError: (errors) => {
+        onSuccess: async () => await alertModal({
+            header: 'Enigmes sauvegardées',
+            message: 'Énigmes sauvegardées avec succès !',
+            icon: 'pi pi-check-circle',
+            acceptLabel: 'Super',
+        }),
+        onError: async (errors) => {
             console.error(errors);
-            alert('Une erreur est survenue lors de la sauvegarde. Vérifiez les champs saisis.');
+            await alertModal({
+                header: 'Erreur',
+                message: 'Une erreur est survenue lors de la sauvegarde. Vérifiez les champs saisis.',
+                icon: 'pi pi-exclamation-triangle',
+                acceptLabel: 'D\'accord',
+            });
         }
     });
 };

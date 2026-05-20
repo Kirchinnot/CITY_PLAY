@@ -2,6 +2,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ref, watch, onBeforeUnmount } from 'vue';
+import { confirmModal } from '@/composables/usePrimeDialogs';
 
 const props = defineProps({
     places: Array,
@@ -120,16 +121,26 @@ const submit = () => {
     });
 };
 
-const deleteImage = (imageId) => {
-    if (confirm('Supprimer cette image ?')) {
-        router.delete(route('admin.place-images.destroy', imageId));
-    }
+const deleteImage = async (imageId) => {
+    if (!(await confirmModal({
+        header: 'Supprimer l\'image',
+        message: 'Supprimer cette image ?',
+        acceptLabel: 'Oui, supprimer',
+        rejectLabel: 'Annuler',
+    }))) return;
+
+    router.delete(route('admin.place-images.destroy', imageId));
 };
 
-const deletePlace = (placeId) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce lieu ? Cela supprimera également ses énigmes et images.')) {
-        router.delete(route('admin.places.destroy', placeId));
-    }
+const deletePlace = async (placeId) => {
+    if (!(await confirmModal({
+        header: 'Supprimer le lieu',
+        message: 'Êtes-vous sûr de vouloir supprimer ce lieu ? Cela supprimera également ses énigmes et images.',
+        acceptLabel: 'Oui, supprimer',
+        rejectLabel: 'Annuler',
+    }))) return;
+
+    router.delete(route('admin.places.destroy', placeId));
 };
 
 // Surveillance de l'affichage du formulaire pour instancier/détruire la carte

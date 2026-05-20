@@ -2,6 +2,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { confirmModal } from '@/composables/usePrimeDialogs';
 
 const props = defineProps({
     cities: {
@@ -71,10 +72,15 @@ const submitForm = () => {
     }
 };
 
-const deleteCity = (cityId) => {
-    if (confirm('Voulez-vous vraiment supprimer ce parcours ? Cette action est irréversible.')) {
-        router.delete(route('admin.cities.destroy', cityId));
-    }
+const deleteCity = async (cityId) => {
+    if (!(await confirmModal({
+        header: 'Supprimer le parcours',
+        message: 'Voulez-vous vraiment supprimer ce parcours ? Cette action est irréversible.',
+        acceptLabel: 'Oui, supprimer',
+        rejectLabel: 'Annuler',
+    }))) return;
+
+    router.delete(route('admin.cities.destroy', cityId));
 };
 
 const publish = (cityId) => { router.post(route('admin.cities.publish', cityId)); };

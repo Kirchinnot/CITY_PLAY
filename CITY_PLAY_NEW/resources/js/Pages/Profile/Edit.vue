@@ -4,6 +4,7 @@ import { Head, usePage, router } from '@inertiajs/vue3';
 import { gsap } from 'gsap';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
+import { confirmModal } from '@/composables/usePrimeDialogs';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 
@@ -63,9 +64,14 @@ const logoutAndKeep = () => {
     });
 };
 
-const logoutAndDelete = () => {
-    if (!confirm("Cette action supprimera définitivement votre compte et votre progression après votre déconnexion. Confirmer ?")) return;
-    
+const logoutAndDelete = async () => {
+    if (!(await confirmModal({
+        header: 'Supprimer le compte',
+        message: 'Cette action supprimera définitivement votre compte et votre progression après votre déconnexion. Confirmer ?',
+        acceptLabel: 'Oui, supprimer',
+        rejectLabel: 'Annuler',
+    }))) return;
+
     isDeletingProfile.value = true;
     router.post(route('profile.logout-delete'), {}, {
         onFinish: () => { isDeletingProfile.value = false; }

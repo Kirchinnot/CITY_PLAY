@@ -1,6 +1,7 @@
 import { ref, computed, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
+import { alertModal } from '@/composables/usePrimeDialogs';
 
 /**
  * Chronomètre de session — aligné sur gameState.timer (source serveur).
@@ -113,7 +114,7 @@ export function useGameTimer(gameState, options = {}) {
         }
     };
 
-    const handleExpiry = (redirectUrl = null) => {
+    const handleExpiry = async (redirectUrl = null) => {
         if (expiryHandled) return;
         expiryHandled = true;
 
@@ -122,7 +123,13 @@ export function useGameTimer(gameState, options = {}) {
             return;
         }
 
-        alert('⏱️ Temps de jeu écoulé ! Direction le bilan…');
+        await alertModal({
+            header: 'Temps écoulé',
+            message: '⏱️ Temps de jeu écoulé ! Direction le bilan…',
+            icon: 'pi pi-clock',
+            acceptLabel: 'Voir le bilan',
+        });
+
         const gs = gameState.value;
         if (redirectUrl) {
             router.visit(redirectUrl);

@@ -112,7 +112,7 @@ const submitAnswer = async () => {
             if (data.selected_answer) answerInput.value = data.selected_answer;
             return;
         }
-        alert(data?.message || 'Erreur de validation');
+        await alertModal({ message: data?.message || 'Erreur de validation' });
     } finally {
         isSubmittingAnswer.value = false;
     }
@@ -134,7 +134,7 @@ const validatePresence = async () => {
             gsap.to('.riddle-card', { y: -50, opacity: 0, duration: 0.5 });
         }
     } catch (e) {
-        alert(e.response?.data?.message || 'Erreur de validation');
+        await alertModal({ message: e.response?.data?.message || 'Erreur de validation' });
     } finally {
         isValidatingPresence.value = false;
     }
@@ -152,7 +152,12 @@ const unlockHint = async (hintId) => {
 };
 
 const skipRiddle = async () => {
-    if (!confirm('Passer cette énigme ? Vous ne gagnerez aucun point.')) return;
+    if (!(await confirmModal({
+        header: 'Passer l\'énigme',
+        message: 'Passer cette énigme ? Vous ne gagnerez aucun point.',
+        acceptLabel: 'Continuer',
+        rejectLabel: 'Annuler',
+    }))) return;
     router.post(route('player.riddle.skip', props.riddle.id));
 };
 </script>

@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import L from 'leaflet';
+import { alertModal, confirmModal } from '@/composables/usePrimeDialogs';
 import 'leaflet/dist/leaflet.css';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
 import { gsap } from 'gsap';
@@ -110,8 +111,19 @@ const startTracking = () => {
 const handleAction = async (action) => {
     if (isProcessingAction.value || !gameState.value?.is_host) return;
 
-    if (action === 'abandon' && !confirm("Abandonner l'aventure ?")) return;
-    if (action === 'pause' && !confirm('Mettre la mission en pause ? Le chronomètre sera arrêté.')) return;
+    if (action === 'abandon' && !(await confirmModal({
+        header: 'Abandon de la partie',
+        message: 'Abandonner l\'aventure ?',
+        acceptLabel: 'Oui, abandonner',
+        rejectLabel: 'Rester',
+    }))) return;
+
+    if (action === 'pause' && !(await confirmModal({
+        header: 'Pause de la mission',
+        message: 'Mettre la mission en pause ? Le chronomètre sera arrêté.',
+        acceptLabel: 'Oui, mettre en pause',
+        rejectLabel: 'Non',
+    }))) return;
 
     isProcessingAction.value = true;
     try {
@@ -122,7 +134,7 @@ const handleAction = async (action) => {
             router.reload({ preserveScroll: true });
         }
     } catch (e) {
-        alert(e.response?.data?.message || 'Action impossible');
+        await alertModal({ message: e.response?.data?.message || 'Action impossible' });
     } finally {
         isProcessingAction.value = false;
     }
