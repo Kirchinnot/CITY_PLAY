@@ -1,4 +1,4 @@
- <?php
+<?php
 
 namespace Database\Seeders;
 
@@ -15,17 +15,17 @@ class UserSeeder extends Seeder
             [
                 'name'               => 'Admin CityPlay',
                 'password'           => Hash::make('password'),
-                'phone'              => '+33600000001',
+                'phone'              => '+22960000001',
                 'role'               => 'admin',
                 'two_factor_enabled' => false,
             ]
         );
 
         $players = [
-            ['name' => 'Alice Martin', 'email' => 'alice@cityplay.fr', 'phone' => '+33611111111'],
-            ['name' => 'Bob Dupont',   'email' => 'bob@cityplay.fr',   'phone' => '+33622222222'],
-            ['name' => 'Carla Nguyen', 'email' => 'carla@cityplay.fr', 'phone' => '+33633333333'],
-            ['name' => 'David Moreau', 'email' => 'david@cityplay.fr', 'phone' => '+33644444444'],
+            ['name' => 'Aïssata Koussoubé', 'email' => 'alice@cityplay.fr', 'phone' => '+22961111111'],
+            ['name' => 'Koffi Agbeko',      'email' => 'bob@cityplay.fr',   'phone' => '+22962222222'],
+            ['name' => 'Séna Adjou',         'email' => 'carla@cityplay.fr', 'phone' => '+22963333333'],
+            ['name' => 'Oumar Dossa',        'email' => 'david@cityplay.fr', 'phone' => '+22964444444'],
         ];
 
         foreach ($players as $p) {

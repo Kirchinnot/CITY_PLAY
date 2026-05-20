@@ -29,12 +29,12 @@ class TestGameSeeder extends Seeder
 
         // 2. Créer une ville de test
         $city = City::firstOrCreate(
-            ['name' => 'Lyon Aventure'],
+            ['name' => 'Cotonou Aventure'],
             [
-                'description' => 'Explorez les traboules et les secrets de la capitale des Gaules.',
-                'country' => 'France',
-                'lat' => 45.7597,
-                'lng' => 4.8422,
+                'description' => 'Plongez au cœur du Bénin entre le marché Dantokpa, la plage des Cocotiers et les traditions ouidahiennes.',
+                'country' => 'Bénin',
+                'lat' => 6.3698,
+                'lng' => 2.4226,
                 'avg_duration_minutes' => 120,
                 'is_published' => true,
                 'created_by' => $admin->id
@@ -43,7 +43,7 @@ class TestGameSeeder extends Seeder
 
         // 3. Créer une invitation de test
         $invitation = Invitation::firstOrCreate(
-            ['token' => 'TEST-TOKEN-CITYPLAY-2026'],
+            ['token' => 'TEST-TOKEN-BENIN-2026'],
             [
                 'city_id' => $city->id,
                 'created_by' => $admin->id,

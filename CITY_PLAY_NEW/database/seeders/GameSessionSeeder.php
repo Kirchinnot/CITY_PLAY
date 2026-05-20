@@ -20,14 +20,14 @@ class GameSessionSeeder extends Seeder
     {
         $alice      = User::where('email', 'alice@cityplay.fr')->first();
         $bob        = User::where('email', 'bob@cityplay.fr')->first();
-        $lyon       = City::where('name', 'Découverte du Vieux Lyon')->first();
-        $invitation = Invitation::where('token', 'lyon-marche-moyen-demo')->first();
+        $cotonou    = City::where('name', 'Cotonou — Escapade Littorale')->first();
+        $invitation = Invitation::where('token', 'benin-dantokpa-moyen-demo')->first();
 
-        // ── Session active (Alice est hôte, Bob est joueur) ─────────────────
+        // ── Session active (Aïssata est hôte, Koffi est joueur) ─────────────
         $session = GameSession::firstOrCreate(
             ['invitation_id' => $invitation->id, 'host_user_id' => $alice->id],
             [
-                'city_id'             => $lyon->id,
+                'city_id'             => $cotonou->id,
                 'mode'                => 'collectif',
                 'difficulty'          => 'moyen',
                 'locomotion'          => 'marche',
@@ -44,15 +44,15 @@ class GameSessionSeeder extends Seeder
         // ── Joueurs ──────────────────────────────────────────────────────────
         GamePlayer::firstOrCreate(
             ['game_session_id' => $session->id, 'user_id' => $alice->id],
-            ['joined_at' => now()->subMinutes(30), 'is_active' => true, 'last_lat' => 45.7578, 'last_lng' => 4.8322, 'last_seen_at' => now()->subMinutes(2)]
+            ['joined_at' => now()->subMinutes(30), 'is_active' => true, 'last_lat' => 6.3698, 'last_lng' => 2.4226, 'last_seen_at' => now()->subMinutes(2)]
         );
         GamePlayer::firstOrCreate(
             ['game_session_id' => $session->id, 'user_id' => $bob->id],
-            ['joined_at' => now()->subMinutes(28), 'is_active' => true, 'last_lat' => 45.7578, 'last_lng' => 4.8322, 'last_seen_at' => now()->subMinutes(1)]
+            ['joined_at' => now()->subMinutes(28), 'is_active' => true, 'last_lat' => 6.3698, 'last_lng' => 2.4226, 'last_seen_at' => now()->subMinutes(1)]
         );
 
         // ── 3 lieux sélectionnés pour cette session ──────────────────────────
-        $places = Place::where('city_id', $lyon->id)->orderBy('order_index')->take(3)->get();
+        $places = Place::where('city_id', $cotonou->id)->orderBy('order_index')->take(3)->get();
         foreach ($places as $place) {
             SessionPlace::firstOrCreate(
                 ['game_session_id' => $session->id, 'place_id' => $place->id],

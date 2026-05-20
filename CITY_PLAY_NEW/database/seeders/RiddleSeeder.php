@@ -12,133 +12,132 @@ class RiddleSeeder extends Seeder
     public function run(): void
     {
         $data = [
-            'Place Bellecour' => [
+            'Marché Dantokpa' => [
                 'difficile' => [
-                    'question' => 'En quelle année la statue équestre de Louis XIV a-t-elle été érigée sur cette place, et quel sculpteur en est l\'auteur ?',
-                    'options'  => ['1825, Lemot', '1830, Chinard', '1815, Bosio', '1848, Pradier'],
-                    'answer'   => '1825, Lemot',
+                    'question' => 'Quel produit traditionnel est vendu sous forme de pâte parfumée dans ce marché ?','options'  => ['Gombo frais', 'Yam rôti', 'Akassa', 'Choukouya'],
+                    'answer'   => 'Akassa',
                     'points_base' => 200
                 ],
                 'moyen'     => [
-                    'question' => 'Quel surnom donne-t-on à cette place en raison de sa taille exceptionnelle ?',
-                    'options'  => ['La plus grande place piétonne d\'Europe', 'La place du soleil', 'Le Forum des Gaules', 'Le Carré Royal'],
-                    'answer'   => 'La plus grande place piétonne d\'Europe',
+                    'question' => 'Quel nom porte le grand marché de Cotonou connu pour ses tissus, épices et marchandises ?',
+                    'options'  => ['Dantokpa', 'Zongo', 'Ganhi', 'Agla'],
+                    'answer'   => 'Dantokpa',
                     'points_base' => 100
                 ],
                 'facile'    => [
-                    'question' => 'Quelle statue monumentale trône au centre de cette grande place de Lyon ?',
-                    'options'  => ['Louis XIV', 'Napoléon Ier', 'Henri IV', 'Charles de Gaulle'],
-                    'answer'   => 'Louis XIV',
+                    'question' => 'Dans quelle ville se trouve le marché Dantokpa ?',
+                    'options'  => ['Cotonou', 'Porto-Novo', 'Abomey', 'Ouidah'],
+                    'answer'   => 'Cotonou',
                     'points_base' => 50
                 ],
                 'enfant'    => [
-                    'question' => 'Sur cette immense place, tu vois un grand roi à cheval. Quel est son prénom ?',
-                    'options'  => ['Louis', 'Jean', 'Paul', 'Arthur'],
-                    'answer'   => 'Louis',
+                    'question' => 'Ce marché est très grand et bruyant. Dans quelle ville du Bénin est-il ?',
+                    'options'  => ['Cotonou', 'Lyon', 'Paris', 'Abidjan'],
+                    'answer'   => 'Cotonou',
                     'points_base' => 25
                 ],
             ],
-            'Basilique de Fourvière' => [
+            'Plage des Cocotiers' => [
                 'difficile' => [
-                    'question' => 'La basilique a été construite suite à un vœu formulé pendant quel événement historique de 1870–1871 ?',
-                    'options'  => ['La guerre franco-prussienne', 'La Commune de Lyon', 'L\'inauguration du funiculaire', 'La crue du Rhône'],
-                    'answer'   => 'La guerre franco-prussienne',
+                    'question' => 'Quel nom donnent les habitants de Cotonou à la plage où l\'on trouve des palmiers et des pêcheurs au bord de la mer ?',
+                    'options'  => ['Plage des Cocotiers', 'Plage de Fidjrossè', 'Plage de Grand-Popo', 'Plage du Rocher'],
+                    'answer'   => 'Plage des Cocotiers',
                     'points_base' => 200
                 ],
                 'moyen'     => [
-                    'question' => 'Sur quelle colline la basilique est-elle construite et quel est son surnom populaire ?',
-                    'options'  => ['Colline de Fourvière, la colline qui prie', 'Colline de la Croix-Rousse, la colline qui travaille', 'Colline de Saint-Just, la colline verte', 'Mont d\'Or, la colline dorée'],
-                    'answer'   => 'Colline de Fourvière, la colline qui prie',
+                    'question' => 'Quel élément naturel borde la plage des Cocotiers ?',
+                    'options'  => ['Le Golfe de Guinée', 'Le fleuve Niger', 'Le lac Nokoué', 'La rivière Sô'],
+                    'answer'   => 'Le Golfe de Guinée',
                     'points_base' => 100
                 ],
                 'facile'    => [
-                    'question' => 'À qui est dédiée cette célèbre basilique dominant Lyon ?',
-                    'options'  => ['Notre-Dame', 'Saint-Jean', 'Sainte-Blandine', 'Saint-Pothin'],
-                    'answer'   => 'Notre-Dame',
+                    'question' => 'Sur quelle étendue d\'eau se trouve la plage des Cocotiers ?',
+                    'options'  => ['La mer', 'Un lac', 'Une rivière', 'Une piscine'],
+                    'answer'   => 'La mer',
                     'points_base' => 50
                 ],
                 'enfant'    => [
-                    'question' => 'Cette grande église blanche est tout en haut d\'une colline. De quelle couleur est sa façade ?',
-                    'options'  => ['Blanche', 'Rouge', 'Bleue', 'Verte'],
-                    'answer'   => 'Blanche',
+                    'question' => 'Il y a des cocotiers et du sable. Est-ce que c\'est une plage ?',
+                    'options'  => ['Oui', 'Non'],
+                    'answer'   => 'Oui',
                     'points_base' => 25
                 ],
             ],
-            'Traboules du Vieux Lyon' => [
+            'Musée Historique de Ouidah' => [
                 'difficile' => [
-                    'question' => 'Les traboules ont été utilisées stratégiquement durant quelle période de la Seconde Guerre mondiale à Lyon ?',
-                    'options'  => ['La Résistance française', 'La collaboration', 'L\'exode', 'La libération de Paris'],
-                    'answer'   => 'La Résistance française',
+                    'question' => 'Quel royaume ancien est mis à l\'honneur dans ce musée historique ?',
+                    'options'  => ['Dahomey', 'Zululand', 'Mali', 'Songhaï'],
+                    'answer'   => 'Dahomey',
                     'points_base' => 200
                 ],
                 'moyen'     => [
-                    'question' => 'De quel mot latin est issu le terme "traboule" et que signifie-t-il ?',
-                    'options'  => ['Trans ambulare — traverser', 'Trabs — la poutre', 'Tabula — la table', 'Transire — passer'],
-                    'answer'   => 'Trans ambulare — traverser',
+                    'question' => 'Quel thème principal trouve-t-on dans ce musée d\'Ouidah ?',
+                    'options'  => ['Histoire et mémoire de l\'Afrique de l\'Ouest', 'Art contemporain européen', 'Faune marine', 'Aviation'],
+                    'answer'   => 'Histoire et mémoire de l\'Afrique de l\'Ouest',
                     'points_base' => 100
                 ],
                 'facile'    => [
-                    'question' => 'Qu\'est-ce qu\'une traboule ?',
-                    'options'  => ['Un passage couvert traversant un immeuble', 'Une spécialité culinaire lyonnaise', 'Un ancien puits romain', 'Une ruelle en impasse'],
-                    'answer'   => 'Un passage couvert traversant un immeuble',
+                    'question' => 'Dans quelle ville se trouve le Musée Historique de Ouidah ?',
+                    'options'  => ['Ouidah', 'Cotonou', 'Porto-Novo', 'Abomey'],
+                    'answer'   => 'Ouidah',
                     'points_base' => 50
                 ],
                 'enfant'    => [
-                    'question' => 'Les traboules sont des passages secrets qui traversent les maisons. Vrai ou faux ?',
-                    'options'  => ['Vrai', 'Faux'],
-                    'answer'   => 'Vrai',
+                    'question' => 'Ce musée raconte des histoires anciennes. Est-il à Ouidah ?',
+                    'options'  => ['Oui', 'Non'],
+                    'answer'   => 'Oui',
                     'points_base' => 25
                 ],
             ],
-            'Musée des Beaux-Arts' => [
+            'Porte du Non-Retour' => [
                 'difficile' => [
-                    'question' => 'Quel ordre religieux occupait ce bâtiment avant sa transformation en musée, et en quelle année a-t-il ouvert ?',
-                    'options'  => ['Les Bénédictines, 1803', 'Les Jésuites, 1792', 'Les Dominicains, 1810', 'Les Franciscains, 1801'],
-                    'answer'   => 'Les Bénédictines, 1803',
+                    'question' => 'La Porte du Non-Retour rappelle quel épisode historique douloureux ?',
+                    'options'  => ['La traite transatlantique des esclaves', 'La révolution de 1910', 'La guerre coloniale', 'L\'indépendance du Bénin'],
+                    'answer'   => 'La traite transatlantique des esclaves',
                     'points_base' => 200
                 ],
                 'moyen'     => [
-                    'question' => 'Dans quel type de bâtiment ancien ce musée a-t-il été installé ?',
-                    'options'  => ['Un couvent bénédictin', 'Un ancien palais de justice', 'Une gare désaffectée', 'Un château royal'],
-                    'answer'   => 'Un couvent bénédictin',
+                    'question' => 'Quel symbole est associé à la Porte du Non-Retour ?',
+                    'options'  => ['Mémoire et résilience', 'Richesse et fortune', 'Joie et fête', 'Commerce'],
+                    'answer'   => 'Mémoire et résilience',
                     'points_base' => 100
                 ],
                 'facile'    => [
-                    'question' => 'Sur quelle place de Lyon se trouve le Musée des Beaux-Arts ?',
-                    'options'  => ['Place des Terreaux', 'Place Bellecour', 'Place des Jacobins', 'Place de la Comédie'],
-                    'answer'   => 'Place des Terreaux',
+                    'question' => 'La Porte du Non-Retour se trouve près de quel lieu ?',
+                    'options'  => ['La mer', 'Une montagne', 'Une forêt', 'Un désert'],
+                    'answer'   => 'La mer',
                     'points_base' => 50
                 ],
                 'enfant'    => [
-                    'question' => 'Ce musée est plein de tableaux et de sculptures. Comment s\'appelle la place devant lui ?',
-                    'options'  => ['Place des Terreaux', 'Place Bellecour', 'Place de la Lune', 'Place du Soleil'],
-                    'answer'   => 'Place des Terreaux',
+                    'question' => 'Ce monument est près de l\'océan. Est-ce que c\'est un lieu triste ou joyeux ?',
+                    'options'  => ['Triste', 'Joyeux'],
+                    'answer'   => 'Triste',
                     'points_base' => 25
                 ],
             ],
-            'Institut Lumière' => [
+            'Palais Royal d\'Abomey' => [
                 'difficile' => [
-                    'question' => 'En quelle année et lors de quelle projection payante le cinématographe a-t-il été présenté pour la 1ère fois ?',
-                    'options'  => ['28 décembre 1895, Grand Café', '14 juillet 1890, Casino de Paris', '20 mai 1895, Eden Théâtre', '1er janvier 1900, Exposition Universelle'],
-                    'answer'   => '28 décembre 1895, Grand Café',
+                    'question' => 'Le Palais Royal d\'Abomey était le centre de quel royaume africain ?',
+                    'options'  => ['Dahomey', 'Ashanti', 'Kanem', 'Watts'],
+                    'answer'   => 'Dahomey',
                     'points_base' => 200
                 ],
                 'moyen'     => [
-                    'question' => 'Quel était le métier du père des frères Lumière, qui les a inspirés dans leur travail ?',
-                    'options'  => ['Photographe', 'Boulanger', 'Ingénieur civil', 'Peintre en bâtiment'],
-                    'answer'   => 'Photographe',
+                    'question' => 'Quel élément orne souvent les murs du palais royal à Abomey ?',
+                    'options'  => ['Bas-reliefs historiques', 'Graffitis modernes', 'Peintures flamandes', 'Sculptures de glace'],
+                    'answer'   => 'Bas-reliefs historiques',
                     'points_base' => 100
                 ],
                 'facile'    => [
-                    'question' => 'Quel appareil révolutionnaire les frères Lumière ont-ils inventé dans cette villa en 1895 ?',
-                    'options'  => ['Le cinématographe', 'Le phonographe', 'Le télégraphe', 'Le microscope'],
-                    'answer'   => 'Le cinématographe',
+                    'question' => 'Le Palais Royal d\'Abomey était habité par des rois. Comment s\'appelle ce type de lieu ?',
+                    'options'  => ['Palais', 'École', 'Marché', 'Pont'],
+                    'answer'   => 'Palais',
                     'points_base' => 50
                 ],
                 'enfant'    => [
-                    'question' => 'Les frères Lumière ont inventé quelque chose qu\'on aime tous : regarder des films ! Comment ça s\'appelle ?',
-                    'options'  => ['Le cinéma', 'La télévision', 'La radio', 'Internet'],
-                    'answer'   => 'Le cinéma',
+                    'question' => 'C\'est un grand bâtiment où vivait un roi. Est-ce un palais ?',
+                    'options'  => ['Oui', 'Non'],
+                    'answer'   => 'Oui',
                     'points_base' => 25
                 ],
             ],

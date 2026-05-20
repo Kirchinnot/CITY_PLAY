@@ -13,42 +13,42 @@ class CitySeeder extends Seeder
         $admin = User::where('role', 'admin')->first();
 
         City::firstOrCreate(
-            ['name' => 'Découverte du Vieux Lyon'],
+            ['name' => 'Cotonou — Escapade Littorale'],
             [
-                'description'          => 'Partez à la découverte des trésors cachés du Vieux Lyon, de la Place Bellecour aux traboules de la Renaissance.',
-                'country'              => 'France',
+                'description'          => 'Partez à la découverte du poumon économique du Bénin, entre marché animé, lagune mystérieuse et plages colorées.',
+                'country'              => 'Bénin',
                 'banner_image'         => null,
-                'lat'                  => 45.7597,
-                'lng'                  => 4.8422,
+                'lat'                  => 6.3703,
+                'lng'                  => 2.3912,
                 'avg_duration_minutes' => 90,
                 'retention_days'       => 365,
                 'is_published'         => true,
                 'outro_config'         => [
-                    'text'           => 'Bravo pour votre parcours ! Vous avez exploré les joyaux de Lyon.',
-                    'restaurant_tip' => 'Bouchon Lyonnais — 2 rue Mercière, Lyon 2e',
-                    'shop_url'       => 'https://souvenirs-lyon.fr',
-                    'rating_url'     => 'https://cityplay.fr/rate/lyon',
+                    'text'           => 'Félicitations ! Tu as révélé les secrets du bord de mer de Cotonou.',
+                    'restaurant_tip' => 'Le Jardin du Golfe — Boulevard de la Marina',
+                    'shop_url'       => 'https://souvenirs-benin.example.com',
+                    'rating_url'     => 'https://cityplay.bj/rate/cotonou',
                 ],
                 'created_by' => $admin->id,
             ]
         );
 
         City::firstOrCreate(
-            ['name' => 'Secrets de Montmartre'],
+            ['name' => 'Ouidah — Route des Ancêtres'],
             [
-                'description'          => 'Explorez les ruelles artistiques et les anecdotes historiques de la Butte Montmartre.',
-                'country'              => 'France',
+                'description'          => 'Suivez le chemin historique de la Porte du Non-Retour à l’entrée du royaume d’Abomey, entre culture et mémoire.',
+                'country'              => 'Bénin',
                 'banner_image'         => null,
-                'lat'                  => 48.8867,
-                'lng'                  => 2.3431,
-                'avg_duration_minutes' => 75,
-                'retention_days'       => 180,
+                'lat'                  => 6.3606,
+                'lng'                  => 2.0875,
+                'avg_duration_minutes' => 100,
+                'retention_days'       => 365,
                 'is_published'         => false,
                 'outro_config'         => [
-                    'text'           => 'Félicitations ! Terminez votre visite au café des Deux Moulins.',
-                    'restaurant_tip' => 'Café des Deux Moulins — 15 rue Lepic, Paris 18e',
+                    'text'           => 'Bravo explorateur ! Tu as honoré les mémoires et découvert la magie d’Ouidah.',
+                    'restaurant_tip' => 'Chez Mango — Route de la Plage',
                     'shop_url'       => null,
-                    'rating_url'     => 'https://cityplay.fr/rate/montmartre',
+                    'rating_url'     => 'https://cityplay.bj/rate/ouidah',
                 ],
                 'created_by' => $admin->id,
             ]

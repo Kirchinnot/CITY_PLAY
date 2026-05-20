@@ -297,14 +297,22 @@ const skipRiddle = async () => {
                             {{ isSubmittingAnswer ? 'VÉRIFICATION...' : 'CONFIRMER MA RÉPONSE' }}
                         </button>
 
-                        <button
-                            v-else
-                            @click="validatePresence"
-                            :disabled="!canValidatePresence"
-                            class="w-full rounded-[2rem] bg-gradient-to-r from-[#F7B227] to-[#E05A1E] px-6 py-5 text-base font-black uppercase tracking-[0.16em] text-[#2D1B16] shadow-[0_20px_50px_-20px_rgba(224,83,28,0.35)] transition duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-[#F3E6D2]"
-                        >
-                            {{ isValidatingPresence ? 'VÉRIFICATION...' : 'VALIDER SUR PLACE' }}
-                        </button>
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <Link
+                                :href="route('player.game.map') + '?place=' + (props.riddle.place?.id ?? '')"
+                                class="inline-flex w-full items-center justify-center rounded-2xl border border-[#E0531C]/15 bg-white px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[#2D1B16] transition hover:bg-[#FFF7EB]"
+                            >
+                                VOIR SUR LA CARTE
+                            </Link>
+
+                            <button
+                                @click="validatePresence"
+                                :disabled="!canValidatePresence"
+                                class="w-full rounded-[2rem] bg-gradient-to-r from-[#F7B227] to-[#E05A1E] px-6 py-5 text-base font-black uppercase tracking-[0.16em] text-[#2D1B16] shadow-[0_20px_50px_-20px_rgba(224,83,28,0.35)] transition duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-[#F3E6D2]"
+                            >
+                                {{ isValidatingPresence ? 'VÉRIFICATION...' : 'VALIDER SUR PLACE' }}
+                            </button>
+                        </div>
 
                         <div class="grid gap-3 sm:grid-cols-2">
                             <button

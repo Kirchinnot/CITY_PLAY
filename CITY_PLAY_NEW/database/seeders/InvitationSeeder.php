@@ -13,13 +13,13 @@ class InvitationSeeder extends Seeder
     public function run(): void
     {
         $admin = User::where('role', 'admin')->first();
-        $lyon  = City::where('name', 'Découverte du Vieux Lyon')->first();
+        $cotonou = City::where('name', 'Cotonou — Escapade Littorale')->first();
 
         // Invitation publique à pied — difficulté moyen
         Invitation::firstOrCreate(
-            ['token' => 'lyon-marche-moyen-demo'],
+            ['token' => 'benin-dantokpa-moyen-demo'],
             [
-                'city_id'          => $lyon->id,
+                'city_id'          => $cotonou->id,
                 'created_by'       => $admin->id,
                 'mode'             => 'collectif',
                 'difficulty'       => 'moyen',
@@ -33,9 +33,9 @@ class InvitationSeeder extends Seeder
 
         // Invitation compétitive en vélo — difficulté difficile
         Invitation::firstOrCreate(
-            ['token' => 'lyon-velo-difficile-demo'],
+            ['token' => 'benin-velo-difficile-demo'],
             [
-                'city_id'          => $lyon->id,
+                'city_id'          => $cotonou->id,
                 'created_by'       => $admin->id,
                 'mode'             => 'mercenaire',
                 'difficulty'       => 'difficile',
