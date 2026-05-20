@@ -56,3 +56,111 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+1. Cloner le projet
+git clone https://github.com/VOTRE-ORG/VOTRE-PROJET.git
+2. Entrer dans le dossier
+cd CITYPLAY
+3. Se déplacer sur la branche develop
+git checkout develop
+4. Installer les dépendances PHP
+composer install
+5. Installer les dépendances Node.js
+npm install
+6. Copier le fichier .env
+cp .env.example .env
+
+Sous Windows PowerShell :
+
+copy .env.example .env
+7. Générer la clé Laravel
+php artisan key:generate
+8. Configurer le .env
+
+Modifier :
+
+APP_NAME=CityPlay
+
+APP_URL=http://127.0.0.1:8000
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=cityplay
+DB_USERNAME=root
+DB_PASSWORD=
+9. Créer la base de données MySQL
+
+Exemple :
+
+CREATE DATABASE cityplay;
+10. Exécuter les migrations
+php artisan migrate
+11. Exécuter les seeders
+php artisan db:seed
+
+OU :
+
+php artisan migrate:fresh --seed
+12. Créer le lien de stockage
+
+TRÈS IMPORTANT pour les images.
+
+php artisan storage:link
+13. Lancer le serveur Laravel
+php artisan serve
+14. Lancer Vite
+
+Dans un second terminal :
+
+npm run dev
+15. Ouvrir l’application
+http://127.0.0.1:8000
+Workflow quotidien recommandé
+Avant de travailler
+git checkout develop
+git pull origin develop
+Aller sur sa branche
+git checkout feature/armel
+Après modifications
+git add .
+git commit -m "feat: ..."
+git push origin feature/armel
+Si develop a changé
+git checkout develop
+git pull origin develop
+
+git checkout feature/armel
+git merge develop
+CONSEIL IMPORTANT POUR VOUS
+
+Ajoutez immédiatement un fichier :
+
+README.md
+
+avec :
+
+installation,
+commandes,
+stack,
+structure projet.
+
+Parce que :
+
+ça évite énormément de problèmes d’équipe.
+
+BONUS — Commande rapide complète
+
+Après clonage :
+
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate:fresh --seed
+php artisan storage:link
+npm run dev
+php artisan serve
+
+C’est votre setup standard CityPlay.

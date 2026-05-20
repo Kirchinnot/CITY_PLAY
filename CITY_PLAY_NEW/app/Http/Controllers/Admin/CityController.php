@@ -14,10 +14,10 @@ class CityController extends Controller
      */
     public function index()
     {
-        $cities = City::withCount(['places', 'gameSessions'])->get();
+        $cities = City::withCount(['places', 'gameSessions'])->get(); //récupères toutes les villes de la table cities
         return Inertia::render('Admin/Cities', [
             'cities' => $cities
-        ]);
+        ]); //rend la vue Inertia située dans resources/js/Pages/Admin/Cities.vue et lui passe les données des villes
     }
 
     /**
@@ -35,7 +35,7 @@ class CityController extends Controller
         }
 
         // Vérification Règle 2
-        $placesWithoutRiddles = $city->places()->whereDoesntHave('riddles')->count();
+        $placesWithoutRiddles = $city->places()->whereDoesntHave('riddles')->count(); //Compter tous les lieux (places) de cette ville (city) qui n’ont aucune énigme (riddles)
         if ($placesWithoutRiddles > 0) {
             return redirect()->back()->withErrors([
                 'publish' => "Tous les lieux doivent avoir au moins une énigme configurée."
@@ -68,8 +68,8 @@ class CityController extends Controller
             'outro_config' => 'nullable|array',
         ]);
 
-        $validated['created_by'] = $request->user()->id;
-        $validated['is_published'] = false;
+        $validated['created_by'] = $request->user()->id; // Associer le parcours à l'admin qui le crée
+        $validated['is_published'] = false; //Ce contenu n’est pas encore publié/visible aux joueurs
 
         City::create($validated);
 
