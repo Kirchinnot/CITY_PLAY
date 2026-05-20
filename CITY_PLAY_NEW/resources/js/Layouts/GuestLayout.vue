@@ -1,55 +1,54 @@
 <script setup>
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <div class="flex min-h-screen flex-col md:flex-row bg-cityplay-lime/20 overflow-hidden font-sans">
-        <!-- Left Side: Illustration & Branding -->
-        <div class="hidden md:flex md:w-1/2 bg-cityplay-lime relative items-center justify-center p-12 overflow-hidden">
-            <!-- Decorative Waves -->
-            <div class="absolute bottom-0 left-0 w-full">
-                <svg viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg" class="w-full fill-cityplay-yellow">
-                    <path d="M0,192L48,197.3C96,203,192,213,288,192C384,171,480,117,576,112C672,107,768,149,864,154.7C960,160,1056,128,1152,112C1248,96,1344,96,1392,96L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
-            </div>
-
-            <div class="relative z-10 text-center w-full max-w-lg">
-                <div class="aspect-[9/16] w-full max-w-[320px] mx-auto mb-8 transform rotate-1 hover:rotate-0 transition-transform duration-500 shadow-2xl rounded-[2rem] overflow-hidden border-8 border-white bg-white">
-                    <img src="/images/auth-explorer.png" alt="CityPlay Explorer" class="w-full h-full object-cover" />
-                </div>
-                <h1 class="text-5xl font-black text-cityplay-brown mb-2 uppercase tracking-tighter drop-shadow-sm">CityPlay</h1>
-                <p class="text-cityplay-brown/80 font-bold text-lg max-w-sm mx-auto leading-tight">
-                    Transforme ta ville en terrain de jeu interactif !
-                </p>
-            </div>
+    <div class="min-h-screen bg-[#FDFBF7] text-[#2D1B16] font-sans overflow-x-hidden flex flex-col justify-between selection:bg-[#E0531C] selection:text-white relative">
+        
+        <div class="fixed inset-0 z-0 pointer-events-none">
+            <div class="absolute top-[-20%] right-[-20%] w-[100vw] h-[100vw] rounded-full bg-[#FFB700]/15 blur-[80px] animate-float"></div>
+            <div class="absolute bottom-[-20%] left-[-20%] w-[100vw] h-[100vw] rounded-full bg-[#00A859]/10 blur-[100px] animate-float" style="animation-delay: -3s;"></div>
+            <div class="absolute inset-0 opacity-[0.02]" style="background-image: radial-gradient(circle, #E0531C 1.5px, transparent 1.5px); background-size: 32px 32px;"></div>
         </div>
 
-        <!-- Right Side: Auth Forms -->
-        <div class="flex-1 flex flex-col items-center justify-center p-6 md:p-12 bg-white relative">
-            <!-- Mobile Illustration (visible only on small screens) -->
-            <div class="md:hidden w-40 aspect-[9/16] mb-6 shadow-xl rounded-2xl overflow-hidden border-4 border-cityplay-lime bg-white">
-                <img src="/images/auth-explorer.png" alt="CityPlay Explorer" class="w-full h-full object-cover" />
-            </div>
+        <div class="relative z-10 flex-1 flex flex-col justify-between px-6 py-6 w-full max-w-md mx-auto">
+            
+            <header class="w-full flex justify-between items-center mb-8 animate-fade-in">
+                <Link href="/" class="flex items-center gap-2 group">
+                    <div class="w-9 h-9 bg-gradient-to-br from-[#E0531C] to-[#FFB700] rounded-xl flex items-center justify-center shadow-md shadow-orange-500/10 group-hover:scale-105 transition-transform">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </div>
+                    <span class="text-xs font-black uppercase tracking-widest text-[#5C4033]/80 group-hover:text-[#E0531C] transition-colors">Accueil</span>
+                </Link>
+                
+                <span class="text-lg font-black italic tracking-tighter uppercase">CityPlay<span class="text-[#E0531C]">.</span></span>
+            </header>
 
-            <div class="w-full max-w-md">
-                <div class="mb-8 flex justify-center md:justify-start">
-                    <Link href="/">
-                        <ApplicationLogo class="h-12 w-auto fill-current text-cityplay-orange" />
-                    </Link>
-                </div>
+            <main class="w-full bg-white/70 backdrop-blur-md p-6 rounded-3xl border border-orange-100/60 shadow-[0_20px_40px_rgba(62,39,32,0.04)] animate-slide-up">
+                <slot />
+            </main>
 
-                <div class="bg-white p-2">
-                    <slot />
-                </div>
-            </div>
-
-            <!-- Decorative Elements -->
-            <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                <svg width="100" height="100" viewBox="0 0 100 100" class="text-cityplay-orange fill-current">
-                    <circle cx="50" cy="50" r="40" />
-                </svg>
-            </div>
+            <footer class="text-center pt-8 text-[9px] font-black text-[#5C4033]/30 uppercase tracking-[0.15em]">
+                Identité Culturelle & Exploration du Bénin
+            </footer>
         </div>
     </div>
 </template>
+
+<style scoped>
+/* Flottaison douce des orbes de lumière */
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(15px, -15px) scale(1.03); }
+}
+.animate-float { animation: float 12s ease-in-out infinite; }
+
+/* Transitions d'entrée */
+.animate-fade-in { animation: fadeIn 0.4s ease-out; }
+.animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+</style>

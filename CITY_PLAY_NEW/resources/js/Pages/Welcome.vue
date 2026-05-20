@@ -1,117 +1,168 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
+import { onMounted, ref } from 'vue';
 
 defineProps({
     canLogin: Boolean,
     canRegister: Boolean,
 });
+
+// Icônes SVG Professionnelles
+const icons = {
+    history: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+    puzzle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11.7 2c.4 0 .8.3.8.7v1.8c2.4.4 4.3 2.3 4.7 4.7h1.8c.4 0 .7.4.7.8s-.3.8-.7.8h-1.8c-.4 2.4-2.3 4.3-4.7 4.7v1.8c0 .4-.3.7-.7.7s-.8-.3-.8-.7v-1.8c-2.4-.4-4.3-2.3-4.7-4.7H3.8c-.4 0-.7-.4-.7-.8s.3-.8.7-.8h1.8c.4-2.4 2.3-4.3 4.7-4.7V2.7c0-.4.3-.7.7-.7z"/></svg>`,
+    community: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`
+};
 </script>
 
 <template>
-    <Head title="CITYPLAY - Découvrez votre ville autrement" />
+    <Head title="CITYPLAY - L'aventure vous attend" />
 
-    <div class="min-h-screen bg-cityplay-dark text-white selection:bg-cityplay-primary selection:text-white font-sans overflow-hidden">
+    <div class="min-h-screen bg-[#FDFBF7] text-[#2D1B16] font-sans overflow-x-hidden flex flex-col selection:bg-[#E0531C] selection:text-white">
         
-        <!-- Background Elements -->
-        <div class="fixed inset-0 z-0">
-            <!-- Gradient Overlay -->
-            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-cityplay-dark/80 to-cityplay-dark z-10"></div>
-            <!-- Pattern Map -->
-            <div class="absolute inset-0 opacity-[0.03] z-0" style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 32px 32px;"></div>
-            <!-- Glow Orbs -->
-            <div class="absolute top-[-10%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-cityplay-primary/20 blur-[120px] animate-pulse-slow"></div>
-            <div class="absolute bottom-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-cityplay-purple/20 blur-[150px] animate-pulse-slow" style="animation-delay: 1.5s;"></div>
+        <div class="fixed inset-0 z-0 pointer-events-none">
+            <div class="absolute top-[-10%] right-[-15%] w-[85vw] h-[85vw] rounded-full bg-[#FFB700]/20 blur-[80px] animate-float-slow"></div>
+            <div class="absolute bottom-[-10%] left-[-15%] w-[90vw] h-[90vw] rounded-full bg-[#00A859]/15 blur-[100px] animate-float-slow-delayed"></div>
+            <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle, #E0531C 1.5px, transparent 1.5px); background-size: 32px 32px;"></div>
         </div>
 
-        <!-- Content -->
-        <div class="relative z-20 min-h-screen flex flex-col">
-            <!-- Header Navbar -->
+        <div class="relative z-20 flex-1 flex flex-col">
+            
             <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-cityplay-primary rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(214,90,49,0.4)]">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 bg-gradient-to-br from-[#E0531C] to-[#FFB700] rounded-xl flex items-center justify-center shadow-xl shadow-orange-500/20">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         </svg>
                     </div>
-                    <span class="text-2xl font-black italic tracking-tighter">CITYPLAY<span class="text-cityplay-primary">.</span></span>
+                    <span class="text-xl font-black italic tracking-tighter uppercase">CityPlay<span class="text-[#E0531C]">.</span></span>
                 </div>
 
-                <nav v-if="canLogin" class="flex gap-4 items-center">
-                    <Link v-if="$page.props.auth.user" :href="route('player.dashboard')" class="text-xs sm:text-sm font-bold uppercase tracking-widest hover:text-cityplay-primary transition">
+                <nav v-if="canLogin">
+                    <Link v-if="$page.props.auth.user" :href="route('player.dashboard')" class="text-xs font-bold text-[#E0531C] bg-orange-50 px-4 py-2 rounded-full border border-orange-100 uppercase tracking-widest">
                         Tableau de bord
                     </Link>
-                    <template v-else>
-                        <Link :href="route('login')" class="hidden sm:block text-xs sm:text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-white transition px-4 py-2">
-                            Connexion
-                        </Link>
-                        <Link v-if="canRegister" :href="route('register')" class="text-xs sm:text-sm font-bold uppercase tracking-widest bg-white/10 border border-white/20 hover:bg-white/20 transition px-6 py-2 rounded-full">
-                            Jouer
-                        </Link>
-                    </template>
+                    <Link v-else :href="route('login')" class="text-xs font-black text-[#5C4033] bg-white border-2 border-[#5C4033]/10 px-5 py-2.5 rounded-full hover:border-[#E0531C] transition-all uppercase tracking-widest">
+                        Se connecter
+                    </Link>
                 </nav>
             </header>
 
-            <!-- Hero Section -->
-            <main class="flex-1 flex flex-col items-center justify-center text-center px-6 mt-[-5vh]">
-                <div class="inline-block px-4 py-1.5 rounded-full bg-cityplay-primary/10 border border-cityplay-primary/30 text-cityplay-primary text-[10px] font-black uppercase tracking-[0.2em] mb-6 shadow-[0_0_15px_rgba(214,90,49,0.2)]">
-                    🌍 L'Aventure Urbaine
+            <main class="flex-1 flex flex-col items-center justify-center text-center px-6 pt-4 pb-10">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FFB700]/15 border border-[#FFB700]/30 text-[#B37D00] text-[10px] font-black uppercase tracking-[0.15em] mb-6 animate-fade-in">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FFB700] opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-[#FFB700]"></span>
+                    </span>
+                    CityPlay : Découverte du Bénin
                 </div>
                 
-                <h1 class="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-[1.1]">
-                    Redécouvrez la ville<br/>
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-cityplay-primary to-cityplay-yellow italic">Énigme par Énigme</span>
+                <h1 class="text-[2.6rem] leading-[1] font-black tracking-tight mb-4 text-[#2D1B16] animate-slide-up">
+                    L'histoire et la culture <br/>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#E0531C] via-[#FFB700] to-[#00A859] italic font-black">
+                        Au cœur du jeu
+                    </span>
                 </h1>
                 
-                <p class="max-w-2xl mx-auto text-gray-400 text-lg md:text-xl font-medium leading-relaxed mb-10">
-                    Cityplay transforme votre environnement urbain en un immense terrain de jeu interactif. Résolvez des mystères, trouvez des lieux cachés et plongez dans l'histoire et la culture locales.
+                <p class="max-w-md mx-auto text-[#5C4033] text-base font-medium leading-relaxed mb-10 px-4 opacity-90 animate-slide-up-delayed">
+                    Explorez les secrets du Bénin, résolvez des énigmes et vivez une aventure culturelle unique sur smartphone.
                 </p>
 
-                <div class="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-md mx-auto">
-                    <Link v-if="$page.props.auth.user" :href="route('player.dashboard')" class="group relative w-full flex items-center justify-center gap-3 h-14 bg-cityplay-primary rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-cityplay-primary-hover transition shadow-[0_10px_30px_rgba(214,90,49,0.3)] overflow-hidden">
-                        <span class="relative z-10">Reprendre l'Aventure</span>
-                        <svg class="relative z-10 w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                <div class="w-full max-w-sm px-2 animate-slide-up-delayed-2">
+                    <Link v-if="$page.props.auth.user" :href="route('player.dashboard')" class="btn-primary-pulse w-full h-16 flex items-center justify-center gap-3 bg-gradient-to-r from-[#E0531C] to-[#FFB700] text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-2xl">
+                        Reprendre l'aventure
                     </Link>
-                    <template v-else>
-                        <Link v-if="canRegister" :href="route('register')" class="group relative w-full flex items-center justify-center gap-3 h-14 bg-cityplay-primary rounded-2xl font-black uppercase tracking-widest text-sm transition shadow-[0_10px_30px_rgba(214,90,49,0.3)] overflow-hidden">
-                            <span class="relative z-10">Commencer</span>
-                            <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                        </Link>
-                        <Link :href="route('login')" class="w-full flex items-center justify-center h-14 bg-white/5 border border-white/10 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-white/10 transition">
-                            Se Connecter
-                        </Link>
-                    </template>
+                    
+                    <Link v-else :href="route('register')" class="btn-primary-pulse w-full h-16 flex items-center justify-center gap-3 bg-gradient-to-r from-[#E0531C] to-[#FFB700] text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-2xl overflow-hidden group">
+                        <div class="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-shine"></div>
+                        <span class="relative z-10">Commencer l'exploration</span>
+                        <svg class="relative z-10 w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    </Link>
                 </div>
             </main>
 
-            <!-- Features -->
-            <div class="w-full max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-cityplay-dark-card border border-white/5 p-6 rounded-3xl shadow-xl hover:border-cityplay-blue/30 transition duration-300">
-                    <div class="w-10 h-10 bg-cityplay-blue/10 rounded-xl flex items-center justify-center mb-4 border border-cityplay-blue/20">
-                        <span class="text-xl">📍</span>
+            <div class="w-full pb-10 overflow-hidden animate-fade-in">
+                <div class="carousel-track flex gap-4 px-6">
+                    <div class="carousel-card shrink-0 w-[280px] bg-white p-5 rounded-3xl border border-orange-50 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-orange-50 text-[#E0531C] rounded-xl flex items-center justify-center" v-html="icons.history"></div>
+                        <div>
+                            <h3 class="text-sm font-black uppercase">Patrimoine</h3>
+                            <p class="text-[11px] text-[#5C4033] font-medium leading-tight mt-0.5">Explorez les palais royaux et les lieux sacrés.</p>
+                        </div>
                     </div>
-                    <h3 class="font-black text-lg mb-2 text-white">Géolocalisation</h3>
-                    <p class="text-sm text-gray-400 font-medium leading-relaxed">Déplacez-vous physiquement pour valider vos objectifs et découvrir les secrets de la carte.</p>
-                </div>
-                <div class="bg-cityplay-dark-card border border-white/5 p-6 rounded-3xl shadow-xl hover:border-cityplay-purple/30 transition duration-300">
-                    <div class="w-10 h-10 bg-cityplay-purple/10 rounded-xl flex items-center justify-center mb-4 border border-cityplay-purple/20">
-                        <span class="text-xl">🧩</span>
+                    <div class="carousel-card shrink-0 w-[280px] bg-white p-5 rounded-3xl border border-orange-50 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-yellow-50 text-[#B37D00] rounded-xl flex items-center justify-center" v-html="icons.puzzle"></div>
+                        <div>
+                            <h3 class="text-sm font-black uppercase">Mystères</h3>
+                            <p class="text-[11px] text-[#5C4033] font-medium leading-tight mt-0.5">Résolvez des énigmes inspirées des traditions.</p>
+                        </div>
                     </div>
-                    <h3 class="font-black text-lg mb-2 text-white">Énigmes Dynamiques</h3>
-                    <p class="text-sm text-gray-400 font-medium leading-relaxed">Des défis adaptés à tous les niveaux de complexité. Demandez des indices si vous êtes coincé.</p>
-                </div>
-                <div class="bg-cityplay-dark-card border border-white/5 p-6 rounded-3xl shadow-xl hover:border-cityplay-green/30 transition duration-300">
-                    <div class="w-10 h-10 bg-cityplay-green/10 rounded-xl flex items-center justify-center mb-4 border border-cityplay-green/20">
-                        <span class="text-xl">🤝</span>
+                    <div class="carousel-card shrink-0 w-[280px] bg-white p-5 rounded-3xl border border-orange-50 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-green-50 text-[#00A859] rounded-xl flex items-center justify-center" v-html="icons.community"></div>
+                        <div>
+                            <h3 class="text-sm font-black uppercase">Clan</h3>
+                            <p class="text-[11px] text-[#5C4033] font-medium leading-tight mt-0.5">Partagez l'aventure avec vos amis en équipe.</p>
+                        </div>
                     </div>
-                    <h3 class="font-black text-lg mb-2 text-white">Jeu en Équipe</h3>
-                    <p class="text-sm text-gray-400 font-medium leading-relaxed">Collaborez jusqu'à 10 joueurs pour percer tous les mystères de votre environnement.</p>
                 </div>
             </div>
             
-            <footer class="text-center py-6 text-[10px] font-black text-gray-600 uppercase tracking-[0.2em]">
-                © {{ new Date().getFullYear() }} CITYPLAY. Tous droits réservés.
+            <footer class="text-center py-6 text-[9px] font-black text-[#5C4033]/30 uppercase tracking-[0.2em]">
+                © {{ new Date().getFullYear() }} CityPlay. Identité Culturelle du Bénin.
             </footer>
         </div>
     </div>
 </template>
+
+<style scoped>
+/* Animations Fond */
+@keyframes float {
+    0%, 100% { transform: translate(0,0) scale(1); opacity: 0.6; }
+    50% { transform: translate(20px, -20px) scale(1.1); opacity: 0.8; }
+}
+.animate-float-slow { animation: float 10s ease-in-out infinite; }
+.animate-float-slow-delayed { animation: float 12s ease-in-out infinite -2s; }
+
+/* Entrée progressive */
+.animate-fade-in { animation: fadeIn 0.8s ease-out; }
+.animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-up-delayed { opacity: 0; animation: slideUp 0.6s 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-up-delayed-2 { opacity: 0; animation: slideUp 0.6s 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Pulsation Bouton Principal */
+.btn-primary-pulse {
+    animation: pulseGlow 3s infinite;
+    position: relative;
+    z-index: 10;
+}
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 10px 30px rgba(224, 83, 28, 0.3); transform: scale(1); }
+    50% { box-shadow: 0 15px 45px rgba(224, 83, 28, 0.5); transform: scale(1.02); }
+}
+
+/* Effet Brillance au survol */
+@keyframes shine {
+    100% { transform: translateX(100%); }
+}
+.animate-shine { animation: shine 0.8s ease-out forwards; }
+
+/* Carrousel Auto-Scroll */
+.carousel-track {
+    display: flex;
+    animation: scrollCarousel 20s linear infinite;
+    width: max-content;
+}
+
+@keyframes scrollCarousel {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* Pause au toucher mobile */
+.carousel-track:active {
+    animation-play-state: paused;
+}
+</style>

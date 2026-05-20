@@ -1,7 +1,7 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { Head, router, Link } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps({
     players: Array,
@@ -33,144 +33,149 @@ const formatDate = (dateString) => {
 
     <AdminLayout>
         <template #header>
-            <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; width: 100%;">
+            <div class="max-w-7xl mx-auto w-full px-4 py-4">
                 <div>
-                    <h2 style="font-family: var(--font-family-display); font-size: 1.75rem; font-weight: 800; color: var(--color-primary-dark); margin: 0;">
-                        Joueurs & Équipes
-                    </h2>
-                    <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0.25rem;">
-                        Gestion de la communauté et des sessions de jeu
-                    </p>
+                    <h2 class="text-2xl font-black text-[#2D1B16] m-0">Joueurs & Équipes</h2>
+                    <p class="text-xs text-[#5C4033]/70 mt-1">Gestion de la communauté et des sessions de jeu</p>
                 </div>
             </div>
         </template>
 
-        <div class="premium-container" style="max-width: 1200px; margin: 0 auto; padding: 2rem 1rem;">
+        <div class="max-w-7xl mx-auto px-4 py-8">
             
             <!-- Onglets -->
-            <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            <div class="flex gap-2 mb-8 border-b border-[#E0531C]/10 pb-0">
                 <button 
                     @click="activeTab = 'players'"
-                    class="tab-btn"
-                    :class="{ 'active': activeTab === 'players' }"
+                    class="px-4 py-3 border-b-4 text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap focus:outline-none"
+                    :class="activeTab === 'players' 
+                        ? 'border-[#E0531C] text-[#2D1B16]' 
+                        : 'border-transparent text-[#5C4033]/60 hover:text-[#5C4033]/80'"
                 >
-                    👤 Joueurs ({{ players.length }})
+                    <svg class="w-4 h-4 inline-block mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <span>Joueurs ({{ players.length }})</span>
                 </button>
                 <button 
                     @click="activeTab = 'teams'"
-                    class="tab-btn"
-                    :class="{ 'active': activeTab === 'teams' }"
+                    class="px-4 py-3 border-b-4 text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap focus:outline-none"
+                    :class="activeTab === 'teams' 
+                        ? 'border-[#E0531C] text-[#2D1B16]' 
+                        : 'border-transparent text-[#5C4033]/60 hover:text-[#5C4033]/80'"
                 >
-                    👥 Équipes & Sessions ({{ teams.length }})
+                    <svg class="w-4 h-4 inline-block mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.856-1.487M15 10h.01M11 10h.01M9 10h.01M19 10a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <span>Équipes ({{ teams.length }})</span>
                 </button>
             </div>
 
             <!-- Liste des JOUEURS -->
-            <div v-if="activeTab === 'players'" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div class="premium-card" style="padding: 0; overflow: hidden;">
-                    <table class="premium-table">
-                        <thead>
-                            <tr>
-                                <th>Joueur</th>
-                                <th>Email / Téléphone</th>
-                                <th>Stats</th>
-                                <th>Dernière activité</th>
-                                <th style="text-align: right;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="player in players" :key="player.id">
-                                <td>
-                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                        <div class="avatar-circle">
-                                            {{ player.name.charAt(0).toUpperCase() }}
+            <div v-if="activeTab === 'players'">
+                <div class="bg-white border border-[#E0531C]/10 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-[#FFF3DF] border-b border-[#E0531C]/10">
+                                    <th class="text-left px-4 py-3 text-[10px] font-black uppercase text-[#2D1B16] tracking-wider">Joueur</th>
+                                    <th class="text-left px-4 py-3 text-[10px] font-black uppercase text-[#2D1B16] tracking-wider hidden sm:table-cell">Email / Téléphone</th>
+                                    <th class="text-left px-4 py-3 text-[10px] font-black uppercase text-[#2D1B16] tracking-wider hidden md:table-cell">Stats</th>
+                                    <th class="text-left px-4 py-3 text-[10px] font-black uppercase text-[#2D1B16] tracking-wider hidden lg:table-cell">Dernière activité</th>
+                                    <th class="text-right px-4 py-3 text-[10px] font-black uppercase text-[#2D1B16] tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="player in players" :key="player.id" class="border-b border-[#E0531C]/10 hover:bg-[#FFF7EB]/50 transition-colors">
+                                    <td class="px-4 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded-full bg-[#FFEBCC] text-[#E0531C] flex items-center justify-center font-black text-sm">
+                                                {{ player.name.charAt(0).toUpperCase() }}
+                                            </div>
+                                            <div>
+                                                <div class="font-bold text-[#2D1B16]">{{ player.name }}</div>
+                                                <div class="text-xs text-[#5C4033]/60">Inscrit le {{ new Date(player.created_at).toLocaleDateString() }}</div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <div style="font-weight: 700; color: var(--color-text-main);">{{ player.name }}</div>
-                                            <div style="font-size: 0.75rem; color: var(--color-text-muted);">Inscrit le {{ new Date(player.created_at).toLocaleDateString() }}</div>
+                                    </td>
+                                    <td class="px-4 py-4 hidden sm:table-cell">
+                                        <div class="text-sm text-[#2D1B16]">{{ player.email }}</div>
+                                        <div class="text-xs text-[#5C4033]/60">{{ player.phone || 'Pas de numéro' }}</div>
+                                    </td>
+                                    <td class="px-4 py-4 hidden md:table-cell">
+                                        <div class="flex gap-2">
+                                            <span class="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-lg">🎮 {{ player.game_sessions_count }}</span>
+                                            <span class="text-xs font-bold bg-yellow-100 text-yellow-700 px-2 py-1 rounded-lg">🏆 {{ player.achievements_count }}</span>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div style="font-size: 0.85rem;">{{ player.email }}</div>
-                                    <div style="font-size: 0.75rem; color: var(--color-text-muted);">{{ player.phone || 'Pas de numéro' }}</div>
-                                </td>
-                                <td>
-                                    <div style="display: flex; gap: 0.5rem;">
-                                        <span class="premium-badge badge-info" title="Parties jouées">🎮 {{ player.game_sessions_count }}</span>
-                                        <span class="premium-badge badge-success" title="Badges débloqués">🏆 {{ player.achievements_count }}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div style="font-size: 0.85rem;">{{ formatDate(player.updated_at) }}</div>
-                                </td>
-                                <td style="text-align: right;">
-                                    <button @click="deletePlayer(player.id)" class="premium-btn premium-btn-danger" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;">
-                                        Supprimer
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr v-if="players.length === 0">
-                                <td colspan="5" style="text-align: center; padding: 3rem; color: var(--color-text-muted);">
-                                    Aucun joueur trouvé.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                    </td>
+                                    <td class="px-4 py-4 hidden lg:table-cell">
+                                        <div class="text-sm text-[#2D1B16]">{{ formatDate(player.updated_at) }}</div>
+                                    </td>
+                                    <td class="px-4 py-4 text-right">
+                                        <button @click="deletePlayer(player.id)" class="text-xs font-bold text-white bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors">
+                                            Supprimer
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="players.length === 0">
+                                    <td colspan="5" class="text-center py-12 text-[#5C4033]/70">
+                                        Aucun joueur trouvé.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <!-- Liste des ÉQUIPES / SESSIONS -->
-            <div v-else class="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
-                    <div v-for="team in teams" :key="team.id" class="premium-card" style="display: flex; flex-direction: column; gap: 1rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div v-else>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div v-for="team in teams" :key="team.id" class="bg-white border border-[#E0531C]/10 rounded-2xl p-5 flex flex-col gap-4 shadow-sm">
+                        <div class="flex justify-between items-start">
                             <div>
-                                <span class="premium-badge" :class="team.status === 'active' ? 'badge-success' : 'badge-warning'" style="margin-bottom: 0.5rem; display: inline-block;">
+                                <span class="text-xs font-black px-2 py-1 rounded-lg mb-2 inline-block" :class="team.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'">
                                     {{ team.status === 'active' ? 'En cours' : team.status === 'completed' ? 'Terminé' : team.status }}
                                 </span>
-                                <h3 style="font-weight: 800; font-size: 1.1rem; color: var(--color-text-main); margin: 0;">
+                                <h3 class="font-black text-base text-[#2D1B16] m-0">
                                     Équipe de {{ team.host?.name }}
                                 </h3>
-                                <p style="font-size: 0.75rem; color: var(--color-text-muted);">
-                                    📍 {{ team.city?.name }} • {{ formatDate(team.started_at) }}
+                                <p class="text-xs text-[#5C4033]/60 flex items-center gap-2 mt-1">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>
+                                    {{ team.city?.name }} • {{ formatDate(team.started_at) }}
                                 </p>
                             </div>
                         </div>
 
-                        <div style="background: var(--color-bg-light); padding: 1rem; border-radius: var(--border-radius-md); border: 1px solid var(--border-color);">
-                            <div style="font-size: 0.75rem; font-weight: 700; color: var(--color-primary); text-transform: uppercase; margin-bottom: 0.5rem;">
+                        <div class="bg-[#FFF7EB] border border-[#E0531C]/10 rounded-xl p-3">
+                            <div class="text-xs font-black uppercase text-[#E0531C] tracking-wider mb-2">
                                 Membres ({{ team.players_count }})
                             </div>
-                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                                <div v-for="player in team.players" :key="player.id" class="member-chip">
+                            <div class="flex flex-wrap gap-2">
+                                <div v-for="player in team.players" :key="player.id" class="text-xs font-bold bg-white border border-[#E0531C]/20 text-[#2D1B16] px-2 py-1 rounded-full">
                                     {{ player.name }}
                                 </div>
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.8rem;">
-                            <div class="stat-box">
-                                <span class="stat-label">Difficulté</span>
-                                <span class="stat-value">{{ team.difficulty }}</span>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-[#FFF3DF] rounded-xl p-3">
+                                <div class="text-[9px] font-black uppercase text-[#5C4033] tracking-wider">Difficulté</div>
+                                <div class="font-black text-[#E0531C]">{{ team.difficulty }}</div>
                             </div>
-                            <div class="stat-box">
-                                <span class="stat-label">Transport</span>
-                                <span class="stat-value">{{ team.locomotion }}</span>
+                            <div class="bg-[#FFF3DF] rounded-xl p-3">
+                                <div class="text-[9px] font-black uppercase text-[#5C4033] tracking-wider">Transport</div>
+                                <div class="font-black text-[#E0531C]">{{ team.locomotion }}</div>
                             </div>
-                            <div class="stat-box">
-                                <span class="stat-label">Énigmes</span>
-                                <span class="stat-value">{{ team.solved_places }} / {{ team.total_places }}</span>
+                            <div class="bg-[#FFF3DF] rounded-xl p-3">
+                                <div class="text-[9px] font-black uppercase text-[#5C4033] tracking-wider">Énigmes</div>
+                                <div class="font-black text-[#E0531C]">{{ team.solved_places }} / {{ team.total_places }}</div>
                             </div>
-                            <div class="stat-box">
-                                <span class="stat-label">Score</span>
-                                <span class="stat-value">{{ team.total_score || 0 }} pts</span>
+                            <div class="bg-[#FFF3DF] rounded-xl p-3">
+                                <div class="text-[9px] font-black uppercase text-[#5C4033] tracking-wider">Score</div>
+                                <div class="font-black text-[#E0531C]">{{ team.total_score || 0 }} pts</div>
                             </div>
                         </div>
                     </div>
 
-                    <div v-if="teams.length === 0" style="grid-column: 1 / -1; text-align: center; padding: 5rem; background: white; border-radius: var(--border-radius-lg); border: 2px dashed var(--border-color);">
-                        <p style="color: var(--color-text-muted); font-weight: 700;">Aucune équipe ou session active pour le moment.</p>
+                    <div v-if="teams.length === 0" class="col-span-full text-center py-12 bg-[#FFF3DF] border-2 border-dashed border-[#E0531C]/20 rounded-2xl">
+                        <p class="text-[#5C4033]/70 font-bold">Aucune équipe ou session active pour le moment.</p>
                     </div>
                 </div>
             </div>
@@ -178,100 +183,3 @@ const formatDate = (dateString) => {
         </div>
     </AdminLayout>
 </template>
-
-<style scoped>
-.tab-btn {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--color-text-muted);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
-    position: relative;
-}
-
-.tab-btn.active {
-    color: var(--color-primary);
-}
-
-.tab-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: -0.5rem;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--color-primary);
-    border-radius: 3px 3px 0 0;
-}
-
-.avatar-circle {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--color-primary-light);
-    color: var(--color-primary-dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 0.9rem;
-}
-
-.member-chip {
-    padding: 0.25rem 0.6rem;
-    background: white;
-    border: 1px solid var(--border-color);
-    border-radius: 100px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--color-text-main);
-}
-
-.stat-box {
-    display: flex;
-    flex-direction: column;
-    padding: 0.5rem;
-    background: var(--color-bg-light);
-    border-radius: var(--border-radius-sm);
-}
-
-.stat-label {
-    font-size: 0.65rem;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    font-weight: 700;
-}
-
-.stat-value {
-    font-weight: 800;
-    color: var(--color-text-main);
-}
-
-.premium-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.premium-table th {
-    text-align: left;
-    padding: 1rem;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    border-bottom: 1px solid var(--border-color);
-    background: var(--color-bg-light);
-}
-
-.premium-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.premium-table tr:last-child td {
-    border-bottom: none;
-}
-</style>

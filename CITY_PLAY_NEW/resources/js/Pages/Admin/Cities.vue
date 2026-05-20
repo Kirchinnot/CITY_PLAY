@@ -46,12 +46,7 @@ const openEditModal = (city) => {
     form.name = city.name;
     form.description = city.description;
     form.retention_days = city.retention_days || 365;
-    form.outro_config = city.outro_config || {
-        message: '',
-        recommendations: '',
-        restaurant_tip: '',
-        shop_url: '',
-    };
+    form.outro_config = city.outro_config || { message: '', recommendations: '', restaurant_tip: '', shop_url: '', };
     form.clearErrors();
     isModalOpen.value = true;
 };
@@ -82,146 +77,108 @@ const deleteCity = (cityId) => {
     }
 };
 
-const publish = (cityId) => {
-    router.post(route('admin.cities.publish', cityId));
-};
-
-const unpublish = (cityId) => {
-    router.post(route('admin.cities.unpublish', cityId));
-};
+const publish = (cityId) => { router.post(route('admin.cities.publish', cityId)); };
+const unpublish = (cityId) => { router.post(route('admin.cities.unpublish', cityId)); };
 </script>
 
 <template>
-
-    <Head title="CityPlay - Liste des Parcours" />
+    <Head title="CityPlay - Grimoire des Cités" />
 
     <AdminLayout>
         <template #header>
-            <div
-                style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; width: 100%; padding: 0.5rem 0;">
-                <div style="display: flex; flex-direction: column; justify-content: center;">
-                    <h2
-                        style="font-family: var(--font-family-display); font-size: 1.75rem; font-weight: 800; color: var(--color-primary-dark); margin: 0; line-height: 1.2;">
-                        À la découverte d'une ville
+            <div class="max-w-7xl mx-auto w-full flex flex-col gap-4 md:flex-row md:justify-between md:items-center py-4 px-4 sm:px-0">
+                <div class="flex flex-col justify-center gap-1">
+                    <h2 class="font-sans text-2xl font-black text-[#2D1B16] m-0 leading-tight">
+                        Grimoire des Cités
                     </h2>
-                    <p
-                        style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0.35rem 0 0 0; line-height: 1;">
-                        Identité Culturelle & Exploration du Bénin
+                    <p class="text-xs text-[#5C4033]/70 font-semibold mt-1 max-w-xl">
+                        Configurez les mythes urbains et aventures du Bénin avec un rendu lumineux et compact.
                     </p>
                 </div>
-                <button @click="openCreateModal" class="premium-btn premium-btn-primary"
-                    style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; height: fit-content; padding: 0.75rem 1.25rem; margin: 0;">
-                    <span style="font-size: 1.2rem; line-height: 1; font-weight: 700;">+</span>
-                    <span>Créer une aventure</span>
+                <button @click="openCreateModal" class="group relative overflow-hidden flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-[#E0531C] to-[#FFB700] text-white font-black text-xs uppercase tracking-wider shadow-[0_20px_50px_-35px_rgba(224,83,28,0.8)] active:scale-95 transition-all duration-300">
+                    <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shine"></div>
+                    <span class="text-xl leading-none font-bold relative z-10">+</span>
+                    <span class="relative z-10">Injecter une ville</span>
                 </button>
             </div>
         </template>
 
-        <div class="premium-container" style="max-width: 1200px; margin: 0 auto; padding: 2rem 1rem;">
-            <!-- Alertes d'erreur de publication globale -->
-            <div v-if="errors && errors.publish"
-                style="background: var(--color-danger-bg); border-left: 4px solid var(--color-danger); padding: 1rem; margin-bottom: 2rem; border-radius: var(--border-radius-md);">
-                <span style="font-weight: 700; color: var(--color-danger);">Erreur de publication :</span>
-                <p style="color: var(--color-danger); margin-top: 0.25rem; font-size: 0.9rem;">{{ errors.publish }}</p>
+        <div class="max-w-7xl mx-auto px-5 py-6 sm:py-8 sm:px-0">
+            <div v-if="errors && errors.publish" class="bg-red-50 border-l-4 border-red-500 p-4 mb-8 rounded-xl animate-slide-up">
+                <span class="font-black text-red-700 text-sm">Erreur de publication :</span>
+                <p class="text-red-600 mt-1 text-xs font-semibold leading-relaxed">{{ errors.publish }}</p>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr; gap: 2.5rem; align-items: start;">
-
-                <!-- Liste des Villes / Parcours -->
+            <div class="grid grid-cols-1 gap-10 items-start">
                 <div>
-                    <h3
-                        style="font-family: var(--font-family-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--color-text-main); display: flex; align-items: center; gap: 0.5rem;">
-                        <span>📍</span> Villes à découvrir
+                    <h3 class="font-sans text-lg font-extrabold mb-6 text-[#2D1B16] flex items-center gap-2.5 uppercase tracking-wide px-1 sm:px-0">
+                        <svg class="w-5 h-5 text-[#FFB700]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span>Cités actives du Royaume</span>
                     </h3>
 
-                    <div
-                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
-                        <!-- Carte Ajouter -->
-                        <div @click="openCreateModal" class="premium-card"
-                            style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 2px dashed var(--color-primary-light); background: transparent; min-height: 380px; box-shadow: none; transition: all var(--transition-normal); border-radius: var(--border-radius-md);">
-                            <div
-                                style="width: 56px; height: 56px; border-radius: 50%; background: var(--color-bg-light); color: var(--color-primary); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; margin-bottom: 1rem; box-shadow: var(--shadow-sm); font-weight: 700;">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                        <div @click="openCreateModal" class="group flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-[#E0531C]/30 hover:border-[#E0531C]/60 bg-[#FFF7EB] hover:bg-[#FFF3DF] rounded-3xl transition-all duration-300 p-6 shadow-sm hover:shadow-lg hover:shadow-orange-500/10 min-h-[320px]">
+                            <div class="w-14 h-14 rounded-full bg-[#FFEBCC] text-[#E0531C] flex items-center justify-center shadow-lg font-black text-3xl mb-4 group-hover:scale-105 transition-transform duration-300 border border-[#FFD69A]">
                                 +
                             </div>
-                            <h3
-                                style="color: var(--color-primary); font-weight: 700; font-family: var(--font-family-display); font-size: 1.1rem; margin: 0;">
-                                Nouveau Parcours</h3>
-                            <p
-                                style="font-size: 0.75rem; color: var(--color-text-muted); text-align: center; margin-top: 0.5rem; padding: 0 1.5rem;">
-                                Créez une nouvelle expérience immersive au Bénin.</p>
+                            <h3 class="text-[#E0531C] font-black font-sans text-xs uppercase tracking-wider">
+                                Nouveau Mythe Urbain
+                            </h3>
+                            <p class="text-[11px] text-[#5C4033]/60 text-center font-medium mt-1.5 px-4 leading-normal">
+                                Initialisez une nouvelle expérience immersive au Bénin.
+                            </p>
                         </div>
 
-                        <!-- Cartes des villes -->
-                        <div v-for="city in cities" :key="city.id" class="premium-card"
-                            style="padding: 0; overflow: hidden; display: flex; flex-direction: column; height: 420px; position: relative; border-radius: var(--border-radius-md);">
-                            <!-- Pattern Visuel -->
-                            <div
-                                style="height: 120px; background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary)); position: relative; display: flex; align-items: flex-end; padding: 1rem;">
-                                <div
-                                    style="position: absolute; inset: 0; opacity: 0.15; background-image: radial-gradient(var(--color-secondary) 1.5px, transparent 1.5px), radial-gradient(var(--color-secondary) 1.5px, var(--color-primary-dark) 1.5px); background-size: 24px 24px; background-position: 0 0, 12px 12px;">
-                                </div>
-                                <span :class="['premium-badge', city.is_published ? 'badge-success' : 'badge-warning']"
-                                    style="position: absolute; top: 1rem; right: 1rem; z-index: 2; font-weight: 700; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">
+                        <div v-for="city in cities" :key="city.id" class="bg-white border border-orange-100/70 rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[340px] relative hover:shadow-[0_20px_50px_-40px_rgba(224,83,28,0.7)] transition-shadow duration-300">
+                            <div class="min-h-[110px] bg-gradient-to-br from-[#FFE5C2] via-[#FFCD7F] to-[#E0531C]/10 relative flex items-end p-4">
+                                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_left,#FFB700_2px,transparent_22px)] [background-size:18px_18px]"></div>
+                                <span :class="[city.is_published ? 'bg-[#2D1B16] text-[#FFB700]' : 'bg-[#E0531C] text-white']" class="absolute top-4 right-4 z-10 px-2.5 py-1 rounded-full font-black text-[9px] uppercase tracking-widest shadow-sm">
                                     {{ city.is_published ? 'Publié' : 'Brouillon' }}
-                                </span>
-                                <h3
-                                    style="font-family: var(--font-family-display); font-size: 1.35rem; font-weight: 800; color: white; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 1;">
+                                }</span>
+                                <h3 class="font-sans text-base font-black text-[#2D1B16] m-0 z-10 tracking-tight drop-shadow-sm truncate w-full">
                                     {{ city.name }}
-                                </h3>
+                                }</h3>
                             </div>
 
-                            <!-- Contenu de la carte -->
-                            <div
-                                style="padding: 1.25rem; display: flex; flex-direction: column; flex: 1; justify-content: space-between;">
-                                <p
-                                    style="color: var(--color-text-muted); font-size: 0.85rem; line-height: 1.5; margin: 0 0 1rem 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                            <div class="p-5 flex flex-col flex-1 justify-between bg-white">
+                                <p class="text-[#5C4033]/75 font-semibold text-sm leading-relaxed m-0 line-clamp-2">
                                     {{ city.description }}
-                                </p>
+                                }</p>
 
-                                <div
-                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
-                                    <div
-                                        style="background: var(--color-bg-light); padding: 0.5rem 0.75rem; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem;">
-                                        <span style="font-size: 1.1rem;">📍</span>
+                                <div class="grid grid-cols-2 gap-3 my-4 pt-4 border-t border-orange-100/30">
+                                    <div class="bg-[#2D1B16]/5 p-2.5 rounded-xl border border-orange-100/40 flex items-center gap-2.5 shadow-inner">
+                                        <svg class="w-4 h-4 text-[#E0531C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                         <div>
-                                            <span
-                                                style="display: block; font-size: 0.65rem; color: var(--color-text-muted); text-transform: uppercase; font-weight: 700;">Lieux</span>
-                                            <span
-                                                style="display: block; font-size: 0.9rem; font-weight: 800; color: var(--color-text-main);">{{
-                                                city.places_count || 0 }} étapes</span>
+                                            <span class="block text-[8px] text-[#5C4033]/50 uppercase font-black tracking-wider leading-none">Lieux</span>
+                                            <span class="block text-xs font-black text-[#2D1B16] mt-0.5">{{ city.places_count || 0 }} étapes</span>
                                         </div>
                                     </div>
-                                    <div
-                                        style="background: var(--color-bg-light); padding: 0.5rem 0.75rem; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem;">
-                                        <span style="font-size: 1.1rem;">💾</span>
+                                    <div class="bg-[#2D1B16]/5 p-2.5 rounded-xl border border-orange-100/40 flex items-center gap-2.5 shadow-inner">
+                                        <svg class="w-4 h-4 text-[#FFB700]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                                         <div>
-                                            <span
-                                                style="display: block; font-size: 0.65rem; color: var(--color-text-muted); text-transform: uppercase; font-weight: 700;">RGPD</span>
-                                            <span
-                                                style="display: block; font-size: 0.9rem; font-weight: 800; color: var(--color-primary-dark);">{{ city.retention_days || 365 }} j</span>
+                                            <span class="block text-[8px] text-[#5C4033]/50 uppercase font-black tracking-wider leading-none">RGPD</span>
+                                            <span class="block text-xs font-black text-[#2D1B16] mt-0.5">{{ city.retention_days || 365 }} j</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                                    <div style="display: flex; gap: 0.5rem;">
-                                        <button @click.stop="openEditModal(city)"
-                                            class="premium-btn premium-btn-outline"
-                                            style="flex: 1; padding: 0.5rem; font-size: 0.8rem; border-color: var(--border-color); color: var(--color-text-muted);"
-                                            title="Modifier les infos">✏️ Modifier</button>
-                                        <button @click.stop="deleteCity(city.id)" class="premium-btn premium-btn-danger"
-                                            style="padding: 0.5rem; font-size: 0.8rem;"
-                                            title="Supprimer le parcours">🗑️</button>
+                                <div class="flex flex-col gap-2">
+                                    <div class="flex gap-2">
+                                        <button @click.stop="openEditModal(city)" class="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-orange-100/70 hover:border-orange-200 text-xs font-bold text-[#5C4033] bg-orange-50/10 hover:bg-orange-50/40 rounded-xl transition-colors" title="Modifier les infos narratives">
+                                            <svg class="w-4 h-4 text-[#5C4033]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h6M4 17.25V20h2.75L17.81 8.94l-2.75-2.75L4 17.25z"/></svg>
+                                            <span>Modifier</span>
+                                        </button>
+                                        <button @click.stop="deleteCity(city.id)" class="p-2 border border-red-100 hover:border-red-200 text-red-500 hover:text-red-600 bg-red-50/20 hover:bg-red-50/50 rounded-xl transition-colors" title="Supprimer définitivement le parcours">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M10 3h4a1 1 0 011 1v2H9V4a1 1 0 011-1z"/></svg>
+                                        </button>
                                     </div>
-                                    <button v-if="!city.is_published" @click.stop="publish(city.id)"
-                                        class="premium-btn premium-btn-primary"
-                                        style="width: 100%; font-size: 0.8rem; padding: 0.6rem;">
-                                        🚀 Publier le parcours
+                                    <button v-if="!city.is_published" @click.stop="publish(city.id)" class="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-[#E0531C] to-[#FFB700] hover:from-[#d94a11] hover:to-[#f4a500] text-white text-xs font-black uppercase tracking-wider rounded-2xl transition-all duration-300 shadow-lg shadow-orange-500/20 active:scale-95">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v12m0 0l4-4m-4 4L8 10"/></svg>
+                                        <span>Publier le parcours</span>
                                     </button>
-                                    <button v-else @click.stop="unpublish(city.id)"
-                                        class="premium-btn premium-btn-outline"
-                                        style="width: 100%; font-size: 0.8rem; padding: 0.6rem; color: var(--color-danger); border-color: var(--color-danger);">
-                                        🔒 Retirer de l'App
+                                    <button v-else @click.stop="unpublish(city.id)" class="w-full flex items-center justify-center gap-2 py-2.5 border border-[#E0531C]/20 hover:bg-[#FFF3DF] text-[#C03911] text-xs font-black uppercase tracking-wider rounded-2xl transition-all duration-200 active:scale-95">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11V7a5 5 0 0110 0v4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        <span>Retirer de l'App</span>
                                     </button>
                                 </div>
                             </div>
@@ -232,72 +189,87 @@ const unpublish = (cityId) => {
             </div>
         </div>
 
-        <!-- Modal Création / Édition -->
-        <div v-if="isModalOpen" class="premium-modal-backdrop" @click.self="closeModal"
-            style="backdrop-filter: blur(6px); background: rgba(28,24,22,0.6); position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 100;">
-            <div class="premium-modal-content"
-                style="max-width: 600px; width: 100%; background: white; padding: 1.5rem; border-radius: var(--border-radius-lg); border: 2px solid var(--border-color); box-shadow: var(--shadow-premium); max-height: 90vh; overflow-y: auto;">
-                <div
-                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+        <div v-if="isModalOpen" class="fixed inset-0 flex items-center justify-center z-50 p-4 bg-[#2D1B16]/20 backdrop-blur-sm transition-opacity" @click.self="closeModal">
+            <div class="bg-[#FFF8F0] border border-[#E0531C]/15 rounded-[28px] w-full max-w-lg shadow-[0_30px_70px_-40px_rgba(224,83,28,0.9)] max-h-[90vh] overflow-y-auto p-6 flex flex-col">
+                <div class="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start pb-4 mb-5 border-b border-[#E0531C]/10">
                     <div>
-                        <span
-                            style="font-size: 0.75rem; color: var(--color-primary); font-weight: 800; text-transform: uppercase;">CityPlay
-                            Créateur</span>
-                        <h3
-                            style="font-family: var(--font-family-display); font-size: 1.35rem; font-weight: 800; margin: 0.1rem 0 0 0; color: var(--color-text-main);">
-                            {{ isEditing ? 'Éditer le parcours' : 'Nouveau parcours' }}
+                        <span class="text-[10px] text-[#E0531C] font-black uppercase tracking-wider">CityPlay Régisseur</span>
+                        <h3 class="font-sans text-lg font-black text-[#2D1B16] mt-0.5">
+                            {{ isEditing ? 'Éditer le mythe' : 'Nouveau mythe urbain' }}
                         </h3>
                     </div>
-                    <button type="button" @click="closeModal"
-                        style="background: var(--color-bg-light); border: 1px solid var(--border-color); border-radius: 50%; width: 32px; height: 32px; font-size: 1.1rem; cursor: pointer; color: var(--color-text-muted); display: flex; align-items: center; justify-content: center;">&times;</button>
+                    <button type="button" @click="closeModal" class="bg-white border border-[#E0531C]/20 hover:bg-[#FFE3C6] rounded-full w-10 h-10 flex items-center justify-center text-lg text-[#5C4033] font-bold transition-colors">
+                        &times;
+                    </button>
                 </div>
 
-                <form @submit.prevent="submitForm" style="display: flex; flex-direction: column; gap: 1.25rem;">
-                    <!-- Infos de base -->
-                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
-                        <div>
-                            <label class="premium-label" style="font-weight: 700; color: var(--color-primary-dark); display: block; margin-bottom: 0.35rem;">Nom de l'aventure</label>
-                            <input v-model="form.name" type="text" class="premium-input" maxlength="150" required placeholder="Ex: Les secrets de Ouidah" />
+                <form @submit.prevent="submitForm" class="flex flex-col gap-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="sm:col-span-2 relative">
+                            <label class="block text-[10px] font-black uppercase tracking-wider text-[#2D1B16] mb-1.5 pl-1">Territoire à explorer</label>
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pt-6 pointer-events-none text-base">
+                                <svg class="w-5 h-5 text-[#E0531C]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21s7-4.5 7-10a7 7 0 10-14 0c0 5.5 7 10 7 10z"/></svg>
+                            </span>
+                            <input v-model="form.name" type="text" class="w-full h-12 pl-10 border border-[#E0531C]/20 rounded-2xl px-3 font-semibold text-sm focus:border-[#E0531C] focus:ring-[#E0531C]/10 bg-white placeholder-[#5C4033]/30" maxlength="150" required placeholder="Ex: Les secrets de Ouidah" />
                         </div>
-                        <div>
-                            <label class="premium-label" style="font-weight: 700; color: var(--color-primary-dark); display: block; margin-bottom: 0.35rem;">RGPD (jours)</label>
-                            <input v-model="form.retention_days" type="number" class="premium-input" min="1" required />
+                        <div class="relative">
+                            <label class="block text-[10px] font-black uppercase tracking-wider text-[#2D1B16] mb-1.5 pl-1">Cycle des données BJ</label>
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pt-6 pointer-events-none text-base">
+                                <svg class="w-5 h-5 text-[#E0531C]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2" ry="2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></rect><path d="M16 3v4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </span>
+                            <input v-model="form.retention_days" type="number" class="w-full h-12 pl-9 border border-[#E0531C]/20 rounded-2xl px-3 font-semibold text-sm focus:border-[#E0531C] focus:ring-[#E0531C]/10 bg-white" min="1" required />
                         </div>
                     </div>
 
-                    <div>
-                        <label class="premium-label" style="font-weight: 700; color: var(--color-primary-dark); display: block; margin-bottom: 0.35rem;">Présentation narrative (max 500 car.)</label>
-                        <textarea v-model="form.description" class="premium-input" rows="3" maxlength="500" required placeholder="Introduisez les mystères de cette ville..."></textarea>
+                    <div class="relative">
+                        <label class="block text-[10px] font-black uppercase tracking-wider text-[#2D1B16] mb-1.5 pl-1">Le mythe de la cité ( max 500 car. )</label>
+                        <span class="absolute top-10 left-3.5 pointer-events-none text-base">
+                            <svg class="w-5 h-5 text-[#E0531C]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v2a2 2 0 002 2h4a2 2 0 002-2V2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 7h16v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <textarea v-model="form.description" class="w-full p-3 pl-10 border border-[#E0531C]/20 rounded-2xl font-medium text-sm focus:border-[#E0531C] focus:ring-[#E0531C]/10 bg-white placeholder-[#5C4033]/30 leading-relaxed" rows="3" maxlength="500" required placeholder="Décrivez l'intrigue et les mystères de cette cité..."></textarea>
                     </div>
 
-                    <!-- Configuration Conclusion (Outro) -->
-                    <div style="border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--border-radius-md); background: var(--color-bg-light);">
-                        <h4 style="font-size: 0.8rem; font-weight: 800; color: var(--color-primary); text-transform: uppercase; margin-bottom: 1rem;">Conclusion de l'aventure</h4>
+                    <div class="border border-[#E0531C]/20 p-4 rounded-2xl bg-[#FFF3DF] shadow-inner">
+                        <h4 class="text-[10px] font-black text-[#E0531C] uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <span>✨</span> Fin du Parcours Éclaireur
+                        </h4>
                         
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div class="flex flex-col gap-4">
                             <div>
-                                <label class="premium-label" style="font-size: 0.75rem;">Message de fin</label>
-                                <textarea v-model="form.outro_config.message" class="premium-input" rows="2" placeholder="Félicitations aux joueurs..."></textarea>
+                                <label class="block text-[9px] font-bold uppercase tracking-wide text-[#2D1B16]/80 mb-1 pl-0.5">Message de fin</label>
+                                <textarea v-model="form.outro_config.message" class="w-full p-3 border border-[#E0531C]/20 rounded-2xl font-medium text-xs focus:border-[#E0531C] focus:ring-[#E0531C]/10 bg-white placeholder-[#5C4033]/30" rows="2" placeholder="Félicitations aux joueurs d'avoir décodé l'identité des ancêtres..."></textarea>
                             </div>
                             <div>
-                                <label class="premium-label" style="font-size: 0.75rem;">Recommandations (tourisme, boutique...)</label>
-                                <textarea v-model="form.outro_config.recommendations" class="premium-input" rows="2" placeholder="Allez visiter la boutique..."></textarea>
+                                <label class="block text-[9px] font-bold uppercase tracking-wide text-[#2D1B16]/80 mb-1 pl-0.5">Recommandations touristiques</label>
+                                <textarea v-model="form.outro_config.recommendations" class="w-full p-3 border border-[#E0531C]/20 rounded-2xl font-medium text-xs focus:border-[#E0531C] focus:ring-[#E0531C]/10 bg-white placeholder-[#5C4033]/30" rows="2" placeholder="Visitez la boutique artisanale locale ou..."></textarea>
                             </div>
                         </div>
                     </div>
 
-                    <div
-                        style="display: flex; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                        <button type="button" @click="closeModal" class="premium-btn premium-btn-outline"
-                            style="flex: 1; border-color: var(--border-color); color: var(--color-text-muted);">Annuler</button>
-                        <button type="submit" class="premium-btn premium-btn-primary"
-                            style="flex: 2; box-shadow: 0 4px 10px rgba(200,92,50,0.25);" :disabled="form.processing">
-                            {{ form.processing ? 'Enregistrement...' : 'Sauvegarder' }}
+                    <div class="flex flex-col gap-3 pt-3 border-t border-[#E0531C]/10 sm:flex-row">
+                        <button type="button" @click="closeModal" class="flex-1 h-12 border border-[#E0531C]/20 hover:bg-[#FFF3DF] text-[#5C4033] font-bold text-xs uppercase tracking-wider rounded-2xl transition-colors">
+                            Annuler
+                        </button>
+                        <button type="submit" class="flex-1 h-12 bg-gradient-to-r from-[#E0531C] to-[#FFB700] text-white font-black text-xs uppercase tracking-wider rounded-2xl hover:opacity-95 active:scale-95 transition-all disabled:opacity-40" :disabled="form.processing">
+                            {{ form.processing ? 'Enregistrement...' : 'Sauvegarder l\'aventure' }}
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-
+        <!-- Floating create button for mobile -->
+        <button @click="openCreateModal" aria-label="Créer une ville" class="md:hidden fixed bottom-6 right-4 z-50 p-4 rounded-full bg-gradient-to-r from-[#E0531C] to-[#FFB700] text-white shadow-lg active:scale-95 transition-all duration-200">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"/></svg>
+        </button>
     </AdminLayout>
 </template>
+
+<style scoped>
+/* Fléch d'animation de brillance au survol */
+@keyframes shine {
+    100% { transform: translateX(100%); }
+}
+.group:hover .group-hover\:animate-shine {
+    animation: shine 0.7s ease-out;
+}
+</style>

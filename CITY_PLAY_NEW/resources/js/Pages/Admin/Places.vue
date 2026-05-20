@@ -37,6 +37,42 @@ const handleImageUpload = (e) => {
     }
 };
 
+const copiedCoords = ref(false);
+
+const copyCoords = async () => {
+    try {
+        await navigator.clipboard.writeText(`${form.lat}, ${form.lng}`);
+        copiedCoords.value = true;
+        setTimeout(() => copiedCoords.value = false, 1500);
+    } catch (err) {
+        // fallback: sélectionne le texte pour copier manuellement
+        const tmp = document.createElement('textarea');
+        tmp.value = `${form.lat}, ${form.lng}`;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand('copy');
+        document.body.removeChild(tmp);
+        copiedCoords.value = true;
+        setTimeout(() => copiedCoords.value = false, 1500);
+    }
+};
+
+const removePreview = (index) => {
+    // retire l'aperçu et reconstruit form.images (FileList) sans le fichier supprimé
+    imagePreviews.value.splice(index, 1);
+    if (!form.images) return;
+    const dt = new DataTransfer();
+    Array.from(form.images).forEach((file, i) => {
+        if (i !== index) dt.items.add(file);
+    });
+    form.images = dt.files;
+};
+
+const clearPreviews = () => {
+    form.images = null;
+    imagePreviews.value = [];
+};
+
 const initMap = () => {
     // Évite les doublons d'initialisation si l'élément n'est pas encore rendu
     const mapContainer = document.getElementById('map');
@@ -117,106 +153,119 @@ onBeforeUnmount(() => {
 
     <AdminLayout>
         <template #header>
-            <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; width: 100%;">
+            <div class="max-w-7xl mx-auto w-full flex items-center justify-between px-4 py-3">
                 <div>
-                    <h2 style="font-family: var(--font-family-display); font-size: 1.75rem; font-weight: 800; color: var(--color-primary-dark); margin: 0;">
-                        Constructeur d'Étapes
-                    </h2>
-                    <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0.25rem 0 0 0;">
-                        Points d'intérêt géolocalisés & Geofencing GPS
-                    </p>
+                    <h2 class="font-sans text-2xl font-black text-[#2D1B16] m-0 leading-tight">Constructeur d'Étapes</h2>
+                    <p class="text-xs text-[#5C4033]/70 mt-1">Points d'intérêt géolocalisés & Geofencing GPS</p>
                 </div>
                 <button @click="showForm = !showForm"
-                        :class="['premium-btn', showForm ? 'premium-btn-outline' : 'premium-btn-primary']"
-                        style="gap: 0.5rem;">
-                    {{ showForm ? 'Annuler' : '+ Ajouter un lieu' }}
+                        :class="showForm ? 'bg-[#FFF3DF] text-[#2D1B16] border border-[#E0531C]/20' : 'bg-gradient-to-r from-[#E0531C] to-[#FFB700] text-white'"
+                        class="flex items-center gap-2 px-4 py-2 rounded-2xl font-black text-xs uppercase tracking-wider transition-all duration-200 active:scale-95">
+                    <span class="text-lg font-bold">+</span>
+                    <span>{{ showForm ? 'Annuler' : 'Ajouter un lieu' }}</span>
                 </button>
             </div>
         </template>
 
-        <div class="premium-container" style="max-width: 1200px; margin: 0 auto; padding: 2rem 1rem;">
+        <div class="max-w-7xl mx-auto px-4 py-6">
             
             <!-- Formulaire d'ajout (Split Layout) -->
-            <div v-if="showForm"
-                 style="display: grid; grid-template-columns: 1fr; gap: 2rem; margin-bottom: 3rem; align-items: stretch;"
-                 class="lg:grid-cols-2">
+              <div v-if="showForm" class="grid grid-cols-1 gap-6 mb-8 lg:grid-cols-2">
 
                 <!-- Colonne Gauche: Formulaire -->
-                <div class="premium-card" style="display: flex; flex-direction: column; border: 1px solid var(--border-color);">
-                    <h3 style="font-family: var(--font-family-display); font-size: 1.25rem; font-weight: 800; margin-bottom: 1.5rem; color: var(--color-primary-dark); display: flex; align-items: center; gap: 0.5rem;">
-                        <span>📍</span> Nouveau point d'intérêt
+                <div class="bg-white rounded-2xl border border-[#E0531C]/10 p-6 flex flex-col">
+                    <h3 class="flex items-center gap-3 text-base font-black text-[#2D1B16] mb-4">
+                        <svg class="w-5 h-5 text-[#E0531C]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21s7-4.5 7-10a7 7 0 10-14 0c0 5.5 7 10 7 10z"/></svg>
+                        <span>Nouveau point d'intérêt</span>
                     </h3>
 
-                    <form @submit.prevent="submit" style="display: flex; flex-direction: column; gap: 1.25rem; flex: 1;">
+                    <form @submit.prevent="submit" class="flex flex-col gap-5 flex-1">
                         <div>
-                            <label class="premium-label">Parcours associé (Aventure)</label>
-                            <select v-model="form.city_id" class="premium-input" required>
+                            <label class="block text-[10px] font-black uppercase tracking-wider text-[#2D1B16] mb-2">Parcours associé (Aventure)</label>
+                            <select v-model="form.city_id" class="w-full h-11 px-3 rounded-xl border border-[#E0531C]/20 bg-white text-sm" required>
                                 <option value="">Choisir un parcours du Bénin...</option>
                                 <option v-for="city in cities" :key="city.id" :value="city.id">{{ city.name }}</option>
                             </select>
                         </div>
 
                         <div>
-                            <label class="premium-label">Nom de l'étape / Monument</label>
-                            <input v-model="form.name" type="text" class="premium-input" required placeholder="Ex: Porte du Non-Retour, Ouidah" />
+                            <label class="block text-[10px] font-black uppercase tracking-wider text-[#2D1B16] mb-2">Nom de l'étape / Monument</label>
+                            <input v-model="form.name" type="text" class="w-full h-11 px-3 rounded-xl border border-[#E0531C]/20 text-sm" required placeholder="Ex: Porte du Non-Retour, Ouidah" />
                         </div>
 
                         <div>
-                            <label class="premium-label">Description du lieu (Présentation - max 500 car.)</label>
-                            <textarea v-model="form.description" rows="3" class="premium-input" maxlength="500" required placeholder="Décrivez l'importance historique et donnez de subtils indices de recherche..."></textarea>
+                            <label class="block text-[10px] font-black uppercase tracking-wider text-[#2D1B16] mb-2">Description du lieu (max 500 car.)</label>
+                            <textarea v-model="form.description" rows="3" class="w-full p-3 pl-3 rounded-xl border border-[#E0531C]/20 text-sm bg-white" maxlength="500" required placeholder="Décrivez l'importance historique et donnez de subtils indices de recherche..."></textarea>
                             <div class="flex justify-between mt-1">
-                                <span class="text-[10px] text-gray-400 italic">Affiché après la découverte du lieu</span>
-                                <span :class="form.description.length > 450 ? 'text-red-500' : 'text-gray-500'" class="text-[10px] font-bold">{{ form.description.length }}/500</span>
+                                <span class="text-[10px] text-[#5C4033]/60 italic">Affiché après la découverte du lieu</span>
+                                <span :class="form.description.length > 450 ? 'text-red-500' : 'text-[#5C4033]/70'" class="text-[10px] font-bold">{{ form.description.length }}/500</span>
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="premium-label">Rayon de validation (mètres)</label>
-                                <input v-model="form.validation_radius" type="number" class="premium-input" min="5" placeholder="Par ex: 30" />
+                                <label class="block text-[10px] font-black uppercase tracking-wider text-[#2D1B16] mb-2">Rayon de validation (mètres)</label>
+                                <input v-model="form.validation_radius" type="number" class="w-full h-11 px-3 rounded-xl border border-[#E0531C]/20 text-sm" min="5" placeholder="Par ex: 30" />
                             </div>
                             <div>
-                                <label class="premium-label">Ordre de passage</label>
-                                <input v-model="form.order_index" type="number" class="premium-input" min="1" />
+                                <label class="block text-[10px] font-black uppercase tracking-wider text-[#2D1B16] mb-2">Ordre de passage</label>
+                                <input v-model="form.order_index" type="number" class="w-full h-11 px-3 rounded-xl border border-[#E0531C]/20 text-sm" min="1" />
                             </div>
                         </div>
 
-                        <div style="background: var(--color-bg-light); border: 1px dashed var(--border-color); padding: 1rem; border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: space-between;">
+                        <div class="flex items-center justify-between p-3 border border-dashed border-[#E0531C]/20 rounded-xl bg-[#FFF7EB]">
                             <div>
-                                <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-primary);">Positionnement GPS</div>
-                                <div style="font-size: 0.75rem; color: var(--color-text-muted); font-family: monospace;">{{ form.lat }}, {{ form.lng }}</div>
+                                <div class="text-sm font-bold text-[#E0531C]">Positionnement GPS</div>
+                                <div class="flex items-center gap-3 mt-1">
+                                    <div class="font-mono text-sm text-[#2D1B16]">{{ form.lat }}, {{ form.lng }}</div>
+                                    <button @click="copyCoords" type="button" class="text-xs px-2 py-1 bg-[#E0531C] text-white rounded-lg active:scale-95">Copier</button>
+                                    <span v-if="copiedCoords" class="text-xs text-green-600">Copié !</span>
+                                </div>
                             </div>
-                            <span class="premium-badge badge-warning" style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">Sélectionnez sur la carte</span>
+                            <span class="text-[10px] font-black uppercase text-[#B86A16]/80 px-2 py-1 rounded-md">Sélectionnez sur la carte</span>
                         </div>
 
                         <div>
-                            <label class="premium-label">Photos touristiques (3 à 4 recommandées)</label>
-                            <input type="file" multiple accept="image/jpeg,image/png" @input="handleImageUpload" style="width: 100%; padding: 0.5rem; background: var(--color-bg-light); border-radius: var(--border-radius-md); border: 1px solid var(--border-color); font-size: 0.85rem;" />
-                            <p class="text-[10px] text-gray-500 mt-1 italic">Ces photos illustreront le lieu une fois découvert.</p>
+                            <label class="block text-[10px] font-black uppercase tracking-wider text-[#2D1B16] mb-2">Photos touristiques (3 à 4 recommandées)</label>
 
-                            <!-- Prévisualisation -->
-                            <div v-if="imagePreviews.length > 0" style="display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap;">
-                                <div v-for="(preview, idx) in imagePreviews" :key="idx" style="width: 60px; height: 60px; border-radius: var(--border-radius-sm); overflow: hidden; border: 1px solid var(--border-color); position: relative;">
-                                    <img :src="preview" style="width: 100%; height: 100%; object-fit: cover;" />
+                            <div class="flex items-center gap-3">
+                                <label for="imagesInput" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-[#E0531C]/20 rounded-xl cursor-pointer text-sm font-bold text-[#2D1B16]">
+                                    <svg class="w-4 h-4 text-[#E0531C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"/></svg>
+                                    <span>Choisir des photos</span>
+                                    <span v-if="form.images && form.images.length" class="text-xs text-[#5C4033]/60">({{ form.images.length }})</span>
+                                </label>
+                                <input id="imagesInput" type="file" multiple accept="image/jpeg,image/png" @input="handleImageUpload" class="hidden" />
+
+                                <button v-if="imagePreviews.length > 0" @click.prevent="clearPreviews()" class="text-xs text-[#E0531C] underline">Supprimer tout</button>
+                            </div>
+
+                            <p class="text-[10px] text-[#5C4033]/60 mt-1 italic">Ces photos illustreront le lieu une fois découvert.</p>
+
+                            <!-- Prévisualisation améliorée -->
+                            <div v-if="imagePreviews.length > 0" class="flex gap-3 mt-3 flex-wrap">
+                                <div v-for="(preview, idx) in imagePreviews" :key="idx" class="w-20 h-20 rounded-md overflow-hidden border border-[#E0531C]/10 relative">
+                                    <img :src="preview" class="w-full h-full object-cover" />
+                                    <button @click.prevent="removePreview(idx)" class="absolute top-1 right-1 bg-white/90 text-[#E0531C] rounded-full w-6 h-6 flex items-center justify-center shadow">&times;</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div style="margin-top: auto; padding-top: 1.5rem;">
-                            <button type="submit" :disabled="form.processing" class="premium-btn premium-btn-primary" style="width: 100%; font-family: var(--font-family-display); font-weight: 800;">
-                                {{ form.processing ? 'Envoi des médias sur Cloudinary...' : '💾 Enregistrer l\'étape' }}
+                        <div class="mt-auto pt-4">
+                            <button type="submit" :disabled="form.processing" class="w-full h-12 rounded-2xl bg-gradient-to-r from-[#E0531C] to-[#FFB700] text-white font-black text-sm uppercase tracking-wider active:scale-95 transition-all">
+                                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5v12h14V9h-2"/></svg>
+                                <span>{{ form.processing ? 'Envoi des médias...' : 'Enregistrer l\'étape' }}</span>
                             </button>
                         </div>
                     </form>
                 </div>
 
                 <!-- Colonne Droite: Carte Leaflet -->
-                <div class="premium-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--border-color); min-height: 480px;">
-                    <div style="padding: 1rem; background: var(--color-surface-light); border-bottom: 1px solid var(--border-color);">
-                        <h4 style="margin: 0; font-family: var(--font-family-display); font-size: 1rem; font-weight: 800; color: var(--color-primary-dark);">Carte Géographique interactive</h4>
-                        <p style="margin: 0.25rem 0 0 0; font-size: 0.75rem; color: var(--color-text-muted);">Cliquez n'importe où pour y placer l'étape ou glissez le marqueur.</p>
+                <div class="bg-white rounded-2xl border border-[#E0531C]/10 overflow-hidden flex flex-col min-h-[360px]">
+                    <div class="px-4 py-3 bg-[#FFF3DF] border-b border-[#E0531C]/10">
+                        <h4 class="m-0 text-base font-black text-[#2D1B16]">Carte Géographique interactive</h4>
+                        <p class="text-xs text-[#5C4033]/70 mt-1">Cliquez n'importe où pour y placer l'étape ou glissez le marqueur.</p>
                     </div>
-                    <div id="map" style="flex: 1; width: 100%; min-height: 400px; z-index: 1;"></div>
+                    <div id="map" class="flex-1 w-full min-h-[300px] rounded-md z-10"></div>
                 </div>
             </div>
 
@@ -225,62 +274,56 @@ onBeforeUnmount(() => {
                 
                 <!-- Liste des étapes (Prend 2 colonnes sur grand écran) -->
                 <div class="lg:col-span-2">
-                    <h3 style="font-family: var(--font-family-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--color-text-main); display: flex; align-items: center; gap: 0.5rem;">
-                        <span>🗺️</span> Les étapes créées au Bénin
+                    <h3 class="flex items-center gap-2 text-lg font-extrabold mb-6 text-[#2D1B16]">
+                        <svg class="w-5 h-5 text-[#FFB700]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A2 2 0 013 15.382V5.618a2 2 0 011.553-1.97L9 1l6 2 5.447 2.724A2 2 0 0121 8.618v9.764a2 2 0 01-1.553 1.97L15 23l-6-3z"/></svg>
+                        <span>Les étapes créées au Bénin</span>
                     </h3>
 
-                    <div v-if="places.length === 0" style="text-align: center; padding: 4rem 2rem; color: var(--color-text-muted); background: var(--color-surface-light); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg);">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">📍</div>
-                        <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; font-family: var(--font-family-display);">Aucun lieu pour le moment</h3>
-                        <p style="font-size: 0.85rem;">Commencez par ajouter une étape à l'un de vos parcours.</p>
+                    <div v-if="places.length === 0" class="text-center p-8 text-[#5C4033]/70 bg-[#FFF3DF] border border-[#E0531C]/10 rounded-2xl">
+                        <div class="text-[2.5rem] mb-3 text-[#E0531C]"> 
+                            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21s7-4.5 7-10a7 7 0 10-14 0c0 5.5 7 10 7 10z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-2">Aucun lieu pour le moment</h3>
+                        <p class="text-sm">Commencez par ajouter une étape à l'un de vos parcours.</p>
                     </div>
 
-                    <div v-else style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
-                        <div v-for="place in places" :key="place.id" class="premium-card" style="display: flex; flex-direction: column; border: 1px solid var(--border-color); transition: all var(--transition-bounce);">
-                            <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem;">
-                                <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--color-primary-light); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; box-shadow: var(--shadow-sm); font-family: var(--font-family-display);">
-                                        #{{ place.order_index }}
-                                    </div>
+                    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                        <div v-for="place in places" :key="place.id" class="bg-white border border-[#E0531C]/10 rounded-2xl p-4 flex flex-col shadow-sm">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-11 h-11 rounded-full bg-[#FFEBCC] text-[#E0531C] flex items-center justify-center font-black text-sm shadow-inner">#{{ place.order_index }}</div>
                                     <div>
-                                        <h4 style="margin: 0; font-family: var(--font-family-display); font-size: 1.1rem; font-weight: 800; color: var(--color-text-main);">{{ place.name }}</h4>
-                                        <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 700; text-transform: uppercase;">{{ place.city.name }}</span>
+                                        <h4 class="m-0 text-base font-black text-[#2D1B16]">{{ place.name }}</h4>
+                                        <span class="text-xs text-[#5C4033]/70 font-bold uppercase">{{ place.city.name }}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <p style="color: var(--color-text-muted); font-size: 0.8rem; line-height: 1.5; margin: 0 0 1rem 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.4rem;">
-                                {{ place.description || 'Aucune description rédigée.' }}
-                            </p>
+                            <p class="text-sm text-[#5C4033]/75 line-clamp-2 mb-3">{{ place.description || 'Aucune description rédigée.' }}</p>
 
                             <!-- Galerie miniatures -->
-                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; min-height: 50px; background: var(--color-bg-light); padding: 0.5rem; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
-                                <div v-for="img in place.images" :key="img.id" style="position: relative; border-radius: var(--border-radius-sm); overflow: hidden; border: 1px solid var(--border-color);">
-                                    <img :src="img.image_url" style="height: 44px; width: 44px; object-fit: cover;" />
-                                    <button @click="deleteImage(img.id)" style="position: absolute; top: -2px; right: -2px; background: var(--color-danger); color: white; border: none; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; box-shadow: var(--shadow-sm);">
-                                        &times;
-                                    </button>
+                            <div class="flex flex-wrap gap-2 mb-3 p-2 bg-[#FFF7EB] rounded-md border border-[#E0531C]/10">
+                                <div v-for="img in place.images" :key="img.id" class="relative rounded-sm overflow-hidden border border-[#E0531C]/10">
+                                    <img :src="img.image_url" class="w-11 h-11 object-cover" />
+                                    <button @click="deleteImage(img.id)" class="absolute -top-2 -right-2 bg-[#E0531C] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow">&times;</button>
                                 </div>
-                                <div v-if="!place.images || place.images.length === 0" style="font-size: 0.75rem; color: var(--color-text-muted); font-style: italic; display: flex; align-items: center; padding-left: 0.5rem;">
-                                    Aucune photo illustrée
+                                <div v-if="!place.images || place.images.length === 0" class="text-sm text-[#5C4033]/70 italic pl-2 flex items-center">Aucune photo illustrée</div>
+                            </div>
+
+                            <div class="bg-[#FFF3DF] border border-[#E0531C]/10 rounded-md p-3 mb-4">
+                                <div class="text-xs text-[#5C4033]/70">
+                                    <div class="font-bold text-[#2D1B16]">Geofencing : {{ place.validation_radius }}m</div>
+                                    <div class="font-mono text-[12px]">{{ place.lat }}, {{ place.lng }}</div>
                                 </div>
                             </div>
 
-                            <div style="background: var(--color-surface-light); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-                                <div style="font-size: 0.75rem; color: var(--color-text-muted);">
-                                    <span style="display: block; font-weight: 700; color: var(--color-primary-dark);">Geofencing : {{ place.validation_radius }}m</span>
-                                    <span style="display: block; font-size: 0.65rem; font-family: monospace;">{{ place.lat }}, {{ place.lng }}</span>
-                                </div>
-                            </div>
-
-                            <div style="margin-top: auto; display: grid; grid-template-columns: 1fr auto; gap: 0.5rem;">
-                                <Link :href="route('admin.riddles.index', place.id)" class="premium-btn premium-btn-outline" style="text-decoration: none; text-align: center; font-size: 0.75rem; padding: 0.6rem;">
-                                    🎭 Gérer les énigmes
+                            <div class="mt-auto grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <Link :href="route('admin.riddles.index', place.id)" class="flex items-center justify-center gap-2 py-2 rounded-2xl border border-[#E0531C]/10 text-sm font-bold text-[#2D1B16] bg-white">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2-2 4 4M7 7h.01M17 7h.01"/></svg>
+                                    <span>Gérer les énigmes</span>
                                 </Link>
-                                <button @click="deletePlace(place.id)" class="premium-btn premium-btn-danger" style="padding: 0.5rem; aspect-ratio: 1;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" style="width: 1.1rem; height: 1.1rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
+                                <button @click="deletePlace(place.id)" class="flex items-center justify-center py-2 rounded-2xl bg-[#FFEFEF] border border-red-200 text-red-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M10 3h4a1 1 0 011 1v2H9V4a1 1 0 011-1z"/></svg>
                                 </button>
                             </div>
                         </div>
@@ -294,17 +337,10 @@ onBeforeUnmount(() => {
             </div>
 
         </div>
+
+        <!-- Floating add button for mobile -->
+        <button @click="showForm = true" aria-label="Ajouter un lieu" class="md:hidden fixed bottom-6 right-4 z-50 p-4 rounded-full bg-gradient-to-r from-[#E0531C] to-[#FFB700] text-white shadow-lg active:scale-95 transition-all duration-200">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"/></svg>
+        </button>
     </AdminLayout>
 </template>
-
-<style scoped>
-@keyframes ping {
-    0% { transform: scale(0.8); opacity: 0.5; }
-    100% { transform: scale(1.4); opacity: 0; }
-}
-.leaflet-container {
-    z-index: 1 !important;
-    font-family: var(--font-family-sans);
-    border-radius: var(--border-radius-sm);
-}
-</style>
