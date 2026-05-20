@@ -90,8 +90,6 @@ const activeTab = ref('enfant');
     <Head :title="'Énigmes - ' + place.name" />
 
     <AdminLayout>
-        <NotificationDescartes />
-
         <template #header>
             <div class="max-w-7xl mx-auto w-full px-4 py-4">
                 <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">

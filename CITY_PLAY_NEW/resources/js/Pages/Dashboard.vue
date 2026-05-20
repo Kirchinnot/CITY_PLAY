@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, nextTick } from 'vue';
-import { Head, Link, usePage, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, usePage, useForm } from '@inertiajs/vue3';
 import { gsap } from 'gsap';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
@@ -25,6 +25,18 @@ const progressPercent  = computed(() => {
     const { solved_places, total_places } = session.value;
     return total_places > 0 ? Math.round((solved_places / total_places) * 100) : 0;
 });
+
+const lastUpdated = ref(new Date().toLocaleTimeString());
+const refreshAdminDashboard = () => {
+    lastUpdated.value = new Date().toLocaleTimeString();
+    router.reload({ preserveState: true });
+};
+
+const statusBadgeClass = (status) => {
+    if (status === 'active') return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+    if (status === 'paused') return 'bg-amber-50 text-amber-700 border-amber-100';
+    return 'bg-slate-50 text-slate-700 border-slate-100';
+};
 
 const greetRef        = ref(null);
 const subtitleRef     = ref(null);
@@ -151,19 +163,117 @@ const animateToggle = () => {
         </template>
 
         <div v-if="user.role === 'admin'" class="space-y-6">
-            <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div class="space-y-3">
+                    <p class="text-xs font-black uppercase tracking-[0.24em] text-[#7c4a35]">Tableau de bord</p>
+                    <h2 class="text-3xl font-black tracking-tight text-[#2D1B16]">État de la plateforme en direct</h2>
+                    <p class="max-w-2xl text-sm font-medium text-[#6f563f]">Surveille les sessions en cours, les joueurs actifs et les alertes de triche en un coup d'œil.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button @click="refreshAdminDashboard" class="inline-flex h-11 items-center justify-center gap-2 rounded-3xl bg-[#E0531C] px-4 text-xs font-black uppercase tracking-[0.16em] text-white shadow-[0_12px_30px_rgba(224,83,28,0.18)] transition hover:-translate-y-0.5 active:scale-95">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M5.64 18.36A9 9 0 0112 3.5a9 9 0 018.49 12.71M18.36 18.36A9 9 0 015.64 5.64"/></svg>
+                        <span>Rafraîchir</span>
+                    </button>
+                    <div class="rounded-3xl border border-[#E0531C]/15 bg-[#FFF4E6] px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-[#7c4a35]">Dernière mise à jour : {{ lastUpdated }}</div>
+                </div>
+            </div>
+
+            <div class="grid gap-5 md:grid-cols-4">
                 <div class="rounded-[28px] border border-[#E0531C]/10 bg-white/95 p-6 shadow-[0_18px_44px_rgba(224,83,28,0.08)]">
-                    <h3 class="text-xs font-black uppercase tracking-[0.24em] text-[#7c4a35] mb-3">Sessions Actives</h3>
+                    <h3 class="text-xs font-black uppercase tracking-[0.24em] text-[#7c4a35] mb-3">Sessions en direct</h3>
                     <p class="text-3xl font-black text-[#E0531C]">{{ adminStats?.active_sessions ?? 0 }}</p>
+                    <p class="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-[#7c4a35]">Actives, en pause, en attente</p>
                 </div>
                 <div class="rounded-[28px] border border-[#E0531C]/10 bg-white/95 p-6 shadow-[0_18px_44px_rgba(224,83,28,0.08)]">
-                    <h3 class="text-xs font-black uppercase tracking-[0.24em] text-[#7c4a35] mb-3">Joueurs Connectés</h3>
-                    <p class="text-3xl font-black text-[#0F4C75]">{{ adminStats?.total_players ?? 0 }}</p>
+                    <h3 class="text-xs font-black uppercase tracking-[0.24em] text-[#7c4a35] mb-3">Joueurs actifs</h3>
+                    <p class="text-3xl font-black text-[#0F4C75]">{{ adminStats?.active_players ?? 0 }}</p>
+                    <p class="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-[#7c4a35]">Présence en jeu</p>
                 </div>
                 <div class="rounded-[28px] border border-[#E0531C]/10 bg-white/95 p-6 shadow-[0_18px_44px_rgba(224,83,28,0.08)]">
-                    <h3 class="text-xs font-black uppercase tracking-[0.24em] text-[#7c4a35] mb-3">Alertes Triche</h3>
-                    <p class="text-3xl font-black text-[#D14343]">{{ adminStats?.suspicious_logs ?? 0 }}</p>
+                    <h3 class="text-xs font-black uppercase tracking-[0.24em] text-[#7c4a35] mb-3">Alertes de triche</h3>
+                    <p class="text-3xl font-black text-[#D14343]">{{ adminStats?.suspicious_events ?? 0 }}</p>
+                    <p class="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-[#7c4a35]">GPS ou vitesses suspectes</p>
                 </div>
+                <div class="rounded-[28px] border border-[#E0531C]/10 bg-white/95 p-6 shadow-[0_18px_44px_rgba(224,83,28,0.08)]">
+                    <h3 class="text-xs font-black uppercase tracking-[0.24em] text-[#7c4a35] mb-3">Villes actives</h3>
+                    <p class="text-3xl font-black text-[#F59E0B]">{{ adminStats?.active_cities ?? 0 }}</p>
+                    <p class="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-[#7c4a35]">Parcours en cours</p>
+                </div>
+            </div>
+
+            <div class="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
+                <section class="rounded-[28px] border border-[#E0531C]/10 bg-white/95 p-6 shadow-[0_18px_44px_rgba(224,83,28,0.08)]">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h3 class="text-base font-black text-[#2D1B16]">Synthèse des sessions</h3>
+                            <p class="mt-2 text-sm text-[#7c4a35]">Répartition par statut avec les chiffres actuels.</p>
+                        </div>
+                        <span class="rounded-full border border-[#E0531C]/15 bg-[#FFE9D1] px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#E0531C]">En temps réel</span>
+                    </div>
+
+                    <div class="mt-6 space-y-4">
+                        <div class="rounded-3xl border border-[#F0D7BD] bg-[#FFF4E6]/80 p-4">
+                            <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.18em] text-[#7c4a35]">
+                                <span>En attente</span>
+                                <span>{{ adminStats?.pending_sessions ?? 0 }}</span>
+                            </div>
+                            <div class="mt-3 h-2.5 overflow-hidden rounded-full bg-[#F4D8C2]">
+                                <div class="h-full rounded-full bg-[#FFB700]" :style="{ width: adminStats?.active_sessions ? `${Math.round((adminStats.pending_sessions / adminStats.active_sessions) * 100)}%` : '0%' }"></div>
+                            </div>
+                        </div>
+                        <div class="rounded-3xl border border-[#D6A360] bg-[#FFFAE3]/80 p-4">
+                            <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.18em] text-[#7c4a35]">
+                                <span>Actives</span>
+                                <span>{{ adminStats?.active_sessions ?? 0 }}</span>
+                            </div>
+                            <div class="mt-3 h-2.5 overflow-hidden rounded-full bg-[#F4D8C2]">
+                                <div class="h-full rounded-full bg-[#E0531C]" :style="{ width: adminStats?.active_sessions ? '100%' : '0%' }"></div>
+                            </div>
+                        </div>
+                        <div class="rounded-3xl border border-[#E29A3D] bg-[#FFF7D4]/80 p-4">
+                            <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.18em] text-[#7c4a35]">
+                                <span>En pause</span>
+                                <span>{{ adminStats?.paused_sessions ?? 0 }}</span>
+                            </div>
+                            <div class="mt-3 h-2.5 overflow-hidden rounded-full bg-[#F4D8C2]">
+                                <div class="h-full rounded-full bg-[#F97316]" :style="{ width: adminStats?.active_sessions ? `${Math.round((adminStats.paused_sessions / adminStats.active_sessions) * 100)}%` : '0%' }"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="rounded-[28px] border border-[#E0531C]/10 bg-white/95 p-6 shadow-[0_18px_44px_rgba(224,83,28,0.08)]">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-base font-black text-[#2D1B16]">Sessions prioritaires</h3>
+                            <p class="mt-2 text-sm text-[#7c4a35]">Dernières sessions actives et leurs indicateurs clés.</p>
+                        </div>
+                        <span class="rounded-full border border-[#E0531C]/15 bg-[#FFE9D1] px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#E0531C]">Top 4</span>
+                    </div>
+
+                    <ul class="mt-6 space-y-3">
+                        <li v-for="session in adminStats?.recent_sessions || []" :key="session.id" class="rounded-[24px] border border-[#E0531C]/10 bg-[#FFF7EA] p-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <h4 class="text-sm font-black text-[#2D1B16]">{{ session.city }}</h4>
+                                    <p class="mt-1 text-xs text-[#7c4a35]">Host: {{ session.host }} · {{ session.players_count }} joueur{{ session.players_count > 1 ? 's' : '' }}</p>
+                                </div>
+                                <span :class="statusBadgeClass(session.status) + ' rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]'">
+                                    {{ session.status === 'active' ? 'Actif' : session.status === 'paused' ? 'En pause' : 'En attente' }}
+                                </span>
+                            </div>
+                            <div class="mt-4 grid gap-2 sm:grid-cols-3">
+                                <span class="inline-flex items-center gap-2 rounded-2xl border border-[#D9C9B6] bg-white px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#7c4a35]">{{ session.progress }}% achevé</span>
+                                <span class="inline-flex items-center gap-2 rounded-2xl border border-[#D9C9B6] bg-white px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#7c4a35]">{{ session.remaining_minutes }} min restantes</span>
+                                <span class="inline-flex items-center gap-2 rounded-2xl border border-[#D9C9B6] bg-white px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#7c4a35]">Mis à jour {{ session.updated_at }}</span>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div v-if="!(adminStats?.recent_sessions?.length)" class="rounded-[24px] border border-dashed border-[#E0531C]/20 bg-[#FFF4E6] px-4 py-5 text-center text-sm font-black uppercase tracking-[0.16em] text-[#7c4a35]">
+                        Aucune session active à afficher pour le moment.
+                    </div>
+                </section>
             </div>
         </div>
 

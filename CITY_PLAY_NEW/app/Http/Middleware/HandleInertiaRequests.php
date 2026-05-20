@@ -5,7 +5,9 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use App\Models\City;
+use App\Models\GamePlayer;
 use App\Models\GameSession;
+use App\Models\PositionLog;
 use App\Services\Session\GameSessionService;
 
 class HandleInertiaRequests extends Middleware
@@ -52,6 +54,40 @@ class HandleInertiaRequests extends Middleware
             }
         }
 
+        $adminStats = null;
+
+        if ($user && $user->role === 'admin') {
+            $ongoingStatuses = ['pending', 'active', 'paused'];
+            $activeSessionCount = GameSession::whereIn('status', $ongoingStatuses)->count();
+
+            $adminStats = [
+                'active_sessions' => $activeSessionCount,
+                'pending_sessions' => GameSession::where('status', 'pending')->count(),
+                'paused_sessions' => GameSession::where('status', 'paused')->count(),
+                'active_players' => GamePlayer::where('is_active', true)->count(),
+                'suspicious_events' => PositionLog::where('is_suspicious', true)->count(),
+                'active_cities' => GameSession::whereIn('status', $ongoingStatuses)->distinct('city_id')->count(),
+                'recent_sessions' => GameSession::with(['city', 'host'])
+                    ->withCount('players')
+                    ->whereIn('status', $ongoingStatuses)
+                    ->orderByDesc('updated_at')
+                    ->limit(4)
+                    ->get()
+                    ->map(fn($session) => [
+                        'id' => $session->id,
+                        'city' => $session->city?->name ?? '—',
+                        'host' => $session->host?->name ?? '—',
+                        'status' => $session->status,
+                        'progress' => $session->total_places > 0 ? round(($session->solved_places / $session->total_places) * 100) : 0,
+                        'players_count' => $session->players_count,
+                        'remaining_minutes' => max(0, ceil($session->getRemainingSeconds() / 60)),
+                        'updated_at' => $session->updated_at?->diffForHumans(),
+                        'warning_level' => $session->getTimeWarningLevel(),
+                    ])
+                    ->toArray(),
+            ];
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -60,6 +96,7 @@ class HandleInertiaRequests extends Middleware
             'gameState' => $gameState,
             // Alias rétro-compatible pour Dashboard / layouts
             'session' => $gameState,
+            'adminStats' => $adminStats,
             'cities' => $user ? City::with(['places.riddles'])->withCount('places')->get() : [],
             'flash' => [
                 'message' => $request->session()->get('message'),
