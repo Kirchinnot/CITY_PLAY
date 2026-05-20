@@ -41,12 +41,23 @@ const coverImageUrl = computed(() => {
     return '/placeholder-place.svg';
 });
 
+const hintsCount = computed(() => props.riddle.hints?.length || 0);
+const unlockedHintsCount = computed(() => localUnlockedHintIds.value.length);
+const canSubmitAnswer = computed(() => !!answerInput.value && !isSubmittingAnswer.value && step.value === 'qcm');
+const canValidatePresence = computed(() => isInValidationZone.value && !isValidatingPresence.value && step.value === 'onsite');
+const locationStatus = computed(() => {
+    if (geoError.value) return geoError.value;
+    if (distanceToTarget.value === null) return 'Localisation en cours...';
+    if (isInValidationZone.value) return 'Zone de validation atteinte';
+    return `À ${Math.round(distanceToTarget.value)} m de la cible (max ${validationRadius.value} m)`;
+});
+
 // ── Lifecycle ───────────────────────────────────────────────────────────────
 onMounted(() => {
     startWatchingLocation();
 
-    gsap.from('.riddle-card', { scale: 0.9, opacity: 0, duration: 0.8, ease: 'back.out(1.7)' });
-    gsap.from('.riddle-image', { y: 20, opacity: 0, duration: 1, ease: 'power4.out', delay: 0.3 });
+    gsap.from('.riddle-card', { scale: 0.92, opacity: 0, duration: 0.8, ease: 'back.out(1.7)' });
+    gsap.from('.riddle-image', { y: 24, opacity: 0, duration: 1, ease: 'power4.out', delay: 0.25 });
 });
 
 onUnmounted(() => {
@@ -150,22 +161,22 @@ const skipRiddle = async () => {
     <Head :title="`Énigme : ${riddle.place?.name}`" />
 
     <PlayerLayout>
-        <div class="min-h-[calc(100vh-160px)] flex flex-col py-6 px-4">
+        <div class="min-h-[calc(100vh-160px)] bg-[radial-gradient(circle_120px_at_top,_rgba(245,158,11,0.12),_transparent_30%),radial-gradient(circle_140px_at_bottom_right,_rgba(34,197,94,0.08),_transparent_30%)] px-4 py-6">
 
             <!-- Result Overlay (Success) -->
             <Transition name="scale">
-                <div v-if="showResult" class="fixed inset-0 z-50 bg-[#0f111a] flex flex-col items-center justify-center p-8 text-center">
-                    <div class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center mb-8 shadow-[0_0_50px_rgba(34,197,94,0.3)]">
+                <div v-if="showResult" class="fixed inset-0 z-50 bg-slate-950/95 flex flex-col items-center justify-center p-8 text-center">
+                    <div class="mb-8 flex h-32 w-32 items-center justify-center rounded-full bg-emerald-500 shadow-[0_0_50px_rgba(16,185,129,0.3)]">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h2 class="text-4xl font-black text-white mb-2 tracking-tighter uppercase italic">Mission Accomplie</h2>
-                    <p class="text-gray-400 mb-12 font-medium">Vous avez percé le mystère de {{ riddle.place.name }}.</p>
+                    <h2 class="mb-3 text-4xl font-black uppercase tracking-tight text-white">Mission Accomplie</h2>
+                    <p class="mb-10 max-w-md text-sm leading-6 text-slate-300">Vous avez percé le mystère de <strong class="text-white">{{ riddle.place?.name }}</strong>. La route vers la suite est ouverte.</p>
 
                     <Link
                         :href="route('player.game.map')"
-                        class="w-full max-w-xs bg-white text-gray-900 font-black py-5 rounded-[2rem] text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all"
+                        class="inline-flex w-full max-w-xs items-center justify-center rounded-[32px] bg-white px-6 py-4 text-base font-black uppercase tracking-[0.16em] text-slate-950 shadow-2xl transition hover:-translate-y-0.5"
                     >
                         CONTINUER
                     </Link>
@@ -173,146 +184,134 @@ const skipRiddle = async () => {
             </Transition>
 
             <!-- Main Riddle Card -->
-            <div v-if="!showResult" class="riddle-card flex-grow bg-gray-900/50 backdrop-blur-xl border border-white/10 rounded-[40px] overflow-hidden shadow-2xl flex flex-col">
+            <div v-if="!showResult" class="riddle-card mx-auto flex min-h-[calc(100vh-220px)] max-w-4xl flex-col overflow-hidden rounded-[40px] border border-white/10 bg-slate-950/90 shadow-2xl backdrop-blur-xl">
 
                 <!-- Image Header -->
-                <div class="riddle-image h-64 relative flex-shrink-0">
-                    <img
-                        :src="coverImageUrl"
-                        class="w-full h-full object-cover"
-                        alt=""
-                    />
-                    <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
+                <div class="riddle-image relative h-64 overflow-hidden">
+                    <img :src="coverImageUrl" class="h-full w-full object-cover" alt="Illustration énigme" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-transparent to-transparent"></div>
 
-                    <div class="absolute top-6 left-6 right-6 flex justify-between items-center">
-                        <Link :href="route('player.game.map')" class="w-10 h-10 bg-black/40 backdrop-blur-md rounded-xl flex items-center justify-center text-white">
+                    <div class="absolute inset-x-6 top-6 flex items-center justify-between">
+                        <Link :href="route('player.game.map')" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950/75 text-white shadow-lg ring-1 ring-white/10 transition hover:bg-slate-900">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
                         </Link>
-                        <div class="flex items-center gap-2">
-                            <span
-                                class="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border"
-                                :class="step === 'qcm' ? 'bg-orange-500/20 border-orange-500 text-orange-400' : 'bg-white/5 border-white/10 text-gray-500'"
-                            >
-                                1. Réponse
-                            </span>
-                            <span
-                                class="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border"
-                                :class="step === 'onsite' ? 'bg-green-500/20 border-green-500 text-green-400' : 'bg-white/5 border-white/10 text-gray-500'"
-                            >
-                                2. Sur place
-                            </span>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <span :class="['rounded-2xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.24em]', step === 'qcm' ? 'bg-amber-400/10 border-amber-400 text-amber-300' : 'bg-white/10 border-white/10 text-slate-300']">1. Réponse</span>
+                            <span :class="['rounded-2xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.24em]', step === 'onsite' ? 'bg-emerald-400/10 border-emerald-400 text-emerald-300' : 'bg-white/10 border-white/10 text-slate-300']">2. Sur place</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Content -->
-                <div class="p-8 flex flex-col flex-grow">
-                    <h1 class="text-2xl font-black text-white mb-4 leading-tight">{{ riddle.question }}</h1>
-
-                    <!-- ═══ ÉTAPE 1 : QCM / texte libre ═══ -->
-                    <div v-if="step === 'qcm'" class="flex-grow">
-                        <div v-if="isQcm" class="grid grid-cols-1 gap-3">
-                            <button
-                                v-for="(option, index) in riddle.options"
-                                :key="index"
-                                @click="answerInput = option"
-                                :class="[
-                                    'w-full p-5 rounded-2xl text-left font-bold transition-all border-2',
-                                    answerInput === option
-                                        ? 'bg-orange-500/20 border-orange-500 text-white'
-                                        : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20'
-                                ]"
-                            >
-                                <div class="flex items-center gap-4">
-                                    <div :class="[
-                                        'w-8 h-8 rounded-full flex items-center justify-center text-xs font-black',
-                                        answerInput === option ? 'bg-orange-500 text-white' : 'bg-gray-800 text-gray-500'
-                                    ]">
-                                        {{ String.fromCharCode(65 + index) }}
-                                    </div>
-                                    {{ option }}
-                                </div>
-                            </button>
-                        </div>
-
-                        <textarea
-                            v-else
-                            v-model="answerInput"
-                            placeholder="Votre réponse ici..."
-                            class="w-full bg-white/5 border-2 border-white/10 rounded-3xl p-6 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-0 transition-all text-lg font-medium"
-                            rows="3"
-                        ></textarea>
-
-                        <p class="mt-4 text-xs text-gray-500 font-medium">
-                            Confirmez votre réponse, puis rendez-vous sur le lieu pour valider.
-                        </p>
-                    </div>
-
-                    <!-- ═══ ÉTAPE 2 : validation sur place ═══ -->
-                    <div v-else class="flex-grow">
-                        <div class="p-5 rounded-2xl bg-green-500/10 border border-green-500/30 mb-6">
-                            <div class="flex items-center gap-3 mb-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                                <span class="text-green-400 text-sm font-black uppercase tracking-wider">Bonne réponse !</span>
+                <div class="flex flex-1 flex-col gap-6 p-8 text-white">
+                    <div class="space-y-6">
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                            <div class="max-w-2xl">
+                                <p class="text-sm uppercase tracking-[0.28em] text-amber-300">{{ riddle.place?.name || 'Lieu mystère' }}</p>
+                                <h1 class="mt-3 text-3xl font-black leading-tight tracking-tight">{{ riddle.question }}</h1>
                             </div>
-                            <p class="text-white font-bold">{{ answerInput }}</p>
-                            <p class="text-gray-400 text-sm mt-2">Rendez-vous à <strong class="text-white">{{ riddle.place?.name }}</strong> pour valider votre présence.</p>
+                            <div class="rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-xs uppercase tracking-[0.22em] text-slate-300">
+                                {{ props.riddle.difficulty || 'Niveau inconnu' }}
+                            </div>
                         </div>
 
-                        <!-- GPS Status -->
-                        <div class="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-2xl border border-white/5">
-                            <div class="w-2 h-2 rounded-full" :class="isInValidationZone ? 'bg-green-500' : 'bg-red-500 animate-pulse'"></div>
-                            <span class="text-xs font-bold uppercase tracking-wider" :class="isInValidationZone ? 'text-green-500' : 'text-gray-400'">
-                                <template v-if="distanceToTarget === null">Localisation en cours...</template>
-                                <template v-else-if="isInValidationZone">Zone de validation atteinte</template>
-                                <template v-else>À {{ Math.round(distanceToTarget) }}m de la cible (max {{ validationRadius }}m)</template>
-                            </span>
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div class="rounded-3xl border border-white/10 bg-slate-950/80 p-4">
+                                <p class="text-[10px] uppercase tracking-[0.24em] text-slate-400">Mode</p>
+                                <p class="mt-2 text-sm font-black uppercase tracking-[0.12em] text-white">{{ props.riddle.mode || 'Exploration' }}</p>
+                            </div>
+                            <div class="rounded-3xl border border-white/10 bg-slate-950/80 p-4">
+                                <p class="text-[10px] uppercase tracking-[0.24em] text-slate-400">Validation</p>
+                                <p class="mt-2 text-sm font-black uppercase tracking-[0.12em] text-white">{{ validationRadius }} m</p>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Actions -->
-                    <div class="mt-8 space-y-4">
-                        <!-- Bouton étape 1 -->
+                    <div class="flex-1">
+                        <div v-if="step === 'qcm'" class="space-y-4">
+                            <div v-if="isQcm" class="grid gap-3">
+                                <button
+                                    v-for="(option, index) in riddle.options"
+                                    :key="index"
+                                    type="button"
+                                    @click="answerInput = option"
+                                    :class="[
+                                        'w-full rounded-3xl border px-5 py-4 text-left font-bold transition duration-200',
+                                        answerInput === option ? 'bg-amber-400/20 border-amber-400 text-white' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+                                    ]"
+                                >
+                                    <div class="flex items-center gap-4">
+                                        <div :class="['flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-black', answerInput === option ? 'bg-amber-400 text-slate-950' : 'bg-slate-900 text-slate-400']">{{ String.fromCharCode(65 + index) }}</div>
+                                        <span class="leading-snug">{{ option }}</span>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <textarea
+                                v-else
+                                v-model="answerInput"
+                                placeholder="Votre réponse ici..."
+                                class="min-h-[150px] w-full rounded-[28px] border border-white/10 bg-white/5 p-5 text-base text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none focus:ring-0"
+                            ></textarea>
+
+                            <p class="text-sm text-slate-400">Confirmez votre réponse, puis rendez-vous sur place pour valider votre présence.</p>
+                        </div>
+
+                        <div v-else class="space-y-6">
+                            <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-5">
+                                <p class="text-xs uppercase tracking-[0.24em] text-emerald-300">Réponse validée</p>
+                                <p class="mt-3 text-lg font-black text-white">{{ answerInput }}</p>
+                                <p class="mt-2 text-sm text-slate-400">Rendez-vous sur place pour confirmer votre présence au point <strong>{{ riddle.place?.name }}</strong>.</p>
+                            </div>
+
+                            <div class="rounded-3xl border border-white/10 bg-slate-950/80 p-5">
+                                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Localisation</p>
+                                        <p class="mt-2 text-sm font-black text-white">{{ locationStatus }}</p>
+                                    </div>
+                                    <span :class="['inline-flex rounded-full px-3 py-2 text-xs font-black uppercase tracking-[0.2em]', isInValidationZone ? 'bg-emerald-500/15 border border-emerald-500/20 text-emerald-300' : 'bg-rose-500/15 border border-rose-500/20 text-rose-300']">
+                                        {{ isInValidationZone ? 'Prêt' : 'En route' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
                         <button
                             v-if="step === 'qcm'"
                             @click="submitAnswer"
-                            :disabled="isSubmittingAnswer || !answerInput"
-                            class="w-full bg-orange-500 disabled:bg-gray-800 disabled:text-gray-600 text-white font-black py-5 rounded-[2rem] text-xl shadow-xl shadow-orange-500/20 active:scale-95 transition-all"
+                            :disabled="!canSubmitAnswer"
+                            class="w-full rounded-[2rem] bg-amber-500 px-6 py-5 text-base font-black uppercase tracking-[0.16em] text-slate-950 shadow-[0_20px_50px_-20px_rgba(245,158,11,0.8)] transition duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-slate-800"
                         >
                             {{ isSubmittingAnswer ? 'VÉRIFICATION...' : 'CONFIRMER MA RÉPONSE' }}
                         </button>
 
-                        <!-- Bouton étape 2 -->
                         <button
                             v-else
                             @click="validatePresence"
-                            :disabled="isValidatingPresence || !isInValidationZone"
-                            class="w-full bg-green-500 disabled:bg-gray-800 disabled:text-gray-600 text-white font-black py-5 rounded-[2rem] text-xl shadow-xl shadow-green-500/20 active:scale-95 transition-all"
+                            :disabled="!canValidatePresence"
+                            class="w-full rounded-[2rem] bg-emerald-500 px-6 py-5 text-base font-black uppercase tracking-[0.16em] text-slate-950 shadow-[0_20px_50px_-20px_rgba(16,185,129,0.8)] transition duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-slate-800"
                         >
                             {{ isValidatingPresence ? 'VÉRIFICATION...' : 'VALIDER SUR PLACE' }}
                         </button>
 
-                        <div class="flex gap-4">
+                        <div class="grid gap-3 sm:grid-cols-2">
                             <button
                                 @click="showHints = !showHints"
-                                class="flex-grow bg-white/5 text-white font-bold py-4 rounded-2xl border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                                class="rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-white/10"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                                </svg>
-                                INDICES ({{ localUnlockedHintIds.length }}/{{ riddle.hints?.length }})
+                                INDICES ({{ unlockedHintsCount }}/{{ hintsCount }})
                             </button>
                             <button
                                 @click="skipRiddle"
-                                class="w-16 bg-white/5 text-gray-500 rounded-2xl border border-white/10 flex items-center justify-center"
+                                class="rounded-3xl border border-white/10 bg-slate-900/80 px-5 py-4 text-sm font-black uppercase tracking-[0.16em] text-slate-300 transition hover:bg-slate-900"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                                </svg>
+                                PASSER L'ÉNIGME
                             </button>
                         </div>
                     </div>
@@ -321,21 +320,21 @@ const skipRiddle = async () => {
 
             <!-- Hints Drawer -->
             <Transition name="slide-up">
-                <div v-if="showHints" class="fixed inset-x-0 bottom-0 z-40 bg-gray-900/95 backdrop-blur-2xl border-t border-white/10 rounded-t-[40px] p-8 max-h-[70vh] overflow-y-auto">
-                    <div class="w-12 h-1.5 bg-gray-700 rounded-full mx-auto mb-8"></div>
-                    <h3 class="text-2xl font-black text-white mb-6 tracking-tight">Besoin d'aide ?</h3>
+                <div v-if="showHints" class="fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-[40px] border-t border-white/10 bg-slate-950/95 p-8 shadow-2xl backdrop-blur-2xl">
+                    <div class="mx-auto mb-8 h-1.5 w-16 rounded-full bg-white/10"></div>
+                    <h3 class="mb-6 text-2xl font-black text-white tracking-tight">Besoin d'aide ?</h3>
 
                     <div class="space-y-4">
-                        <div v-for="(hint, index) in riddle.hints" :key="hint.id" class="p-6 rounded-3xl border border-white/10 bg-white/5 transition-all">
+                        <div v-for="(hint, index) in riddle.hints" :key="hint.id" class="rounded-3xl border border-white/10 bg-white/5 p-6">
                             <div v-if="localUnlockedHintIds.includes(hint.id)">
-                                <div class="text-[10px] font-black text-orange-500 uppercase mb-2">Indice {{ index + 1 }}</div>
-                                <p class="text-white font-medium">{{ hint.content }}</p>
+                                <p class="text-[10px] uppercase tracking-[0.24em] text-amber-300">Indice {{ index + 1 }}</p>
+                                <p class="mt-3 text-sm text-slate-100">{{ hint.content }}</p>
                             </div>
-                            <div v-else class="flex items-center justify-between">
-                                <span class="text-gray-400 font-bold italic">Indice caché</span>
+                            <div v-else class="flex items-center justify-between gap-4">
+                                <span class="text-sm italic text-slate-400">Indice caché</span>
                                 <button
                                     @click="unlockHint(hint.id)"
-                                    class="bg-white text-gray-900 px-4 py-2 rounded-xl font-black text-xs uppercase"
+                                    class="rounded-2xl bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-slate-950 transition hover:bg-slate-100"
                                 >
                                     DÉBLOQUER (-25 PTS)
                                 </button>

@@ -46,6 +46,12 @@ const visiblePlaces = computed(() => {
         });
 });
 
+const remainingPlaces = computed(() => {
+    const total = gameState.value?.total_places ?? 0;
+    const solved = gameState.value?.solved_places ?? 0;
+    return Math.max(total - solved, 0);
+});
+
 // ── Map & Markers ───────────────────────────────────────────────────────────
 const drawMarkers = () => {
     if (!map || !gameState.value) return;
@@ -145,84 +151,94 @@ watch(() => gameState.value, drawMarkers, { deep: true });
     <Head title="CityPlay - Mission Tactique" />
 
     <PlayerLayout>
-        <div class="h-[calc(100vh-160px)] -mt-6 -mx-4 relative overflow-hidden bg-[#0f111a]">
-            <!-- Map Container -->
-            <div ref="mapContainer" class="w-full h-full z-0"></div>
+        <div class="relative min-h-[calc(100vh-80px)] overflow-hidden bg-[#070a13]">
+            <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_left_top,rgba(255,179,0,0.14),transparent_32%),radial-gradient(circle_at_right_bottom,rgba(255,95,0,0.16),transparent_32%)]"></div>
 
-            <!-- HUD Top: Timer & Score -->
-            <div class="hud-top absolute top-6 left-4 right-4 z-10 flex justify-between items-start pointer-events-none">
-                <div class="bg-gray-900/90 backdrop-blur-xl border border-white/10 p-4 rounded-3xl shadow-2xl pointer-events-auto">
-                    <div class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Temps Restant</div>
-                    <div class="text-3xl font-black font-mono tracking-tighter" :class="timerColorClass">
-                        {{ formatTime(remainingTimeSeconds) }}
+            <div class="absolute inset-x-0 top-4 z-20 px-4 hud-top">
+                <div class="flex flex-col gap-3 rounded-[32px] border border-white/10 bg-slate-950/90 p-4 shadow-2xl backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.28em] text-slate-400">Mission en cours</p>
+                        <h1 class="text-xl font-black uppercase tracking-[0.18em] text-white">Carte tactique</h1>
                     </div>
-                    <p v-if="timeAlertMessage" class="text-[10px] font-bold mt-1" :class="timerColorClass">{{ timeAlertMessage }}</p>
-                </div>
-
-                <div class="bg-gray-900/90 backdrop-blur-xl border border-white/10 p-4 rounded-3xl shadow-2xl text-right pointer-events-auto">
-                    <div class="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1">Score Actuel</div>
-                    <div class="text-3xl font-black text-white tracking-tighter">
-                        {{ gameState?.total_score || 0 }} <span class="text-xs text-orange-500">PTS</span>
+                    <div class="text-right">
+                        <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Ville</p>
+                        <p class="truncate text-sm font-black uppercase tracking-[0.1em] text-orange-300">{{ gameState?.city?.name || 'Ville inconnue' }}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- HUD Bottom: Current Target -->
-            <div class="hud-bottom absolute bottom-10 left-4 right-4 z-10 pointer-events-none">
-                <div class="max-w-md mx-auto bg-gray-900/95 backdrop-blur-2xl border border-white/10 rounded-[40px] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] p-6 pointer-events-auto">
-                    <div v-if="gameState?.current_riddle" class="flex items-center gap-6">
-                        <div class="relative flex-shrink-0">
-                            <div class="w-20 h-20 rounded-3xl overflow-hidden border-2 border-orange-500/50 shadow-2xl">
-                                <img 
-                                    :src="gameState.current_riddle.place?.images?.[0]?.image_url || gameState.current_riddle.place?.images?.[0]?.image_path || '/placeholder-place.svg'" 
-                                    class="w-full h-full object-cover"
-                                />
-                            </div>
-                            <div class="absolute -bottom-2 -right-2 bg-orange-500 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg">
-                                {{ gameState.solved_places + 1 }}/{{ gameState.total_places }}
-                            </div>
+            <div ref="mapContainer" class="absolute inset-0 z-0"></div>
+
+            <div class="absolute inset-x-4 top-24 z-20">
+                <div class="grid gap-3 sm:grid-cols-3">
+                    <div class="rounded-3xl border border-white/10 bg-slate-950/85 p-4 shadow-xl backdrop-blur-xl">
+                        <div class="text-[10px] uppercase tracking-[0.28em] text-slate-400 mb-2">Chrono</div>
+                        <div class="text-3xl font-black tracking-tight" :class="timerColorClass">{{ formatTime(remainingTimeSeconds) }}</div>
+                    </div>
+                    <div class="rounded-3xl border border-white/10 bg-slate-950/85 p-4 shadow-xl backdrop-blur-xl">
+                        <div class="text-[10px] uppercase tracking-[0.28em] text-slate-400 mb-2">Score</div>
+                        <div class="text-3xl font-black tracking-tight text-white">{{ gameState?.total_score || 0 }} <span class="text-xs text-orange-300">PTS</span></div>
+                    </div>
+                    <div class="rounded-3xl border border-white/10 bg-slate-950/85 p-4 shadow-xl backdrop-blur-xl">
+                        <div class="text-[10px] uppercase tracking-[0.28em] text-slate-400 mb-2">Progression</div>
+                        <div class="text-3xl font-black tracking-tight text-white">{{ gameState?.solved_places || 0 }}/{{ gameState?.total_places || 0 }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-bottom absolute inset-x-4 bottom-4 z-30 pointer-events-none">
+                <div class="mx-auto max-w-3xl rounded-[36px] border border-white/10 bg-slate-950/95 p-5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.72)] backdrop-blur-xl pointer-events-auto">
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="min-w-0">
+                            <p class="text-[10px] uppercase tracking-[0.22em] text-[#e7a06f] mb-2">Objectif actuel</p>
+                            <h2 class="text-xl font-black text-white leading-tight truncate">{{ gameState?.current_riddle?.place?.name || 'Lieu mystère' }}</h2>
+                            <p class="mt-2 text-sm text-slate-300 line-clamp-2">{{ gameState?.current_riddle?.question || 'Attendez la prochaine énigme.' }}</p>
                         </div>
 
-                        <div class="flex-grow min-w-0">
-                            <h3 class="text-white font-black text-xl leading-tight mb-1 truncate">
-                                {{ gameState.current_riddle.place?.name || 'Lieu Mystère' }}
-                            </h3>
-                            <p class="text-gray-400 text-xs font-medium line-clamp-2 mb-4">
-                                {{ gameState.current_riddle.question }}
-                            </p>
-                            
-                            <div class="flex gap-3">
-                                <Link 
-                                    :href="route('player.riddle.show', gameState.current_riddle.id)"
-                                    class="flex-grow bg-orange-500 hover:bg-orange-600 text-white text-sm font-black py-3 rounded-2xl transition-all duration-300 text-center shadow-lg shadow-orange-500/20 active:scale-95"
-                                >
-                                    RÉSOUDRE
-                                </Link>
-                                <button
-                                    v-if="gameState.is_host && gameState.status === 'active'"
-                                    @click="handleAction('pause')"
-                                    :disabled="isProcessingAction"
-                                    class="w-12 bg-white/5 hover:bg-white/10 text-white rounded-2xl flex items-center justify-center transition-colors disabled:opacity-50"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </button>
-                            </div>
+                        <div class="grid gap-3 sm:w-56">
+                            <Link
+                                v-if="gameState?.current_riddle"
+                                :href="route('player.riddle.show', gameState.current_riddle.id)"
+                                class="inline-flex items-center justify-center rounded-3xl bg-gradient-to-r from-[#E0531C] to-[#FFB700] px-5 py-3 text-sm font-black uppercase tracking-[0.18em] text-white shadow-[0_18px_48px_rgba(224,83,28,0.24)] transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
+                            >
+                                Résoudre
+                            </Link>
+                            <button
+                                v-if="gameState?.is_host && gameState.status === 'active'"
+                                @click="handleAction('pause')"
+                                :disabled="isProcessingAction"
+                                class="h-11 rounded-3xl border border-white/10 bg-white/5 text-sm font-black uppercase tracking-[0.14em] text-white transition hover:border-[#E0531C]/40 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Pause
+                            </button>
+                            <button
+                                v-if="gameState?.is_host"
+                                @click="handleAction('abandon')"
+                                :disabled="isProcessingAction"
+                                class="h-11 rounded-3xl bg-white text-slate-900 text-sm font-black uppercase tracking-[0.14em] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Abandonner
+                            </button>
                         </div>
                     </div>
 
-                    <div v-else class="text-center py-4">
-                        <div class="animate-pulse flex flex-col items-center">
-                            <div class="w-12 h-12 bg-gray-800 rounded-full mb-3"></div>
-                            <div class="h-4 w-32 bg-gray-800 rounded mb-2"></div>
-                            <div class="h-3 w-48 bg-gray-800 rounded"></div>
+                    <div class="mt-5 grid gap-3 sm:grid-cols-3">
+                        <div class="rounded-3xl bg-slate-900/80 p-4 border border-white/10">
+                            <p class="text-[10px] uppercase tracking-[0.22em] text-slate-400 mb-2">Mode</p>
+                            <p class="text-sm font-black text-white uppercase">{{ gameState?.mode || 'N/A' }}</p>
+                        </div>
+                        <div class="rounded-3xl bg-slate-900/80 p-4 border border-white/10">
+                            <p class="text-[10px] uppercase tracking-[0.22em] text-slate-400 mb-2">Difficulté</p>
+                            <p class="text-sm font-black text-white uppercase">{{ gameState?.difficulty || 'N/A' }}</p>
+                        </div>
+                        <div class="rounded-3xl bg-slate-900/80 p-4 border border-white/10">
+                            <p class="text-[10px] uppercase tracking-[0.22em] text-slate-400 mb-2">Étapes restantes</p>
+                            <p class="text-sm font-black text-white uppercase">{{ remainingPlaces }}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Overlay Pause -->
             <Transition name="fade">
                 <div v-if="gameState?.status === 'paused'" class="absolute inset-0 z-50 bg-gray-900/90 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center">
                     <div class="w-24 h-24 bg-orange-500/20 rounded-full flex items-center justify-center mb-8 animate-pulse">
@@ -232,15 +248,15 @@ watch(() => gameState.value, drawMarkers, { deep: true });
                     </div>
                     <h2 class="text-4xl font-black text-white mb-4 tracking-tighter uppercase italic">Mission Suspendue</h2>
                     <p class="text-gray-400 mb-12 max-w-xs font-medium">Le temps est arrêté. Reprenez votre souffle avant de continuer l'aventure.</p>
-                    
-                    <button 
+
+                    <button
                         v-if="gameState.is_host"
                         @click="handleAction('resume')"
                         class="w-full max-w-xs bg-white text-gray-900 font-black py-5 rounded-[2rem] text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all mb-4"
                     >
                         REPRENDRE
                     </button>
-                    <button 
+                    <button
                         v-if="gameState.is_host"
                         @click="handleAction('abandon')"
                         class="text-red-500 font-bold py-4 hover:underline"

@@ -196,6 +196,10 @@ class GameSessionController extends Controller
     {
         Gate::authorize('manage', $session);
 
+        if (!$session->isPending()) {
+            return redirect()->route('player.game.map')->with('info', 'La partie est déjà lancée.');
+        }
+
         // Mettre à jour les paramètres de la session choisis dans le Lobby
         $session->update($request->only([
             'difficulty', 
