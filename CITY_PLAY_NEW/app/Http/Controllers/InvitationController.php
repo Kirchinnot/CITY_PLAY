@@ -43,7 +43,7 @@ class InvitationController extends Controller
         $invitation = $this->invitationService->generate($city->id, $request->user(), $validated);
 
         return redirect()->route('admin.cities.show', $city)
-            ->with('success', 'Invitation générée avec succès !');
+            ->with('success', 'Invitation générée avec succès !');//
     }
 
     /**
