@@ -13,7 +13,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Outfit', 'Inter', ...defaultTheme.fontFamily.sans],
+                sans: ['Sofia Sans', ...defaultTheme.fontFamily.sans],
+                display: ['Sofia Sans', ...defaultTheme.fontFamily.sans],
                 mono: ['Fira Code', ...defaultTheme.fontFamily.mono],
             },
             colors: {

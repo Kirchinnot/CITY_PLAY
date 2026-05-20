@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -33,8 +33,8 @@
   --color-danger-bg: #FDF2F2;
 
   /* Typography */
-  --font-family-sans: 'Inter', sans-serif;
-  --font-family-display: 'Outfit', sans-serif;
+  --font-family-sans: 'Sofia Sans', sans-serif;
+  --font-family-display: 'Sofia Sans', sans-serif;
 
   /* Shadows (Glassmorphism & Depth) */
   --shadow-sm: 0 1px 3px rgba(28, 24, 22, 0.05);
@@ -130,9 +130,16 @@ html {
 /* ── Global Styles ── */
 body {
   font-family: var(--font-family-sans);
+  font-size: 0.95rem;
   background-color: var(--bg-base);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 0.9rem;
+  }
 }
 
 h1, h2, h3, h4, h5, h6 {

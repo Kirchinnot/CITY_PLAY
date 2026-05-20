@@ -18,23 +18,41 @@ const formatTime = (seconds) => {
 
 // GSAP Animations
 onMounted(() => {
-    gsap.from(".summary-header", { y: -50, opacity: 0, duration: 1, ease: "power4.out" });
-    gsap.from(".stat-card", { 
-        scale: 0.8, 
-        opacity: 0, 
-        duration: 0.8, 
-        stagger: 0.1, 
-        ease: "back.out(1.7)",
-        delay: 0.5 
-    });
-    gsap.from(".badge-item", { 
-        y: 20, 
-        opacity: 0, 
-        duration: 0.5, 
-        stagger: 0.1, 
-        delay: 1 
-    });
+    const headerTargets = gsap.utils.toArray(".summary-header");
+    const statTargets = gsap.utils.toArray(".stat-card");
+    const badgeTargets = gsap.utils.toArray(".badge-item");
+
+    if (headerTargets.length) {
+        gsap.from(headerTargets, { y: -50, opacity: 0, duration: 1, ease: "power4.out" });
+    }
+
+    if (statTargets.length) {
+        gsap.from(statTargets, {
+            scale: 0.8,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: "back.out(1.7)",
+            delay: 0.5,
+        });
+    }
+
+    if (badgeTargets.length) {
+        gsap.from(badgeTargets, {
+            y: 20,
+            opacity: 0,
+            duration: 0.5,
+            stagger: 0.1,
+            delay: 1,
+        });
+    }
 });
+
+const handleImageError = (event) => {
+    if (event?.target) {
+        event.target.src = '/placeholder-place.svg';
+    }
+};
 
 // GDPR / Profile Deletion
 const showProfileModal = ref(false);
@@ -71,7 +89,7 @@ const deleteProfile = async () => {
                     </div>
                 </div>
                 <div>
-                    <h1 class="text-5xl font-black text-white italic tracking-tighter uppercase leading-none">Mission Terminée</h1>
+                    <h1 class="text-5xl font-black text-slate-950 italic tracking-tighter uppercase leading-none">Mission Terminée</h1>
                     <p class="text-orange-500 font-black uppercase tracking-[0.2em] text-[10px] mt-2">Secteur : {{ session.city_name }}</p>
                 </div>
             </div>
@@ -81,21 +99,21 @@ const deleteProfile = async () => {
                 <div class="stat-card bg-white/5 border border-white/10 p-6 rounded-[2.5rem] backdrop-blur-xl">
                     <span class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Score Total</span>
                     <div class="flex items-baseline gap-1">
-                        <span class="text-4xl font-black text-white leading-none">{{ session.total_score }}</span>
+                    <span class="text-4xl font-black text-slate-950 leading-none">{{ session.total_score }}</span>
                         <span class="text-xs font-black text-orange-500 uppercase">pts</span>
                     </div>
                 </div>
                 
                 <div class="stat-card bg-white/5 border border-white/10 p-6 rounded-[2.5rem] backdrop-blur-xl">
                     <span class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Temps Final</span>
-                    <span class="text-xl font-black text-white leading-none">{{ formatTime(session.total_time) }}</span>
+                    <span class="text-xl font-black text-slate-950 leading-none">{{ formatTime(session.total_time) }}</span>
                 </div>
 
                 <div class="stat-card bg-white/5 border border-white/10 p-6 rounded-[2.5rem] backdrop-blur-xl">
                     <span class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Objectifs</span>
                     <div class="flex items-baseline gap-1">
-                        <span class="text-3xl font-black text-white leading-none">{{ session.solved_places }}</span>
-                        <span class="text-xs font-black text-gray-500 uppercase">/ {{ session.total_places }}</span>
+                        <span class="text-3xl font-black text-slate-950 leading-none">{{ session.solved_places }}</span>
+                        <span class="text-xs font-black text-slate-500 uppercase">/ {{ session.total_places }}</span>
                     </div>
                 </div>
 
@@ -112,7 +130,7 @@ const deleteProfile = async () => {
                     <div v-for="achievement in session.achievements" :key="achievement.id" 
                          class="badge-item bg-orange-500/10 border border-orange-500/30 px-5 py-3 rounded-2xl flex items-center gap-3 shadow-lg shadow-orange-500/5">
                         <span class="text-2xl">{{ achievement.icon || '🏆' }}</span>
-                        <span class="text-[10px] font-black text-white uppercase tracking-widest">{{ achievement.type }}</span>
+                        <span class="text-[10px] font-black text-slate-950 uppercase tracking-widest">{{ achievement.type }}</span>
                     </div>
                 </div>
             </div>
@@ -124,17 +142,17 @@ const deleteProfile = async () => {
                     <div v-for="score in session.scores" :key="score.id" 
                          class="bg-white/5 border border-white/5 p-5 rounded-3xl flex items-center justify-between group hover:bg-white/10 transition-all">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-xs font-black text-gray-500 italic border border-white/5">
+                            <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-xs font-black text-slate-950 italic border border-slate-200">
                                 #{{ score.riddle?.id }}
                             </div>
                             <div>
-                                <p class="text-sm font-black text-white uppercase">{{ score.riddle?.place?.name || 'Lieu' }}</p>
-                                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Secteur Validé</p>
+                            <p class="text-sm font-black text-slate-950 uppercase">{{ score.riddle?.place?.name || 'Lieu' }}</p>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Secteur Validé</p>
                             </div>
                         </div>
                         <div class="text-right">
                             <p class="text-xl font-black text-orange-500 leading-none">+{{ score.points_earned }}</p>
-                            <p class="text-[9px] font-black text-gray-600 uppercase tracking-widest mt-1">PTS</p>
+                            <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">PTS</p>
                         </div>
                     </div>
                 </div>
@@ -147,9 +165,15 @@ const deleteProfile = async () => {
                     <div v-for="place in session.unsolved_places" :key="place.id"
                          class="bg-white/5 border border-white/5 rounded-[2rem] overflow-hidden group">
                         <div class="h-28 relative">
-                            <img :src="place.images?.[0]?.image_url || place.images?.[0]?.image_path || '/placeholder-place.svg'" class="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500" />
+                            <img
+                                :src="place.images?.[0]?.image_url || place.images?.[0]?.image_path || '/placeholder-place.svg'"
+                                :alt="place.name || 'Image du lieu'"
+                                loading="lazy"
+                                @error="handleImageError"
+                                class="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                            />
                             <div class="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
-                            <span class="absolute bottom-3 left-4 right-4 text-[10px] font-black text-white uppercase truncate">{{ place.name }}</span>
+                            <span class="absolute bottom-3 left-4 right-4 text-[10px] font-black text-slate-950 uppercase truncate">{{ place.name }}</span>
                         </div>
                     </div>
                 </div>

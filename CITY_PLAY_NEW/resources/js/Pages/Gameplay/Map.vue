@@ -167,10 +167,10 @@ watch(() => gameState.value, drawMarkers, { deep: true });
             <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_left_top,rgba(255,179,0,0.14),transparent_32%),radial-gradient(circle_at_right_bottom,rgba(255,95,0,0.16),transparent_32%)]"></div>
 
             <div class="absolute inset-x-0 top-4 z-20 px-4 hud-top">
-                <div class="flex flex-col gap-3 rounded-[32px] border border-white/10 bg-slate-950/90 p-4 shadow-2xl backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-col gap-3 rounded-[28px] border border-white/10 bg-slate-950/90 p-3 shadow-2xl backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between sm:p-4">
                     <div>
                         <p class="text-[10px] uppercase tracking-[0.28em] text-slate-400">Mission en cours</p>
-                        <h1 class="text-xl font-black uppercase tracking-[0.18em] text-white">Carte tactique</h1>
+                        <h1 class="text-lg font-black uppercase tracking-[0.18em] text-white sm:text-xl">Carte tactique</h1>
                     </div>
                     <div class="text-right">
                         <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Ville</p>
@@ -182,18 +182,18 @@ watch(() => gameState.value, drawMarkers, { deep: true });
             <div ref="mapContainer" class="absolute inset-0 z-0"></div>
 
             <div class="absolute inset-x-4 top-24 z-20">
-                <div class="grid gap-3 sm:grid-cols-3">
-                    <div class="rounded-3xl border border-white/10 bg-slate-950/85 p-4 shadow-xl backdrop-blur-xl">
-                        <div class="text-[10px] uppercase tracking-[0.28em] text-slate-400 mb-2">Chrono</div>
-                        <div class="text-3xl font-black tracking-tight" :class="timerColorClass">{{ formatTime(remainingTimeSeconds) }}</div>
+                <div class="grid grid-cols-3 gap-2 rounded-[28px] border border-white/10 bg-slate-950/90 p-3 shadow-xl backdrop-blur-xl sm:gap-3 sm:p-4">
+                    <div class="rounded-3xl bg-slate-900/85 p-3 text-center sm:p-4">
+                        <div class="text-[9px] uppercase tracking-[0.28em] text-slate-400">Chrono</div>
+                        <div class="text-2xl font-black tracking-tight sm:text-3xl" :class="timerColorClass">{{ formatTime(remainingTimeSeconds) }}</div>
                     </div>
-                    <div class="rounded-3xl border border-white/10 bg-slate-950/85 p-4 shadow-xl backdrop-blur-xl">
-                        <div class="text-[10px] uppercase tracking-[0.28em] text-slate-400 mb-2">Score</div>
-                        <div class="text-3xl font-black tracking-tight text-white">{{ gameState?.total_score || 0 }} <span class="text-xs text-orange-300">PTS</span></div>
+                    <div class="rounded-3xl bg-slate-900/85 p-3 text-center sm:p-4">
+                        <div class="text-[9px] uppercase tracking-[0.28em] text-slate-400">Score</div>
+                        <div class="text-2xl font-black tracking-tight text-white sm:text-3xl">{{ gameState?.total_score || 0 }} <span class="text-xs text-orange-300">PTS</span></div>
                     </div>
-                    <div class="rounded-3xl border border-white/10 bg-slate-950/85 p-4 shadow-xl backdrop-blur-xl">
-                        <div class="text-[10px] uppercase tracking-[0.28em] text-slate-400 mb-2">Progression</div>
-                        <div class="text-3xl font-black tracking-tight text-white">{{ gameState?.solved_places || 0 }}/{{ gameState?.total_places || 0 }}</div>
+                    <div class="rounded-3xl bg-slate-900/85 p-3 text-center sm:p-4">
+                        <div class="text-[9px] uppercase tracking-[0.28em] text-slate-400">Progression</div>
+                        <div class="text-2xl font-black tracking-tight text-white sm:text-3xl">{{ gameState?.solved_places || 0 }}/{{ gameState?.total_places || 0 }}</div>
                     </div>
                 </div>
             </div>
@@ -234,7 +234,7 @@ watch(() => gameState.value, drawMarkers, { deep: true });
                         </div>
                     </div>
 
-                    <div class="mt-5 grid gap-3 sm:grid-cols-3">
+                    <div class="mt-5 hidden sm:grid gap-3 sm:grid-cols-3">
                         <div class="rounded-3xl bg-slate-900/80 p-4 border border-white/10">
                             <p class="text-[10px] uppercase tracking-[0.22em] text-slate-400 mb-2">Mode</p>
                             <p class="text-sm font-black text-white uppercase">{{ gameState?.mode || 'N/A' }}</p>

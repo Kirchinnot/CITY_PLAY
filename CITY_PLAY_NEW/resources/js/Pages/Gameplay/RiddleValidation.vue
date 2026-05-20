@@ -4,6 +4,7 @@ import { Head, router, Link } from '@inertiajs/vue3';
 import axios from 'axios';
 import PlayerLayout from '@/Layouts/PlayerLayout.vue';
 import { gsap } from 'gsap';
+import { alertModal, confirmModal } from '@/composables/usePrimeDialogs';
 
 const props = defineProps({
     riddle: Object,
@@ -166,7 +167,7 @@ const skipRiddle = async () => {
     <Head :title="`Énigme : ${riddle.place?.name}`" />
 
     <PlayerLayout>
-        <div class="min-h-[calc(100vh-160px)] bg-[radial-gradient(circle_120px_at_top,_rgba(245,158,11,0.12),_transparent_30%),radial-gradient(circle_140px_at_bottom_right,_rgba(34,197,94,0.08),_transparent_30%)] px-4 py-6">
+        <div class="min-h-[calc(100vh-160px)] bg-[#FDFBF7] px-4 py-6">
 
             <!-- Result Overlay (Success) -->
             <Transition name="scale">
@@ -189,48 +190,48 @@ const skipRiddle = async () => {
             </Transition>
 
             <!-- Main Riddle Card -->
-            <div v-if="!showResult" class="riddle-card mx-auto flex min-h-[calc(100vh-220px)] max-w-4xl flex-col overflow-hidden rounded-[40px] border border-white/10 bg-slate-950/90 shadow-2xl backdrop-blur-xl">
+            <div v-if="!showResult" class="riddle-card mx-auto flex min-h-[calc(100vh-220px)] max-w-4xl flex-col overflow-hidden rounded-[40px] border border-[#E0531C]/15 bg-white shadow-[0_40px_120px_-50px_rgba(224,115,20,0.45)]">
 
                 <!-- Image Header -->
-                <div class="riddle-image relative h-64 overflow-hidden">
+                <div class="riddle-image relative h-64 overflow-hidden bg-[#F7E5D0]">
                     <img :src="coverImageUrl" class="h-full w-full object-cover" alt="Illustration énigme" />
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-transparent to-transparent"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#2D1B16]/70 via-transparent to-transparent"></div>
 
                     <div class="absolute inset-x-6 top-6 flex items-center justify-between">
-                        <Link :href="route('player.game.map')" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950/75 text-white shadow-lg ring-1 ring-white/10 transition hover:bg-slate-900">
+                        <Link :href="route('player.game.map')" class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#2D1B16]/80 text-white shadow-lg ring-1 ring-slate-900/10 transition hover:bg-[#2D1B16]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
                         </Link>
 
-                        <div class="grid grid-cols-2 gap-2">
-                            <span :class="['rounded-2xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.24em]', step === 'qcm' ? 'bg-amber-400/10 border-amber-400 text-amber-300' : 'bg-white/10 border-white/10 text-slate-300']">1. Réponse</span>
-                            <span :class="['rounded-2xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.24em]', step === 'onsite' ? 'bg-emerald-400/10 border-emerald-400 text-emerald-300' : 'bg-white/10 border-white/10 text-slate-300']">2. Sur place</span>
-                        </div>
+                        <!-- <div class="grid grid-cols-2 gap-2"> -->
+                            <!-- <span :class="['rounded-2xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.24em]', step === 'qcm' ? 'bg-[#FFE8C4] border-[#E0531C] text-[#2D1B16]' : 'bg-white/80 border-white/80 text-[#7A5328]']">1. Réponse</span>
+                            <span :class="['rounded-2xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.24em]', step === 'onsite' ? 'bg-[#FFE8C4] border-[#2D1B16] text-[#2D1B16]' : 'bg-white/80 border-white/80 text-[#7A5328]']">2. Sur place</span> -->
+                        <!-- </div> -->
                     </div>
                 </div>
 
                 <!-- Content -->
-                <div class="flex flex-1 flex-col gap-6 p-8 text-white">
+                <div class="flex flex-1 flex-col gap-6 p-8 text-[#2D1B16]">
                     <div class="space-y-6">
                         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                             <div class="max-w-2xl">
-                                <p class="text-sm uppercase tracking-[0.28em] text-amber-300">{{ riddle.place?.name || 'Lieu mystère' }}</p>
+                                <p class="text-sm uppercase tracking-[0.28em] text-[#B86A16]">{{ riddle.place?.name || 'Lieu mystère' }}</p>
                                 <h1 class="mt-3 text-3xl font-black leading-tight tracking-tight">{{ riddle.question }}</h1>
                             </div>
-                            <div class="rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-xs uppercase tracking-[0.22em] text-slate-300">
+                            <div class="rounded-3xl border border-[#E0531C]/15 bg-[#FFF3DF] px-5 py-4 text-xs uppercase tracking-[0.22em] text-[#2D1B16]">
                                 {{ props.riddle.difficulty || 'Niveau inconnu' }}
                             </div>
                         </div>
 
                         <div class="grid gap-3 sm:grid-cols-2">
-                            <div class="rounded-3xl border border-white/10 bg-slate-950/80 p-4">
-                                <p class="text-[10px] uppercase tracking-[0.24em] text-slate-400">Mode</p>
-                                <p class="mt-2 text-sm font-black uppercase tracking-[0.12em] text-white">{{ props.riddle.mode || 'Exploration' }}</p>
+                            <div class="rounded-3xl border border-[#E0531C]/10 bg-[#FFF7EB] p-4">
+                                <p class="text-[10px] uppercase tracking-[0.24em] text-[#7A5328]">Mode</p>
+                                <p class="mt-2 text-sm font-black uppercase tracking-[0.12em] text-[#2D1B16]">{{ props.riddle.mode || 'Exploration' }}</p>
                             </div>
-                            <div class="rounded-3xl border border-white/10 bg-slate-950/80 p-4">
-                                <p class="text-[10px] uppercase tracking-[0.24em] text-slate-400">Validation</p>
-                                <p class="mt-2 text-sm font-black uppercase tracking-[0.12em] text-white">{{ validationRadius }} m</p>
+                            <div class="rounded-3xl border border-[#E0531C]/10 bg-[#FFF7EB] p-4">
+                                <p class="text-[10px] uppercase tracking-[0.24em] text-[#7A5328]">Validation</p>
+                                <p class="mt-2 text-sm font-black uppercase tracking-[0.12em] text-[#2D1B16]">{{ validationRadius }} m</p>
                             </div>
                         </div>
                     </div>
@@ -245,11 +246,11 @@ const skipRiddle = async () => {
                                     @click="answerInput = option"
                                     :class="[
                                         'w-full rounded-3xl border px-5 py-4 text-left font-bold transition duration-200',
-                                        answerInput === option ? 'bg-amber-400/20 border-amber-400 text-white' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+                                        answerInput === option ? 'bg-[#FFE0B8] border-[#E0531C] text-[#2D1B16]' : 'bg-white border-[#E0531C]/10 text-[#2D1B16] hover:bg-[#FFF3DF]'
                                     ]"
                                 >
                                     <div class="flex items-center gap-4">
-                                        <div :class="['flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-black', answerInput === option ? 'bg-amber-400 text-slate-950' : 'bg-slate-900 text-slate-400']">{{ String.fromCharCode(65 + index) }}</div>
+                                        <div :class="['flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-black', answerInput === option ? 'bg-[#E0531C] text-white' : 'bg-[#F5E1C0] text-[#7A5328]']">{{ String.fromCharCode(65 + index) }}</div>
                                         <span class="leading-snug">{{ option }}</span>
                                     </div>
                                 </button>
@@ -259,26 +260,26 @@ const skipRiddle = async () => {
                                 v-else
                                 v-model="answerInput"
                                 placeholder="Votre réponse ici..."
-                                class="min-h-[150px] w-full rounded-[28px] border border-white/10 bg-white/5 p-5 text-base text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none focus:ring-0"
+                                class="min-h-[150px] w-full rounded-[28px] border border-[#E0531C]/10 bg-[#FFF7EB] p-5 text-base text-[#2D1B16] placeholder-[#7A5328] focus:border-[#E0531C] focus:outline-none focus:ring-0"
                             ></textarea>
 
                             <p class="text-sm text-slate-400">Confirmez votre réponse, puis rendez-vous sur place pour valider votre présence.</p>
                         </div>
 
                         <div v-else class="space-y-6">
-                            <div class="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-5">
-                                <p class="text-xs uppercase tracking-[0.24em] text-emerald-300">Réponse validée</p>
-                                <p class="mt-3 text-lg font-black text-white">{{ answerInput }}</p>
-                                <p class="mt-2 text-sm text-slate-400">Rendez-vous sur place pour confirmer votre présence au point <strong>{{ riddle.place?.name }}</strong>.</p>
+                            <div class="rounded-3xl border border-[#E0531C]/10 bg-[#FFF7EB] p-5">
+                                <p class="text-xs uppercase tracking-[0.24em] text-[#B86A16]">Réponse validée</p>
+                                <p class="mt-3 text-lg font-black text-[#2D1B16]">{{ answerInput }}</p>
+                                <p class="mt-2 text-sm text-[#5C4033]">Rendez-vous sur place pour confirmer votre présence au point <strong>{{ riddle.place?.name }}</strong>.</p>
                             </div>
 
-                            <div class="rounded-3xl border border-white/10 bg-slate-950/80 p-5">
+                            <div class="rounded-3xl border border-[#E0531C]/10 bg-[#FFF3DF] p-5">
                                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
-                                        <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Localisation</p>
-                                        <p class="mt-2 text-sm font-black text-white">{{ locationStatus }}</p>
+                                        <p class="text-[10px] uppercase tracking-[0.24em] text-[#7A5328]">Localisation</p>
+                                        <p class="mt-2 text-sm font-black text-[#2D1B16]">{{ locationStatus }}</p>
                                     </div>
-                                    <span :class="['inline-flex rounded-full px-3 py-2 text-xs font-black uppercase tracking-[0.2em]', isInValidationZone ? 'bg-emerald-500/15 border border-emerald-500/20 text-emerald-300' : 'bg-rose-500/15 border border-rose-500/20 text-rose-300']">
+                                    <span :class="['inline-flex rounded-full px-3 py-2 text-xs font-black uppercase tracking-[0.2em]', isInValidationZone ? 'bg-[#D6F5E5] border border-emerald-400/30 text-[#2D1B16]' : 'bg-[#FFE6E2] border border-rose-400/30 text-[#7A5328]']">
                                         {{ isInValidationZone ? 'Prêt' : 'En route' }}
                                     </span>
                                 </div>
@@ -291,7 +292,7 @@ const skipRiddle = async () => {
                             v-if="step === 'qcm'"
                             @click="submitAnswer"
                             :disabled="!canSubmitAnswer"
-                            class="w-full rounded-[2rem] bg-amber-500 px-6 py-5 text-base font-black uppercase tracking-[0.16em] text-slate-950 shadow-[0_20px_50px_-20px_rgba(245,158,11,0.8)] transition duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-slate-800"
+                            class="w-full rounded-[2rem] bg-gradient-to-r from-[#E0531C] to-[#FFB700] px-6 py-5 text-base font-black uppercase tracking-[0.16em] text-[#2D1B16] shadow-[0_20px_50px_-20px_rgba(224,83,28,0.55)] transition duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-[#F3E6D2]"
                         >
                             {{ isSubmittingAnswer ? 'VÉRIFICATION...' : 'CONFIRMER MA RÉPONSE' }}
                         </button>
@@ -300,7 +301,7 @@ const skipRiddle = async () => {
                             v-else
                             @click="validatePresence"
                             :disabled="!canValidatePresence"
-                            class="w-full rounded-[2rem] bg-emerald-500 px-6 py-5 text-base font-black uppercase tracking-[0.16em] text-slate-950 shadow-[0_20px_50px_-20px_rgba(16,185,129,0.8)] transition duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-slate-800"
+                            class="w-full rounded-[2rem] bg-gradient-to-r from-[#F7B227] to-[#E05A1E] px-6 py-5 text-base font-black uppercase tracking-[0.16em] text-[#2D1B16] shadow-[0_20px_50px_-20px_rgba(224,83,28,0.35)] transition duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-[#F3E6D2]"
                         >
                             {{ isValidatingPresence ? 'VÉRIFICATION...' : 'VALIDER SUR PLACE' }}
                         </button>
@@ -308,13 +309,13 @@ const skipRiddle = async () => {
                         <div class="grid gap-3 sm:grid-cols-2">
                             <button
                                 @click="showHints = !showHints"
-                                class="rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-sm font-black uppercase tracking-[0.16em] text-white transition hover:bg-white/10"
+                                class="rounded-3xl border border-[#E0531C]/15 bg-[#FFF3DF] px-5 py-4 text-sm font-black uppercase tracking-[0.16em] text-[#2D1B16] transition hover:bg-[#FFEBCC]"
                             >
                                 INDICES ({{ unlockedHintsCount }}/{{ hintsCount }})
                             </button>
                             <button
                                 @click="skipRiddle"
-                                class="rounded-3xl border border-white/10 bg-slate-900/80 px-5 py-4 text-sm font-black uppercase tracking-[0.16em] text-slate-300 transition hover:bg-slate-900"
+                                class="rounded-3xl border border-[#E0531C]/15 bg-white px-5 py-4 text-sm font-black uppercase tracking-[0.16em] text-[#2D1B16] transition hover:bg-[#FFF7EB]"
                             >
                                 PASSER L'ÉNIGME
                             </button>
@@ -325,24 +326,42 @@ const skipRiddle = async () => {
 
             <!-- Hints Drawer -->
             <Transition name="slide-up">
-                <div v-if="showHints" class="fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-[40px] border-t border-white/10 bg-slate-950/95 p-8 shadow-2xl backdrop-blur-2xl">
-                    <div class="mx-auto mb-8 h-1.5 w-16 rounded-full bg-white/10"></div>
-                    <h3 class="mb-6 text-2xl font-black text-white tracking-tight">Besoin d'aide ?</h3>
+                <div v-if="showHints" class="fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-[40px] border-t border-[#E0531C]/10 bg-white p-8 shadow-2xl backdrop-blur-2xl">
+                    <div class="mx-auto mb-8 h-1.5 w-16 rounded-full bg-[#E0531C]/20"></div>
+                    <div class="mb-6 flex items-start justify-between gap-4">
+                        <div>
+                            <h3 class="text-3xl font-black text-[#2D1B16] tracking-tight">Besoin d'aide ?</h3>
+                            <p class="mt-2 text-sm text-[#7A5328]">Consultez les indices disponibles ou fermez la fenêtre pour revenir à l’énigme.</p>
+                        </div>
+                        <button
+                            @click="showHints = false"
+                            class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#E0531C]/15 bg-[#FFF3DF] text-[#2D1B16] transition hover:bg-[#FFE6C9]"
+                            aria-label="Fermer les indices"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
 
                     <div class="space-y-4">
-                        <div v-for="(hint, index) in riddle.hints" :key="hint.id" class="rounded-3xl border border-white/10 bg-white/5 p-6">
-                            <div v-if="localUnlockedHintIds.includes(hint.id)">
-                                <p class="text-[10px] uppercase tracking-[0.24em] text-amber-300">Indice {{ index + 1 }}</p>
-                                <p class="mt-3 text-sm text-slate-100">{{ hint.content }}</p>
-                            </div>
-                            <div v-else class="flex items-center justify-between gap-4">
-                                <span class="text-sm italic text-slate-400">Indice caché</span>
-                                <button
-                                    @click="unlockHint(hint.id)"
-                                    class="rounded-2xl bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-slate-950 transition hover:bg-slate-100"
-                                >
-                                    DÉBLOQUER (-25 PTS)
-                                </button>
+                        <div v-for="(hint, index) in riddle.hints" :key="hint.id" class="rounded-[32px] border border-[#E0531C]/15 bg-[#FFF7EB] p-6 shadow-sm">
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-[10px] uppercase tracking-[0.24em] text-[#B86A16]">Indice {{ index + 1 }}</p>
+                                    <p v-if="localUnlockedHintIds.includes(hint.id)" class="mt-3 text-sm leading-7 text-[#2D1B16]">{{ hint.content }}</p>
+                                    <p v-else class="mt-3 text-sm italic text-[#7A5328]">Indice caché. Débloquez-le pour découvrir l'information secrète.</p>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="rounded-full bg-[#FEE4C3] px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#A35E1B]">-25 pts</span>
+                                    <button
+                                        v-if="!localUnlockedHintIds.includes(hint.id)"
+                                        @click="unlockHint(hint.id)"
+                                        class="rounded-2xl bg-[#E0531C] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-[#C2410C]"
+                                    >
+                                        Débloquer
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

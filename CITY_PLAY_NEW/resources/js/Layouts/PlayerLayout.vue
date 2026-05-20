@@ -10,6 +10,13 @@ const user = computed(() => page.props.auth.user);
 const session = computed(() => page.props.gameState || page.props.session || null);
 const hasActiveSession = computed(() => ['active', 'paused'].includes(session.value?.status));
 const isPausedSession = computed(() => session.value?.status === 'paused');
+const sessionId = computed(() => page.props.gameState?.id || page.props.session?.id || null);
+const summaryHref = computed(() => {
+    if (sessionId.value) {
+        return route('player.game-sessions.summary', sessionId.value);
+    }
+    return route('player.profile.edit');
+});
 
 // Initialise le thème dès le montage du layout (appliqué sur toutes les pages)
 const { isDark } = useTheme();
@@ -128,13 +135,13 @@ const { isDark } = useTheme();
                     <span class="text-[9px] font-black uppercase tracking-widest">Carte</span>
                 </Link>
 
-                <Link :href="route('player.profile.edit')"
-                      :class="route().current('player.profile.edit') ? 'text-[#d65a31]' : 'cp-nav-item'"
+                <Link :href="summaryHref"
+                      :class="route().current('player.game-sessions.summary') || route().current('player.profile.edit') ? 'text-[#d65a31]' : 'cp-nav-item'"
                       class="flex flex-col items-center gap-1 transition-colors duration-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    <span class="text-[9px] font-black uppercase tracking-widest">Profil</span>
+                    <span class="text-[9px] font-black uppercase tracking-widest">Résumé</span>
                 </Link>
 
             </div>
