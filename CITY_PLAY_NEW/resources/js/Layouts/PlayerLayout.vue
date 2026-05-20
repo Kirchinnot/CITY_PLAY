@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import NotificationDescartes from '@/Components/NotificationDescartes.vue';
+import PrimeModalManager from '@/Components/PrimeModalManager.vue';
 import { useTheme } from '@/composables/useTheme';
 
 const page = usePage();
@@ -79,6 +80,8 @@ const { isDark } = useTheme();
         <main class="relative z-10 max-w-2xl mx-auto px-4 py-5 pb-28">
             <slot />
         </main>
+
+        <PrimeModalManager />
 
         <!-- ── BOTTOM NAV ── -->
         <nav class="cp-nav fixed bottom-0 inset-x-0 z-40">

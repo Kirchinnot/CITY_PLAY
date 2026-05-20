@@ -20,9 +20,12 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
+        "@primevue/themes": "^4.5.4",
         "@vue-leaflet/vue-leaflet": "^0.10.1",
         "gsap": "3.12.5",
         "leaflet": "^1.9.4",
+        "primeicons": "^7.0.0",
+        "primevue": "^4.5.5",
         "qrcode.vue": "^3.9.1"
     }
 }

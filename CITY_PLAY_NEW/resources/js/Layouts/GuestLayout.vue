@@ -1,5 +1,6 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
+import PrimeModalManager from '@/Components/PrimeModalManager.vue';
 </script>
 
 <template>
@@ -34,6 +35,8 @@ import { Link } from '@inertiajs/vue3';
                 Identité Culturelle & Exploration du Bénin
             </footer>
         </div>
+
+        <PrimeModalManager />
     </div>
 </template>
 

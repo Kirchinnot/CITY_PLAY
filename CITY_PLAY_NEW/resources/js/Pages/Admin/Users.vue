@@ -2,6 +2,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { confirmModal } from '@/composables/usePrimeDialogs';
 
 const props = defineProps({
     players: Array,
@@ -10,10 +11,15 @@ const props = defineProps({
 
 const activeTab = ref('players'); // 'players' or 'teams'
 
-const deletePlayer = (playerId) => {
-    if (confirm('Voulez-vous vraiment supprimer ce joueur ? Cette action est irréversible.')) {
-        router.delete(route('admin.users.destroy', playerId));
-    }
+const deletePlayer = async (playerId) => {
+    if (!(await confirmModal({
+        header: 'Suppression de joueur',
+        message: 'Voulez-vous vraiment supprimer ce joueur ? Cette action est irréversible.',
+        acceptLabel: 'Oui, supprimer',
+        rejectLabel: 'Annuler',
+    }))) return;
+
+    router.delete(route('admin.users.destroy', playerId));
 };
 
 const formatDate = (dateString) => {

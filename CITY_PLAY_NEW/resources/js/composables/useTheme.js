@@ -30,13 +30,7 @@ const toggleTheme = () => {
 };
 
 export function useTheme() {
-    onMounted(() => {
-        initTheme();
-    });
-
-    watch(isDark, (val) => {
-        applyTheme(val);
-    });
-
+    onMounted(() => { initTheme(); });
+    watch(isDark, (val) => { applyTheme(val); });
     return { isDark, toggleTheme, initTheme };
 }
