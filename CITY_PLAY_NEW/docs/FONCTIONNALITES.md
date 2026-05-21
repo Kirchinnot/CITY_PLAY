@@ -229,3 +229,82 @@ Ces relations sont implémentées via les méthodes Eloquent (`hasMany`, `belong
 ---
 
 Fichier créé automatiquement par l'agent — si tu veux que j'ajoute des captures d'écran, des extraits de code précis (lignes) ou des exemples de requêtes API pour les endpoints, dis-moi lesquelles et je les insère.
+
+
+1. Activation à l’inscription
+Dans Register.vue, j’ai ajouté une case à cocher two_factor_enabled.
+Le formulaire envoie ce champ au backend.
+Dans RegisteredUserController.php, le contrôleur valide two_factor_enabled comme boolean et l’enregistre dans la table users.
+2. Détection au moment du login
+Le code principal se trouve dans AuthenticatedSessionController.php.
+Après authentification standard ($request->authenticate()), il vérifie :
+if ($user && $user->two_factor_enabled)
+3. Génération et envoi du code
+Si le flag 2FA est activé :
+un code à 6 chiffres est généré
+il est stocké dans l’utilisateur : two_factor_code
+une date d’expiration est définie : two_factor_expires_at
+l’utilisateur reçoit une notification via App\Notifications\TwoFactorCode
+4. Passage en mode verification
+L’utilisateur est déconnecté immédiatement (auth()->logout())
+La session conserve l’ID en attente :
+session(['2fa:user:id' => $user->id, '2fa:remember' => $request->boolean('remember')])
+Puis redirection vers la page de vérification 2FA : route two-factor.index
+5. Vérification du code
+La vue TwoFactor.vue affiche un formulaire avec :
+route('two-factor') pour soumettre le code
+route('two-factor.resend') pour réclamer un nouveau code
+Dans TwoFactorController.php :
+on charge l’utilisateur en attente via la session
+on compare le code saisi avec two_factor_code
+on vérifie la date two_factor_expires_at
+si c’est bon, on ré-authentifie l’utilisateur et on nettoie la session 2FA
+
+
+Génération des liens d’invitation
+Le lien d’invitation est construit à partir d’un token unique stocké dans la table invitations.
+
+1. Création d’une invitation
+Quand un admin crée une invitation, c’est InvitationController@store qui gère :
+
+InvitationController.php
+Il valide les paramètres (mode, difficulty, locomotion, max_players, duration_minutes, expires_in_hours) puis appelle :
+
+App\Services\Invitation\InvitationService::generate(...)
+2. Génération du token
+Dans InvitationService.php :
+
+Str::random(64) crée un token aléatoire de 64 caractères :
+
+'token' => Str::random(64),
+Ce token est enregistré avec les paramètres de l’invitation :
+
+city_id
+created_by
+mode
+difficulty
+locomotion
+max_players
+duration_minutes
+expires_at
+3. Construction de l’URL
+La vraie URL d’invitation est générée avec la route nommée game.join :
+
+return route('game.join', ['token' => $invitation->token]);
+Cette route est définie dans web.php :
+
+Route::get('/join/{token}', [InvitationController::class, 'join'])->name('game.join');
+Donc le lien final ressemble à :
+
+https://.../join/<token>
+4. Utilisation du lien
+Quand un joueur ouvre ce lien, InvitationController@join($token) :
+
+vérifie le token en base via InvitationService::validateToken($token)
+refuse le lien si l’invitation est expirée ou invalide
+sinon affiche la page de jonction (Game/Join)
+En résumé
+le token est généré par InvitationService::generate() avec Str::random(64)
+il est enregistré dans la table invitations
+le lien est construit avec route('game.join', ['token' => $token])
+l’accès est validé par InvitationService::validateToken() au moment du join
