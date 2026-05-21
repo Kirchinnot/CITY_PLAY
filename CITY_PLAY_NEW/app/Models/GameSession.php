@@ -227,7 +227,7 @@ class GameSession extends Model
         // On cherche l'énigme correspondante au lieu ET à la difficulté de la session
         return Riddle::where('place_id', $currentPlace->place_id)
             ->where('difficulty', $this->difficulty)
-            ->with(['hints', 'images'])
+            ->with(['hints', 'images', 'place.images'])
             ->first();
     }
 

@@ -28,7 +28,7 @@ class HandleInertiaRequests extends Middleware
             // Récupérer la session la plus pertinente pour le joueur
             $session = GameSession::whereHas('players', fn($q) => $q->where('user_id', $user->id))
                 ->whereIn('status', ['active', 'paused', 'pending'])
-                ->with(['city'])
+                ->with(['city.places'])
                 ->latest()
                 ->first();
 
