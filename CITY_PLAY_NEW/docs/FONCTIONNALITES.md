@@ -308,3 +308,10 @@ le token est généré par InvitationService::generate() avec Str::random(64)
 il est enregistré dans la table invitations
 le lien est construit avec route('game.join', ['token' => $token])
 l’accès est validé par InvitationService::validateToken() au moment du join
+
+1.Animations UI
+2.Écran victoire
+3.Carte immersive
+4.Badges
+5.Anecdotes culturelles
+6.Intro cinématique
