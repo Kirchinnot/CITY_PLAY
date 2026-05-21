@@ -148,6 +148,7 @@ const incrementTeamSize = () => startForm.team_size < 10 && startForm.team_size+
                     <p class="text-xs font-bold text-[#E0531C]/70 uppercase tracking-widest mt-1">{{ session.city.name }}</p>
                 </header>
 
+                <!-- Section Configuration uniquement visible par le chef -->
                 <section v-if="isHost" class="bg-white/80 backdrop-blur-md border border-[#2D1B16]/5 rounded-[2.5rem] p-5 shadow-sm mb-4">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-sm font-black uppercase tracking-tight">Configuration</h2>
@@ -205,10 +206,13 @@ const incrementTeamSize = () => startForm.team_size < 10 && startForm.team_size+
                                 </div>
                             </div>
                             <div class="space-y-2">
-                                <span class="text-[10px] font-black uppercase opacity-40 ml-1">Temps ({{ startForm.available_minutes }}')</span>
+                                <span class="text-[10px] font-black uppercase opacity-40 ml-1">Temps ({{ startForm.available_minutes }}' min)</span>
                                 <div class="h-12 flex items-center px-2">
-                                    <input type="range" min="30" max="240" step="15" v-model="startForm.available_minutes" 
+                                    <input type="range" min="30" max="300" step="30" v-model="startForm.available_minutes" 
                                            class="w-full h-2 bg-[#2D1B16]/10 rounded-lg appearance-none cursor-pointer accent-[#E0531C]">
+                                </div>
+                                <div class="flex justify-between text-[9px] font-bold text-[#2D1B16]/30 px-1">
+                                    <span>30 min</span><span>300 min</span>
                                 </div>
                             </div>
                         </div>
@@ -237,8 +241,11 @@ const incrementTeamSize = () => startForm.team_size < 10 && startForm.team_size+
                 </section>
 
                 <footer class="mt-auto space-y-3 pb-4">
-                    <button v-if="isHost" @click="showQRModal = true" 
-                            class="w-full h-14 border-2 border-dashed border-[#E0531C]/30 rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#E0531C] flex items-center justify-center gap-2 active:scale-95 transition-all bg-[#E0531C]/5">
+                    <!-- Invitation : masquée en mode solo et mercenaire -->
+                    <button
+                        v-if="isHost && startForm.mode !== 'solo' && startForm.mode !== 'mercenaire'"
+                        @click="showQRModal = true"
+                        class="w-full h-14 border-2 border-dashed border-[#E0531C]/30 rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#E0531C] flex items-center justify-center gap-2 active:scale-95 transition-all bg-[#E0531C]/5">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                         Invoquer des amis
                     </button>

@@ -32,26 +32,27 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'two_factor_enabled' => 'boolean',
             'accept_cgu' => 'required|accepted',
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'two_factor_enabled' => $request->boolean('two_factor_enabled'),
-            'cgu_accepted_at' => now(),
+            'name'                       => $request->name,
+            'email'                      => $request->email,
+            'password'                   => Hash::make($request->password),
+            'two_factor_enabled'         => true, // Obligatoire pour tous les joueurs
+            'cgu_accepted_at'            => now(),
             'privacy_policy_accepted_at' => now(),
         ]);
 
         event(new Registered($user));
 
-        Auth::login($user);
-
-        return redirect(route('player.dashboard', absolute: false));
+        // Pas d'autologin : le joueur doit se connecter et recevoir son code 2FA par email
+        return redirect()->route('login')->with(
+            'status',
+            'Profil créé ! Connectez-vous pour recevoir votre code de vérification par email.'
+        );
     }
 }

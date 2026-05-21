@@ -51,10 +51,11 @@ class GameSessionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'city_id' => 'required|exists:cities,id',
-            'difficulty' => 'nullable|string',
-            'mode' => 'nullable|string',
-            'start_place_id' => 'nullable|exists:places,id',
+            'city_id'          => 'required|exists:cities,id',
+            'difficulty'       => 'nullable|string',
+            'mode'             => 'nullable|string',
+            'start_place_id'   => 'nullable|exists:places,id',
+            'available_minutes'=> 'nullable|integer|min:30|max:300',
         ]);
 
         $user = $request->user();
@@ -200,13 +201,21 @@ class GameSessionController extends Controller
             return redirect()->route('player.game.map')->with('info', 'La partie est déjà lancée.');
         }
 
-        // Mettre à jour les paramètres de la session choisis dans le Lobby
+        // Valider et mettre à jour les paramètres de la session choisis dans le Lobby
+        $request->validate([
+            'difficulty'        => 'nullable|string',
+            'mode'              => 'nullable|string',
+            'locomotion'        => 'nullable|string',
+            'available_minutes' => 'nullable|integer|min:30|max:300',
+            'team_size'         => 'nullable|integer|min:1|max:10',
+        ]);
+
         $session->update($request->only([
-            'difficulty', 
-            'mode', 
-            'locomotion', 
+            'difficulty',
+            'mode',
+            'locomotion',
             'available_minutes',
-            'team_size'
+            'team_size',
         ]));
 
         if ($this->gameSessionService->startSession($session, $request->start_place_id)) {

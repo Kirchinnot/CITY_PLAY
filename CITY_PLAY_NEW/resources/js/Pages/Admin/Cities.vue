@@ -140,16 +140,16 @@ const unpublish = (cityId) => { router.post(route('admin.cities.unpublish', city
                                 <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_left,#FFB700_2px,transparent_22px)] [background-size:18px_18px]"></div>
                                 <span :class="[city.is_published ? 'bg-[#2D1B16] text-[#FFB700]' : 'bg-[#E0531C] text-white']" class="absolute top-4 right-4 z-10 px-2.5 py-1 rounded-full font-black text-[9px] uppercase tracking-widest shadow-sm">
                                     {{ city.is_published ? 'Publié' : 'Brouillon' }}
-                                }</span>
+                                </span>
                                 <h3 class="font-sans text-base font-black text-[#2D1B16] m-0 z-10 tracking-tight drop-shadow-sm truncate w-full">
                                     {{ city.name }}
-                                }</h3>
+                                </h3>
                             </div>
 
                             <div class="p-5 flex flex-col flex-1 justify-between bg-white">
                                 <p class="text-[#5C4033]/75 font-semibold text-sm leading-relaxed m-0 line-clamp-2">
                                     {{ city.description }}
-                                }</p>
+                                </p>
 
                                 <div class="grid grid-cols-2 gap-3 my-4 pt-4 border-t border-orange-100/30">
                                     <div class="bg-[#2D1B16]/5 p-2.5 rounded-xl border border-orange-100/40 flex items-center gap-2.5 shadow-inner">
