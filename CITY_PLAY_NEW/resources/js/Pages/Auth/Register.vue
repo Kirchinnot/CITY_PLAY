@@ -122,24 +122,6 @@ const submit = () => {
                     <InputError class="mt-1 pl-1 font-bold text-[11px]" :message="form.errors.password_confirmation" />
                 </div>
 
-                <div class="p-2.5 rounded-xl bg-[#00A859]/5 border border-[#00A859]/10 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-2">
-                        <span class="text-[#00A859]">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                            </svg>
-                        </span>
-                        <div>
-                            <p class="text-[11px] font-black text-[#2D1B16] uppercase tracking-wide leading-none">Bouclier 2FA</p>
-                            <p class="text-[9px] text-[#5C4033]/60 font-semibold mt-0.5">Sécurise ton score de jeu</p>
-                        </div>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                        <input type="checkbox" v-model="form.two_factor_enabled" class="sr-only peer">
-                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#00A859]"></div>
-                    </label>
-                </div>
-
                 <div class="flex items-start gap-2 px-1 py-0.5">
                     <input
                         id="accept_cgu"
@@ -150,6 +132,18 @@ const submit = () => {
                     />
                     <label for="accept_cgu" class="text-[10px] text-[#5C4033]/80 font-semibold leading-tight cursor-pointer select-none">
                         J'accepte le <a href="#" class="text-[#E0531C] font-black hover:underline">pacte des éclaireurs (CGU)</a>.
+                    </label>
+                </div>
+
+                <div class="flex items-center gap-2 px-1 py-1">
+                    <input
+                        id="two_factor_enabled"
+                        type="checkbox"
+                        v-model="form.two_factor_enabled"
+                        class="rounded border-orange-200 text-[#E0531C] focus:ring-[#E0531C] h-4 w-4 transition-all cursor-pointer"
+                    />
+                    <label for="two_factor_enabled" class="text-[10px] text-[#5C4033]/80 font-semibold leading-tight cursor-pointer select-none">
+                        Activer la vérification en deux étapes (2FA) pour sécuriser mon compte.
                     </label>
                 </div>
 

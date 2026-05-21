@@ -31,6 +31,28 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $user = auth()->user();
+
+        // If user has 2FA enabled, generate and send a one-time code, then require verification
+        if ($user && $user->two_factor_enabled) {
+            $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $user->two_factor_code = $code;
+            $user->two_factor_expires_at = now()->addMinutes(10);
+            $user->save();
+
+            try {
+                $user->notify(new \App\Notifications\TwoFactorCode($code));
+            } catch (\Throwable $e) {
+                // ignore notification failures for now
+            }
+
+            // store pending 2fa in session and logout to restrict access until verification
+            session(['2fa:user:id' => $user->id, '2fa:remember' => $request->boolean('remember')]);
+            auth()->logout();
+
+            return redirect()->route('two-factor.index');
+        }
+
         $request->session()->regenerate();
 
         return redirect()->intended(route('player.dashboard', absolute: false));
